@@ -4,7 +4,13 @@
     "gulp":"*",
     "gulp-util": "2.2.14",
     "livescript":"1.4.0",
+    "gulp-plumber":"*",
     "gulp-livescript":"*",
-    "gulp-browserify":"*"
+    "gulp-browserify":"*",
+    "ramda":"*",
+    "rx":"*",
+    "convnetjs":"*",
+    "vue":"*",
+    "canvas":"*"
   }
 }
