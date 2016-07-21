@@ -1,0 +1,10 @@
+{
+  "name":"HanWork",
+  "devDependencies":{
+    "gulp":"*",
+    "gulp-util": "2.2.14",
+    "livescript":"1.4.0",
+    "gulp-livescript":"*",
+    "gulp-browserify":"*"
+  }
+}
