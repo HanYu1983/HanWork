@@ -2,6 +2,7 @@ require! {
   fs
   canvas: Canvas
   rx: Rx
+  ramda: {reduce}
 }
 
 global = 
@@ -40,7 +41,20 @@ writeImage = (imgidx, w, h, buf)->
           
     writeImageClosure out, stream
 
-parse = ({state, pos, buf, imgidx}:ctx, obs)->
+readChunk = (filepath)->
+  Rx.Observable.create (obs)->
+    fs.createReadStream filepath
+      ..on "data", (chunk)->
+        obs.onNext chunk
+      
+      ..on "end", ->
+        console.log "end"
+        obs.onCompleted()
+      
+      ..on "close", ->
+        console.log "close"
+        
+parse = ({state, pos, buf}:ctx, obs)->
   return switch state
     | 0 =>
       if pos >= 16
@@ -75,47 +89,35 @@ parse = ({state, pos, buf, imgidx}:ctx, obs)->
           true,
           ctx with do
             pos: pos - imagelen
-            imgidx: imgidx+1
         ]
       else
         [false]
     | otherwise =>
       [false]
-
+        
 mnistData = (filepath)->
   Rx.Observable.create (obs)->
-    context = 
-      state: 0
-      pos: 0
-      buf: new Buffer(65535*2)
-      imgidx: 0
-      
-    fs.createReadStream filepath
-      ..on "data", (trunk)->
-        trunk.copy(context.buf, context.pos);
-        context.pos += trunk.byteLength
-        while true
-          [ok, nctx] = parse context, obs
+    readChunk(filepath).reduce do
+      ({state, pos, buf, imgidx}:ctx, chunk)->
+        chunk.copy(buf, pos)
+        nctx = ctx with pos: pos + chunk.byteLength
+        parseWhileTrue = (ctx, obs)->
+          [ok, nctx] = parse ctx, obs
           if ok
-            context.state = nctx.state
-            context.pos = nctx.pos
-            context.dataLen = nctx.dataLen
-            context.rows = nctx.rows
-            context.columns = nctx.columns
-            context.imgidx = nctx.imgidx
+            parseWhileTrue nctx, obs
           else
-            break
-      
-      ..on "end", ->
-        console.log "end"
-        obs.onCompleted()
-      
-      ..on "close", ->
-        console.log "close"
+            ctx
+        parseWhileTrue nctx, obs
+      {
+        state: 0
+        pos: 0
+        buf: new Buffer(65535*2)
+      }
+    .subscribe ->,->,->obs.onCompleted()
 
 mnistData("../doc/train-images-idx3-ubyte")
   .zip do
-    Rx.Observable.range(0, 200)
+    Rx.Observable.range(0, 60000)
     (data, idx)->
       [idx, data]
   .tapOnNext ([idx, data])->

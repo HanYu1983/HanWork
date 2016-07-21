@@ -1,7 +1,8 @@
-var fs, Canvas, Rx, global, writeImage, parse, mnistData;
+var fs, Canvas, Rx, reduce, global, writeImage, readChunk, parse, mnistData;
 fs = require('fs');
 Canvas = require('canvas');
 Rx = require('rx');
+reduce = require('ramda').reduce;
 global = {
   imgdir: "../output"
 };
@@ -36,9 +37,26 @@ writeImage = function(imgidx, w, h, buf){
     return writeImageClosure(out, stream);
   });
 };
+readChunk = function(filepath){
+  return Rx.Observable.create(function(obs){
+    var x$;
+    x$ = fs.createReadStream(filepath);
+    x$.on("data", function(chunk){
+      return obs.onNext(chunk);
+    });
+    x$.on("end", function(){
+      console.log("end");
+      return obs.onCompleted();
+    });
+    x$.on("close", function(){
+      return console.log("close");
+    });
+    return x$;
+  });
+};
 parse = function(ctx, obs){
-  var state, pos, buf, imgidx, magic, dataLen, rows, columns, imagelen, imgbuf;
-  state = ctx.state, pos = ctx.pos, buf = ctx.buf, imgidx = ctx.imgidx;
+  var state, pos, buf, magic, dataLen, rows, columns, imagelen, imgbuf;
+  state = ctx.state, pos = ctx.pos, buf = ctx.buf;
   return (function(){
     switch (state) {
     case 0:
@@ -74,8 +92,7 @@ parse = function(ctx, obs){
         buf.copy(buf, 0, imagelen, pos - imagelen);
         return [
           true, import$(clone$(ctx), {
-            pos: pos - imagelen,
-            imgidx: imgidx + 1
+            pos: pos - imagelen
           })
         ];
       } else {
@@ -89,44 +106,31 @@ parse = function(ctx, obs){
 };
 mnistData = function(filepath){
   return Rx.Observable.create(function(obs){
-    var context, x$;
-    context = {
+    return readChunk(filepath).reduce(function(ctx, chunk){
+      var state, pos, buf, imgidx, nctx, ref$, parseWhileTrue;
+      state = ctx.state, pos = ctx.pos, buf = ctx.buf, imgidx = ctx.imgidx;
+      chunk.copy(buf, pos);
+      nctx = (ref$ = clone$(ctx), ref$.pos = pos + chunk.byteLength, ref$);
+      parseWhileTrue = function(ctx, obs){
+        var ref$, ok, nctx;
+        ref$ = parse(ctx, obs), ok = ref$[0], nctx = ref$[1];
+        if (ok) {
+          return parseWhileTrue(nctx, obs);
+        } else {
+          return ctx;
+        }
+      };
+      return parseWhileTrue(nctx, obs);
+    }, {
       state: 0,
       pos: 0,
-      buf: new Buffer(65535 * 2),
-      imgidx: 0
-    };
-    x$ = fs.createReadStream(filepath);
-    x$.on("data", function(trunk){
-      var ref$, ok, nctx, results$ = [];
-      trunk.copy(context.buf, context.pos);
-      context.pos += trunk.byteLength;
-      for (;;) {
-        ref$ = parse(context, obs), ok = ref$[0], nctx = ref$[1];
-        if (ok) {
-          context.state = nctx.state;
-          context.pos = nctx.pos;
-          context.dataLen = nctx.dataLen;
-          context.rows = nctx.rows;
-          context.columns = nctx.columns;
-          results$.push(context.imgidx = nctx.imgidx);
-        } else {
-          break;
-        }
-      }
-      return results$;
-    });
-    x$.on("end", function(){
-      console.log("end");
+      buf: new Buffer(65535 * 2)
+    }).subscribe(function(){}, function(){}, function(){
       return obs.onCompleted();
     });
-    x$.on("close", function(){
-      return console.log("close");
-    });
-    return x$;
   });
 };
-mnistData("../doc/train-images-idx3-ubyte").zip(Rx.Observable.range(0, 200), function(data, idx){
+mnistData("../doc/train-images-idx3-ubyte").zip(Rx.Observable.range(0, 60000), function(data, idx){
   return [idx, data];
 }).tapOnNext(function(arg$){
   var idx, data;
