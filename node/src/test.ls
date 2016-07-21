@@ -1,16 +1,46 @@
 require! {
   fs
-  canvas
+  canvas: Canvas
+  rx: Rx
 }
-  
-context = 
-  imgdir: "../output"
-  state: 0
-  pos: 0
-  buf: new Buffer(65535*2)
-  imgidx: 0
 
-parse = ({state, pos, buf, imgidx}:ctx)->
+global = 
+  imgdir: "../output"
+  
+writeImage = (imgidx, w, h, buf)->
+  Rx.Observable.create (obs)->
+    imagelen = w* h
+    can = new Canvas(w,h)
+    c2d = can.getContext('2d')
+    imgdata = c2d.createImageData(w, h)
+  
+    for i from 0 til imagelen by 1
+      imgdata .data[i*4] = buf[i]
+      imgdata .data[i*4+1] = buf[i]
+      imgdata .data[i*4+2] = buf[i]
+      imgdata .data[i*4+3] = 255
+  
+    c2d.putImageData( imgdata, 0, 0 )
+  
+    outfilepath = "#{global.imgdir}/#{imgidx}.png"
+    out = fs.createWriteStream(outfilepath)
+    stream = can.pngStream()
+  
+    writeImageClosure = (outfile, pngstream)->
+      console.log "writeImage > #{outfilepath}"
+      pngstream.on do
+        'data'
+        (chunk) -> 
+          outfile.write(chunk)
+      pngstream.on do
+        'end'
+        -> 
+          out.end(->)
+          obs.onCompleted()
+          
+    writeImageClosure out, stream
+
+parse = ({state, pos, buf, imgidx}:ctx, obs)->
   return switch state
     | 0 =>
       if pos >= 16
@@ -37,33 +67,9 @@ parse = ({state, pos, buf, imgidx}:ctx)->
     | 1 =>
       imagelen = ctx.rows* ctx.columns
       if pos >= imagelen
-        can = new canvas(ctx.rows, ctx.columns)
-        c2d = can.getContext('2d')
-        imgdata = c2d.createImageData(ctx.rows, ctx.columns)
-        
-        for i from 0 til imagelen by 1
-          imgdata .data[i*4] = buf[i]
-          imgdata .data[i*4+1] = buf[i]
-          imgdata .data[i*4+2] = buf[i]
-          imgdata .data[i*4+3] = 255
-        
-        c2d.putImageData( imgdata, 0, 0 )
-        
-        out = fs.createWriteStream("#{ctx.imgdir}/#{imgidx}.png")
-        stream = can.pngStream()
-        
-        writeImage = (outfile, pngstream)->
-          console.log "writeImage"
-          pngstream.on do
-            'data'
-            (chunk) -> outfile.write(chunk)
-          pngstream.on do
-            'end'
-            -> 
-              out.end(->)
-            
-        writeImage out, stream
-        
+        imgbuf = new Buffer(imagelen)
+        buf.copy imgbuf, 0, 0, imagelen
+        obs.onNext(imgbuf)
         buf.copy buf, 0, imagelen, pos - imagelen
         [
           true,
@@ -76,25 +82,49 @@ parse = ({state, pos, buf, imgidx}:ctx)->
     | otherwise =>
       [false]
 
-readable = do
-  fs.createReadStream("../doc/train-images-idx3-ubyte")
-    ..on "data", (trunk)->
-      trunk.copy(context.buf, context.pos);
-      context.pos += trunk.byteLength
-      while true
-        [ok, nctx] = parse context
-        if ok
-          context.state = nctx.state
-          context.pos = nctx.pos
-          context.dataLen = nctx.dataLen
-          context.rows = nctx.rows
-          context.columns = nctx.columns
-          context.imgidx = nctx.imgidx
-        else
-          break
+mnistData = (filepath)->
+  Rx.Observable.create (obs)->
+    context = 
+      state: 0
+      pos: 0
+      buf: new Buffer(65535*2)
+      imgidx: 0
       
-    ..on "end", ->
-      console.log "end"
+    fs.createReadStream filepath
+      ..on "data", (trunk)->
+        trunk.copy(context.buf, context.pos);
+        context.pos += trunk.byteLength
+        while true
+          [ok, nctx] = parse context, obs
+          if ok
+            context.state = nctx.state
+            context.pos = nctx.pos
+            context.dataLen = nctx.dataLen
+            context.rows = nctx.rows
+            context.columns = nctx.columns
+            context.imgidx = nctx.imgidx
+          else
+            break
       
-    ..on "close", ->
-      console.log "close"
+      ..on "end", ->
+        console.log "end"
+        obs.onCompleted()
+      
+      ..on "close", ->
+        console.log "close"
+
+mnistData("../doc/train-images-idx3-ubyte")
+  .zip do
+    Rx.Observable.range(0, 200)
+    (data, idx)->
+      [idx, data]
+  .tapOnNext ([idx, data])->
+    writeImage idx, 28, 28, data
+      .subscribe ->,->,->
+  .subscribe do
+    ([idx, data])->
+    (err)->
+      console.log err
+    ->
+      console.log "completed"
+
