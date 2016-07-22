@@ -250,9 +250,9 @@ testConvnet = function(){
       return 0;
     }, 0);
   };
-  return Rx.Observable.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]).flatMap(partial(training, [0, 20, 2])).reduce(function(acc, curr){
+  return Rx.Observable.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]).flatMap(partial(training, [0, 100, 1])).reduce(function(acc, curr){
     return 0;
-  }, 0).flatMap(partial(predic, [20, 30])).subscribe(function(){}, function(err){
+  }, 0).flatMap(partial(predic, [200, 300])).subscribe(function(){}, function(err){
     return console.log(err);
   }, function(){
     return console.log("completed");

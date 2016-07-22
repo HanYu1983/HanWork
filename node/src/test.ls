@@ -199,9 +199,9 @@ testConvnet = ->
     .reduce (acc, curr)->0, 0
   
   Rx.Observable.from [0 til 20]
-    .flatMap partial(training, [0, 20, 2])
+    .flatMap partial(training, [0, 100, 1])
     .reduce (acc, curr)->0, 0
-    .flatMap partial(predic, [20, 30])
+    .flatMap partial(predic, [200, 300])
     .subscribe do
       ->
       (err)->
