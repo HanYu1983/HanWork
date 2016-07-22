@@ -2,7 +2,7 @@ require! {
   fs
   canvas: Canvas
   rx: Rx
-  ramda: {reduce}
+  ramda: {reduce, partial}
   convnetjs
 }
 
@@ -49,11 +49,9 @@ readChunk = (filepath)->
         obs.onNext chunk
       
       ..on "end", ->
-        console.log "end"
         obs.onCompleted()
       
       ..on "close", ->
-        console.log "close"
       
 mnistDataLabel = (filepath)->
   Rx.Observable.create (obs)->
@@ -160,33 +158,56 @@ testConvnet = ->
       batch_size:20
       l2_decay:0.001
   
-  Rx.Observable.zip do
-    Rx.Observable.range(0, 10)
-    mnistDataImage("../doc/train-images-idx3-ubyte")
-    mnistDataLabel("../doc/train-labels-idx1-ubyte")
-    (idx, img, label)->
-      x = new convnetjs.Vol(28,28,1,0.0)
-      W = 28* 28
-      for i from 0 til W
-        x.w[i] = img[i]/255.0
-      x = convnetjs.augment(x, 24)
-      [idx, x, label]
-  .subscribe do
-    ([idx, x, y])->
-      net.forward(x)
-      
-      for i from 0 til 100
+  trainSet = 
+    Rx.Observable.zip do
+      mnistDataImage("../doc/train-images-idx3-ubyte")
+      mnistDataLabel("../doc/train-labels-idx1-ubyte")
+      (img, label)->
+        x = new convnetjs.Vol(28,28,1,0.0)
+        W = 28* 28
+        for i from 0 til W
+          x.w[i] = img[i]/255.0
+        x = convnetjs.augment(x, 24)
+        [x, label]
+        
+  training = (s, e, time)->
+    trainSet.zip do
+      Rx.Observable.range(0, e)
+      (ts, idx)->
+        [idx, ts]
+    .skip(s)
+    .tapOnNext ([idx, [x, y]])->
+      for i from 0 til time
         stats = trainer.train(x, y)
         lossx = stats.cost_loss
         lossw = stats.l2_decay_loss
-      
+      net.forward(x)
       yhat = net.getPrediction();
-      console.log "#{idx})#{y} > #{yhat}"
-    (err)->
-      console.log err
-    ->
-      console.log "completed"
-    
+      console.log "tarin:#{idx})#{y} > #{yhat}"
+    .reduce (acc, curr)->0, 0
+      
+  predic = (s, e)->
+    trainSet.zip do
+      Rx.Observable.range(0, e)
+      (ts, idx)->
+        [idx, ts]
+    .skip(s)
+    .tapOnNext ([idx, [x, y]])->
+      net.forward(x)
+      yhat = net.getPrediction()
+      console.log "predict:#{idx})#{y} > #{yhat}"
+    .reduce (acc, curr)->0, 0
+  
+  Rx.Observable.from [0 til 20]
+    .flatMap partial(training, [0, 20, 2])
+    .reduce (acc, curr)->0, 0
+    .flatMap partial(predic, [20, 30])
+    .subscribe do
+      ->
+      (err)->
+        console.log err
+      ->
+        console.log "completed"
 
 /*
 mnistDataImage("../doc/train-images-idx3-ubyte")

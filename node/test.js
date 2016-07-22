@@ -1,8 +1,8 @@
-var fs, Canvas, Rx, reduce, convnetjs, global, writeImage, readChunk, mnistDataLabel, mnistDataImage, testConvnet;
+var fs, Canvas, Rx, ref$, reduce, partial, convnetjs, global, writeImage, readChunk, mnistDataLabel, mnistDataImage, testConvnet;
 fs = require('fs');
 Canvas = require('canvas');
 Rx = require('rx');
-reduce = require('ramda').reduce;
+ref$ = require('ramda'), reduce = ref$.reduce, partial = ref$.partial;
 convnetjs = require('convnetjs');
 global = {
   imgdir: "../output"
@@ -46,12 +46,9 @@ readChunk = function(filepath){
       return obs.onNext(chunk);
     });
     x$.on("end", function(){
-      console.log("end");
       return obs.onCompleted();
     });
-    x$.on("close", function(){
-      return console.log("close");
-    });
+    x$.on("close", function(){});
     return x$;
   });
 };
@@ -169,7 +166,7 @@ mnistDataImage = function(filepath){
   });
 };
 testConvnet = function(){
-  var layer_defs, x$, net, trainer;
+  var layer_defs, x$, net, trainer, trainSet, training, predic;
   layer_defs = [
     {
       type: 'input',
@@ -210,7 +207,7 @@ testConvnet = function(){
     batch_size: 20,
     l2_decay: 0.001
   });
-  return Rx.Observable.zip(Rx.Observable.range(0, 10), mnistDataImage("../doc/train-images-idx3-ubyte"), mnistDataLabel("../doc/train-labels-idx1-ubyte"), function(idx, img, label){
+  trainSet = Rx.Observable.zip(mnistDataImage("../doc/train-images-idx3-ubyte"), mnistDataLabel("../doc/train-labels-idx1-ubyte"), function(img, label){
     var x, W, i$, i;
     x = new convnetjs.Vol(28, 28, 1, 0.0);
     W = 28 * 28;
@@ -219,20 +216,43 @@ testConvnet = function(){
       x.w[i] = img[i] / 255.0;
     }
     x = convnetjs.augment(x, 24);
-    return [idx, x, label];
-  }).subscribe(function(arg$){
-    var idx, x, y, i$, i, stats, lossx, lossw, yhat;
-    idx = arg$[0], x = arg$[1], y = arg$[2];
-    net.forward(x);
-    for (i$ = 0; i$ < 100; ++i$) {
-      i = i$;
-      stats = trainer.train(x, y);
-      lossx = stats.cost_loss;
-      lossw = stats.l2_decay_loss;
-    }
-    yhat = net.getPrediction();
-    return console.log(idx + ")" + y + " > " + yhat);
-  }, function(err){
+    return [x, label];
+  });
+  training = function(s, e, time){
+    return trainSet.zip(Rx.Observable.range(0, e), function(ts, idx){
+      return [idx, ts];
+    }).skip(s).tapOnNext(function(arg$){
+      var idx, ref$, x, y, i$, to$, i, stats, lossx, lossw, yhat;
+      idx = arg$[0], ref$ = arg$[1], x = ref$[0], y = ref$[1];
+      for (i$ = 0, to$ = time; i$ < to$; ++i$) {
+        i = i$;
+        stats = trainer.train(x, y);
+        lossx = stats.cost_loss;
+        lossw = stats.l2_decay_loss;
+      }
+      net.forward(x);
+      yhat = net.getPrediction();
+      return console.log("tarin:" + idx + ")" + y + " > " + yhat);
+    }).reduce(function(acc, curr){
+      return 0;
+    }, 0);
+  };
+  predic = function(s, e){
+    return trainSet.zip(Rx.Observable.range(0, e), function(ts, idx){
+      return [idx, ts];
+    }).skip(s).tapOnNext(function(arg$){
+      var idx, ref$, x, y, yhat;
+      idx = arg$[0], ref$ = arg$[1], x = ref$[0], y = ref$[1];
+      net.forward(x);
+      yhat = net.getPrediction();
+      return console.log("predict:" + idx + ")" + y + " > " + yhat);
+    }).reduce(function(acc, curr){
+      return 0;
+    }, 0);
+  };
+  return Rx.Observable.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]).flatMap(partial(training, [0, 20, 2])).reduce(function(acc, curr){
+    return 0;
+  }, 0).flatMap(partial(predic, [20, 30])).subscribe(function(){}, function(err){
     return console.log(err);
   }, function(){
     return console.log("completed");
