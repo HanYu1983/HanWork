@@ -3,6 +3,7 @@ require! {
   canvas: Canvas
   rx: Rx
   ramda: {reduce}
+  convnetjs
 }
 
 global = 
@@ -138,8 +139,56 @@ mnistDataImage = (filepath)->
         buf: new Buffer(65535*2)
       }
     .subscribe ->,->,->obs.onCompleted()
+    
+    
 
+testConvnet = ->
+  layer_defs =
+    * type: 'input', out_sx: 24, out_sy: 24, out_depth: 1
+    * type: 'conv', sx: 5, filters: 8, stride: 1, pad: 2, activation:'relu'
+    * type: 'pool', sx: 2, stride: 2
+    * type: 'conv', sx:5, filters:16, stride:1, pad:2, activation:'relu'
+    * type: 'pool', sx: 3, stride: 3
+    * type: 'softmax', num_classes: 10
+  
+  net = new convnetjs.Net()
+    ..makeLayers layer_defs
+    
+  trainer = new convnetjs.SGDTrainer do
+    net
+    * method:'adadelta'
+      batch_size:20
+      l2_decay:0.001
+  
+  Rx.Observable.zip do
+    Rx.Observable.range(0, 10)
+    mnistDataImage("../doc/train-images-idx3-ubyte")
+    mnistDataLabel("../doc/train-labels-idx1-ubyte")
+    (idx, img, label)->
+      x = new convnetjs.Vol(28,28,1,0.0)
+      W = 28* 28
+      for i from 0 til W
+        x.w[i] = img[i]/255.0
+      x = convnetjs.augment(x, 24)
+      [idx, x, label]
+  .subscribe do
+    ([idx, x, y])->
+      net.forward(x)
+      
+      for i from 0 til 100
+        stats = trainer.train(x, y)
+        lossx = stats.cost_loss
+        lossw = stats.l2_decay_loss
+      
+      yhat = net.getPrediction();
+      console.log "#{idx})#{y} > #{yhat}"
+    (err)->
+      console.log err
+    ->
+      console.log "completed"
+    
 
+/*
 mnistDataImage("../doc/train-images-idx3-ubyte")
   .zip do
     Rx.Observable.range(0, 60000)
@@ -155,6 +204,7 @@ mnistDataImage("../doc/train-images-idx3-ubyte")
       console.log err
     ->
       console.log "completed"
+*/
 
 /*
 
@@ -172,3 +222,5 @@ mnistDataLabel("../doc/train-labels-idx1-ubyte")
     ->
       console.log "completed"
 */
+
+testConvnet!

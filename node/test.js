@@ -1,8 +1,9 @@
-var fs, Canvas, Rx, reduce, global, writeImage, readChunk, mnistDataLabel, mnistDataImage;
+var fs, Canvas, Rx, reduce, convnetjs, global, writeImage, readChunk, mnistDataLabel, mnistDataImage, testConvnet;
 fs = require('fs');
 Canvas = require('canvas');
 Rx = require('rx');
 reduce = require('ramda').reduce;
+convnetjs = require('convnetjs');
 global = {
   imgdir: "../output"
 };
@@ -167,20 +168,93 @@ mnistDataImage = function(filepath){
     });
   });
 };
-mnistDataImage("../doc/train-images-idx3-ubyte").zip(Rx.Observable.range(0, 60000), function(data, idx){
-  return [idx, data];
-}).skip(59990).tapOnNext(function(arg$){
-  var idx, data;
-  idx = arg$[0], data = arg$[1];
-  return writeImage(idx, 28, 28, data).subscribe(function(){}, function(){}, function(){});
-}).subscribe(function(arg$){
-  var idx, data;
-  idx = arg$[0], data = arg$[1];
-}, function(err){
-  return console.log(err);
-}, function(){
-  return console.log("completed");
-});
+testConvnet = function(){
+  var layer_defs, x$, net, trainer;
+  layer_defs = [
+    {
+      type: 'input',
+      out_sx: 24,
+      out_sy: 24,
+      out_depth: 1
+    }, {
+      type: 'conv',
+      sx: 5,
+      filters: 8,
+      stride: 1,
+      pad: 2,
+      activation: 'relu'
+    }, {
+      type: 'pool',
+      sx: 2,
+      stride: 2
+    }, {
+      type: 'conv',
+      sx: 5,
+      filters: 16,
+      stride: 1,
+      pad: 2,
+      activation: 'relu'
+    }, {
+      type: 'pool',
+      sx: 3,
+      stride: 3
+    }, {
+      type: 'softmax',
+      num_classes: 10
+    }
+  ];
+  x$ = net = new convnetjs.Net();
+  x$.makeLayers(layer_defs);
+  trainer = new convnetjs.SGDTrainer(net, {
+    method: 'adadelta',
+    batch_size: 20,
+    l2_decay: 0.001
+  });
+  return Rx.Observable.zip(Rx.Observable.range(0, 10), mnistDataImage("../doc/train-images-idx3-ubyte"), mnistDataLabel("../doc/train-labels-idx1-ubyte"), function(idx, img, label){
+    var x, W, i$, i;
+    x = new convnetjs.Vol(28, 28, 1, 0.0);
+    W = 28 * 28;
+    for (i$ = 0; i$ < W; ++i$) {
+      i = i$;
+      x.w[i] = img[i] / 255.0;
+    }
+    x = convnetjs.augment(x, 24);
+    return [idx, x, label];
+  }).subscribe(function(arg$){
+    var idx, x, y, i$, i, stats, lossx, lossw, yhat;
+    idx = arg$[0], x = arg$[1], y = arg$[2];
+    net.forward(x);
+    for (i$ = 0; i$ < 100; ++i$) {
+      i = i$;
+      stats = trainer.train(x, y);
+      lossx = stats.cost_loss;
+      lossw = stats.l2_decay_loss;
+    }
+    yhat = net.getPrediction();
+    return console.log(idx + ")" + y + " > " + yhat);
+  }, function(err){
+    return console.log(err);
+  }, function(){
+    return console.log("completed");
+  });
+};
+/*
+mnistDataImage("../doc/train-images-idx3-ubyte")
+  .zip do
+    Rx.Observable.range(0, 60000)
+    (data, idx)->
+      [idx, data]
+  .skip(59990)
+  .tapOnNext ([idx, data])->
+    writeImage idx, 28, 28, data
+      .subscribe ->,->,->
+  .subscribe do
+    ([idx, data])->
+    (err)->
+      console.log err
+    ->
+      console.log "completed"
+*/
 /*
 
 mnistDataLabel("../doc/train-labels-idx1-ubyte")
@@ -197,6 +271,7 @@ mnistDataLabel("../doc/train-labels-idx1-ubyte")
     ->
       console.log "completed"
 */
+testConvnet();
 function clone$(it){
   function fun(){} fun.prototype = it;
   return new fun;
