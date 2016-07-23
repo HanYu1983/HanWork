@@ -1,4 +1,4 @@
-var fs, Canvas, Rx, ref$, reduce, partial, convnetjs, global, writeImage, readChunk, mnistDataLabel, mnistDataImage, testConvnet;
+var fs, Canvas, Rx, ref$, reduce, partial, convnetjs, global, writeImage, readChunk, mnistDataLabel, mnistDataImage, testConvnet, testWriteImage, testShowLabel;
 fs = require('fs');
 Canvas = require('canvas');
 Rx = require('rx');
@@ -31,7 +31,7 @@ writeImage = function(imgidx, w, h, buf){
         return outfile.write(chunk);
       });
       return pngstream.on('end', function(){
-        out.end(function(){});
+        outfile.end(function(){});
         return obs.onCompleted();
       });
     };
@@ -258,39 +258,35 @@ testConvnet = function(){
     return console.log("completed");
   });
 };
-/*
-mnistDataImage("../doc/train-images-idx3-ubyte")
-  .zip do
-    Rx.Observable.range(0, 60000)
-    (data, idx)->
-      [idx, data]
-  .skip(59990)
-  .tapOnNext ([idx, data])->
-    writeImage idx, 28, 28, data
-      .subscribe ->,->,->
-  .subscribe do
-    ([idx, data])->
-    (err)->
-      console.log err
-    ->
-      console.log "completed"
-*/
-/*
-
-mnistDataLabel("../doc/train-labels-idx1-ubyte")
-  .zip do
-    Rx.Observable.range(0, 60000)
-    (data, idx)->
-      [idx, data]
-  .skip(59990)
-  .subscribe do
-    ([idx, data])->
-      console.log "#{idx})#{data}"
-    (err)->
-      console.log err
-    ->
-      console.log "completed"
-*/
+testWriteImage = function(){
+  return mnistDataImage("../doc/train-images-idx3-ubyte").zip(Rx.Observable.range(0, 60000), function(data, idx){
+    return [idx, data];
+  }).skip(59990).tapOnNext(function(arg$){
+    var idx, data;
+    idx = arg$[0], data = arg$[1];
+    return writeImage(idx, 28, 28, data).subscribe(function(){}, function(){}, function(){});
+  }).subscribe(function(arg$){
+    var idx, data;
+    idx = arg$[0], data = arg$[1];
+  }, function(err){
+    return console.log(err);
+  }, function(){
+    return console.log("completed");
+  });
+};
+testShowLabel = function(){
+  return mnistDataLabel("../doc/train-labels-idx1-ubyte").zip(Rx.Observable.range(0, 60000), function(data, idx){
+    return [idx, data];
+  }).skip(59990).subscribe(function(arg$){
+    var idx, data;
+    idx = arg$[0], data = arg$[1];
+    return console.log(idx + ")" + data);
+  }, function(err){
+    return console.log(err);
+  }, function(){
+    return console.log("completed");
+  });
+};
 testConvnet();
 function clone$(it){
   function fun(){} fun.prototype = it;
