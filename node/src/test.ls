@@ -56,8 +56,13 @@ testConvnet = ->
     * type: 'pool', sx: 3, stride: 3
     * type: 'softmax', num_classes: 10
   
-  net = new convnetjs.Net()
-    ..makeLayers layer_defs
+  # 簡單的fc網路就可以訓練出來，但準確率較低
+  layer_defs2 = 
+    * type: 'input', out_sx: 24, out_sy: 24, out_depth: 1
+    * type: 'softmax', num_classes:10
+  
+  net = new convnetjs.Net
+    ..makeLayers layer_defs2 # 這裡選擇要使用哪一個網路
     
   trainer = new convnetjs.SGDTrainer do
     net

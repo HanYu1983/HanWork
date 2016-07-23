@@ -40,7 +40,7 @@ writeImage = function(imgidx, w, h, buf){
   });
 };
 testConvnet = function(){
-  var layer_defs, x$, net, trainer, trainSet, training, predic;
+  var layer_defs, layer_defs2, x$, net, trainer, trainSet, training, predic;
   layer_defs = [
     {
       type: 'input',
@@ -74,8 +74,19 @@ testConvnet = function(){
       num_classes: 10
     }
   ];
-  x$ = net = new convnetjs.Net();
-  x$.makeLayers(layer_defs);
+  layer_defs2 = [
+    {
+      type: 'input',
+      out_sx: 24,
+      out_sy: 24,
+      out_depth: 1
+    }, {
+      type: 'softmax',
+      num_classes: 10
+    }
+  ];
+  x$ = net = new convnetjs.Net;
+  x$.makeLayers(layer_defs2);
   trainer = new convnetjs.SGDTrainer(net, {
     method: 'adadelta',
     batch_size: 20,
