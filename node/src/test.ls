@@ -10,7 +10,8 @@ require! {
 # livescript基本上所有變數會在local宣告，除非指定物件或使用:=引用外層變數
 global = 
   imgdir: "../output"
-  
+
+# 使用指定的alpha層bytes寫入圖片
 writeImage = (imgidx, w, h, buf)->
   Rx.Observable.create (obs)->
     imagelen = w* h
@@ -36,7 +37,7 @@ writeImage = (imgidx, w, h, buf)->
         'data'
         (chunk) -> 
           outfile.write(chunk)
-      # stream結束時要記得關閉outfile的stream, 不然會有建立太多檔案連結例外
+      # stream結束時要記得關閉outfile的stream, 不然會有「建立太多檔案連結」例外
       pngstream.on do
         'end'
         -> 
@@ -45,6 +46,7 @@ writeImage = (imgidx, w, h, buf)->
           
     writeImageClosure out, stream
 
+# 將檔案輸入流轉成Rx事件流
 readChunk = (filepath)->
   Rx.Observable.create (obs)->
     fs.createReadStream filepath
@@ -55,7 +57,8 @@ readChunk = (filepath)->
         obs.onCompleted()
       
       ..on "close", ->
-      
+
+# 取得minst的label
 mnistDataLabel = (filepath)->
   Rx.Observable.create (obs)->
     readChunk(filepath).reduce do
@@ -91,7 +94,8 @@ mnistDataLabel = (filepath)->
         buf: new Buffer(65535*2)
       }
     .subscribe ->,->,->obs.onCompleted()
-        
+
+# 取得mnist的圖片
 mnistDataImage = (filepath)->
   Rx.Observable.create (obs)->
     readChunk(filepath).reduce do
@@ -187,7 +191,7 @@ testConvnet = ->
       net.forward(x)
       yhat = net.getPrediction();
       console.log "tarin:#{idx})#{y} > #{yhat}"
-    .reduce (acc, curr)->0, 0
+    .reduce (acc, curr)->0, 0 # 消化掉所有事件
       
   predic = (s, e)->
     trainSet.zip do
@@ -199,7 +203,7 @@ testConvnet = ->
       net.forward(x)
       yhat = net.getPrediction()
       console.log "predict:#{idx})#{y} > #{yhat}"
-    .reduce (acc, curr)->0, 0
+    .reduce (acc, curr)->0, 0 # 消化掉所有事件
   
   Rx.Observable.from [0 til 20]             # 總共訓練20遍
     .flatMap partial(training, [0, 100, 1]) # 使用編號0~100的數據，各訓練一次
