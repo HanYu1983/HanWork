@@ -12,5 +12,8 @@
     "convnetjs":"*",
     "vue":"*",
     "canvas":"*"
+  },
+  "scripts":{
+    "compile":"gulp"
   }
 }
