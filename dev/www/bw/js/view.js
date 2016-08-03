@@ -1,4 +1,7 @@
-(function(){
+var vic = vic || {};
+vic.view = vic.view || {};
+
+(function( module ){
 	var container, stats;
 
 	var camera, scene, renderer;
@@ -10,19 +13,10 @@
 	
 	var mesh, mats, objl;
 	var iconCon;
-	
-	//var o = {x:100, y:200};
-	//Tweener.addTween(o, {x:400, y:500, time:2, delay:1, transition:"easeOutBounce"});
-
-
-	init();
-	animate();
-
 
 	function init() {
 
-		container = document.createElement( 'div' );
-		document.body.appendChild( container );
+		container = $('#webgl');
 
 		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
 		camera.position.y = 50;
@@ -58,7 +52,7 @@
 
 		var onError = function ( xhr ) { };
 
-		THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+		//THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
 
 		var mtlLoader = new THREE.MTLLoader();
 		mtlLoader.load( 'asset/plate.mtl', function( materials ) {
@@ -107,7 +101,7 @@
 		renderer = new THREE.WebGLRenderer();
 		renderer.setPixelRatio( window.devicePixelRatio );
 		renderer.setSize( window.innerWidth, window.innerHeight );
-		container.appendChild( renderer.domElement );
+		container.append( renderer.domElement );
 
 		document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 
@@ -155,4 +149,10 @@
 		renderer.render( scene, camera );
 
 	}
-})();
+	
+	module.init = init;
+	module.animate = animate;
+})( vic.view );
+
+vic.view.init();
+vic.view.animate();
