@@ -1,24 +1,31 @@
-var Vue, ref$, reduce, map, repeat, clone, convnetjs, showTargetImage, data2input, drawImage, testConvnet;
+var Vue, ref$, reduce, map, repeat, clone, convnetjs, IMAGE_W, IMAGE_H, DRAW_DURATION, RATE, NUM_OUTPUT, showTargetImage, data2input, drawImage, testConvnet;
 Vue = require('vue');
 ref$ = require('ramda'), reduce = ref$.reduce, map = ref$.map, repeat = ref$.repeat, clone = ref$.clone;
 convnetjs = require('convnetjs');
+IMAGE_W = 120;
+IMAGE_H = 120;
+DRAW_DURATION = 10;
+RATE = 0.07;
+NUM_OUTPUT = IMAGE_W * IMAGE_H;
 showTargetImage = function(model, img){
   return model.$els.target.appendChild(img);
 };
 data2input = function(data){
   var x, i$, to$, i;
-  x = new convnetjs.Vol(64, 64, 1, 0);
-  for (i$ = 0, to$ = 64 * 64; i$ < to$; ++i$) {
+  x = new convnetjs.Vol(IMAGE_W, IMAGE_H, 1, 0);
+  for (i$ = 0, to$ = IMAGE_W * IMAGE_H; i$ < to$; ++i$) {
     i = i$;
     x.w[i] = data.selection.data[i] / 255.0;
   }
   return x;
 };
 drawImage = function(model, data){
-  var canvas, ctx, g, i$, ref$, len$, i, value;
-  canvas = model.$els.emptycanvas;
+  var x$, canvas, ctx, g, i$, ref$, len$, i, value;
+  x$ = canvas = model.$els.emptycanvas;
+  x$.width = IMAGE_W;
+  x$.height = IMAGE_H;
   ctx = canvas.getContext('2d');
-  g = ctx.createImageData(64, 64);
+  g = ctx.createImageData(IMAGE_W, IMAGE_H);
   for (i$ = 0, len$ = (ref$ = (fn$())).length; i$ < len$; ++i$) {
     i = ref$[i$];
     value = Math.floor(data[i] * 255);
@@ -30,7 +37,7 @@ drawImage = function(model, data){
   return ctx.putImageData(g, 0, 0);
   function fn$(){
     var i$, to$, results$ = [];
-    for (i$ = 0, to$ = 64 * 64; i$ < to$; ++i$) {
+    for (i$ = 0, to$ = IMAGE_W * IMAGE_H; i$ < to$; ++i$) {
       results$.push(i$);
     }
     return results$;
@@ -42,20 +49,19 @@ testConvnet = function(){
     el: '#app',
     data: {
       times: 0,
-      loss: 0,
-      W: []
+      loss: 0
     }
   });
   layer_defs = [
     {
       type: 'input',
-      out_sx: 64,
-      out_sy: 64,
+      out_sx: IMAGE_W,
+      out_sy: IMAGE_H,
       out_depth: 1
     }, {
       type: 'conv',
-      sx: 5,
-      filters: 10,
+      sx: 3,
+      filters: 16,
       stride: 1,
       pad: 2,
       activation: 'relu'
@@ -65,8 +71,8 @@ testConvnet = function(){
       stride: 2
     }, {
       type: 'conv',
-      sx: 5,
-      filters: 10,
+      sx: 3,
+      filters: 32,
       stride: 1,
       pad: 2,
       activation: 'relu'
@@ -76,7 +82,7 @@ testConvnet = function(){
       stride: 2
     }, {
       type: 'regression',
-      num_neurons: 2000
+      num_neurons: NUM_OUTPUT
     }
   ];
   x$ = net = new convnetjs.Net;
@@ -86,34 +92,33 @@ testConvnet = function(){
     var data, input, yhat, input2;
     showTargetImage(model, img);
     data = nj.images.read(img);
-    input = data2input(data.reshape(64 * 64));
+    input = data2input(data.reshape(IMAGE_W * IMAGE_H));
     yhat = net.forward(input);
-    input2 = data2input(nj.zeros([64, 64]));
+    input2 = data2input(nj.zeros([IMAGE_W, IMAGE_H]));
     return setInterval(function(){
       var cost_loss, i$, ref$, len$, i;
       net.forward(input2);
       cost_loss = net.backward(yhat.w);
       for (i$ = 0, len$ = (ref$ = (fn$())).length; i$ < len$; ++i$) {
         i = ref$[i$];
-        input2.w[i] -= input2.dw[i] * 0.07;
+        input2.w[i] -= input2.dw[i] * RATE;
         input2.dw[i] = 0;
       }
       model.loss = cost_loss;
-      model.W = input2.w;
       model.times += 1;
-      if (model.times % 10 === 0) {
+      if (model.times % DRAW_DURATION === 0) {
         return drawImage(model, input2.w);
       }
       function fn$(){
         var i$, to$, results$ = [];
-        for (i$ = 0, to$ = 64 * 64; i$ < to$; ++i$) {
+        for (i$ = 0, to$ = IMAGE_W * IMAGE_H; i$ < to$; ++i$) {
           results$.push(i$);
         }
         return results$;
       }
     }, 0);
   };
-  y$.src = '../bw/asset/icon_diff.jpg';
+  y$.src = 'image/test2.jpg';
   return y$;
 };
 testConvnet();

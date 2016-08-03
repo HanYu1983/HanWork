@@ -4,12 +4,11 @@
 	</head>
 	<body>
 		<div id="app">
-			<canvas v-el:emptycanvas width=64 height=64 style='border: 1px solid'></canvas>
+			<canvas v-el:emptycanvas style='border: 1px solid'></canvas>
 			<div v-el:target></div>
 			<div>
 				time: {{ times }}<br>
 				loss: {{ loss }}<br>
-				W: {{ W[0] }}, {{ W[1]}}<br>
 			</div>
 		</div>
 		<script src='../common/js/numjs.min.js'></script>
