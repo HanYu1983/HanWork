@@ -4,7 +4,7 @@ var gutil = require('gulp-util')
 var gulpLiveScript = require('gulp-livescript');
 var browserify = require('gulp-browserify');
 
-gulp.task('build-ls-file', function() {
+gulp.task('轉譯ls檔', function() {
   return gulp.src('./src/**/*.ls')
     .pipe(gulpPlumber({
       errorHandler: function (err) {
@@ -16,15 +16,15 @@ gulp.task('build-ls-file', function() {
     .pipe(gulp.dest('./'))
 });
 
-gulp.task('browserify-it', ['build-ls-file'], function(){
-  return gulp.src('./test.js')
+gulp.task('將需要的檔案轉譯到www', ['轉譯ls檔'], function(){
+  return gulp.src('./web/*.js')
     .pipe(browserify())
-    .pipe(gulp.dest('./web/js'))
+    .pipe(gulp.dest('../www/build/js/'))
 })
 
-gulp.task('compile-web', ['browserify-it'])
-gulp.task('compile-node', ['build-ls-file'])
+gulp.task('轉譯web', ['將需要的檔案轉譯到www'])
+gulp.task('轉譯node', ['轉譯ls檔'])
 
 gulp.task('default', function() {
-  gulp.watch('./src/**/*.ls', ['compile-node'])
+  gulp.watch('./src/**/*.ls', ['轉譯web'])
 });
