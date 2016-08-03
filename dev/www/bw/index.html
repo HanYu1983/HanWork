@@ -1,1 +1,38 @@
-<html>hello 2</html>
+<html>
+	<body>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/rxjs/4.1.0/rx.all.min.js'></script>
+		<script>
+		var global = global || {};
+		global.onModel = new Rx.Subject
+		global.onView = new Rx.Subject
+		</script>
+		
+		<script name="test">
+		global.onModel.subscribe(
+			function(cmd){
+				console.log(cmd)
+			},
+			function(err){
+				console.log(err)
+			},
+			function(){
+				
+			}
+		)
+		global.onView.subscribe(
+			function(cmd){
+				console.log(cmd)
+			},
+			function(err){
+				console.log(err)
+			},
+			function(){
+				
+			}
+		)
+		global.onModel.onNext(['start from html',0])
+		global.onView.onNext(['start from html',0])
+		</script>
+		<script src='../build/js/bw.js'></script>
+	</body>
+</html>
