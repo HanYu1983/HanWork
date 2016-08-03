@@ -5,6 +5,11 @@
 		<script src='https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.26/vue.min.js'></script>
 		<script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
 		<script src='https://cdnjs.cloudflare.com/ajax/libs/rxjs/4.1.0/rx.all.min.js'></script>
+		
+		<script src='http://tweener.ivank.net/tw.js'></script>
+		<script src='../common/js/threejsExample/loaders/MTLLoader.js'></script>
+		<script src='../common/js/threejsExample/loaders/OBJLoader.js'></script>
+		<script src='../common/js/threejsExample/loaders/DDSLoader.js'></script>
 		<script>
 		var global = global || {};
 		global.onModel = new Rx.Subject
@@ -37,6 +42,7 @@
 		global.onModel.onNext(['start from html',0])
 		global.onView.onNext(['start from html',0])
 		</script>
+		<script src='js/view.js'></script>
 		<script src='../build/js/bw.js'></script>
 	</body>
 </html>
