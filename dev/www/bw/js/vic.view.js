@@ -105,9 +105,9 @@ vic.view = vic.view || {};
 			black:black
 		}
 		
-		Tweener.addTween(mesh.position, {x:toGlobal.x, y:toGlobal.y, z:toGlobal.z, time:1, transition:"easeOutQuad"});
+		Tweener.addTween(mesh.position, {x:toGlobal.x, y:toGlobal.y, z:toGlobal.z, time:.5, transition:"easeOutQuad"});
 		if( black )
-			Tweener.addTween(mesh.rotation, {x:3.14, time:1, transition:"easeOutQuad"});
+			Tweener.addTween(mesh.rotation, {x:3.14, time:.5, transition:"easeOutQuad"});
 		
 		ary_icons.push( mesh );
 	}
