@@ -58,7 +58,7 @@ ApplyBlackWhiteTransform = function(posId, model){
   return model;
 };
 SendEvent = function(cmd, obj){
-  window.global.onView.onNext([cmd, obj]);
+  window.global.onModel.onNext([cmd, obj]);
   return obj;
 };
 Main = function(){
@@ -73,7 +73,7 @@ Main = function(){
     var code;
     code = arg$.code;
     return ['keyup', code];
-  }), window.global.onModel, Rx.Observable.just(['init']));
+  }), window.global.onView, Rx.Observable.just(['init']));
   return onInput.reduce(function(model, arg$){
     var cmd, params, ChangePlayerIfSuccessPut, SendUpdateEventIfSuccessPut, piece, posId;
     cmd = arg$[0], params = arg$[1];
