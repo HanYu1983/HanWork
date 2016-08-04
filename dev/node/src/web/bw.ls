@@ -52,7 +52,7 @@ ApplyBlackWhiteTransform = (posId, model)->
   model
   
 SendEvent = (cmd, obj)->
-  window.global.onView.onNext [cmd, obj]
+  window.global.onModel.onNext [cmd, obj]
   obj
 
 Main = ->
@@ -70,7 +70,7 @@ Main = ->
       onKeyUp
         .map ({code})->
           ['keyup', code]
-      window.global.onModel
+      window.global.onView
       Rx.Observable.just(['init'])
     
   onInput.reduce do
