@@ -1,5 +1,5 @@
 require!{
-  ramda: {repeat, map, zip, merge, equals}
+  ramda: {repeat, map, zip, merge, equals, concat, reduce, takeWhile, filter}
 }
 
 W = 8
@@ -48,8 +48,46 @@ MoveCursor = (t, model)->
     cursor:
       map (([a,b])->a+b), zip(t, model.cursor)
 
+VolidateCursor = (model)->
+  merge do
+    model
+    cursor:
+      [
+        model.cursor[0] |> (Math.max 0, _) |> (Math.min W - 1, _)
+        model.cursor[1] |> (Math.max 0, _) |> (Math.min H - 1, _)
+      ]
+
 ApplyBlackWhiteTransform = (posId, model)->
-  model
+  checkType = model.board[posId]
+  
+  IdsMustChange = (checkIds)->
+    takeWhile do
+      (id)->
+        if id == posId
+          true
+        else if model.board[id] == EMPTY
+          false
+        else
+          checkType != model.board[id]
+      checkIds
+          
+  idsMustChange = []
+    |> (concat IdsMustChange([posId to 0 by -W]), _)
+    |> (concat IdsMustChange([posId til W*H by W]), _)
+    |> (concat IdsMustChange([posId to Math.floor(posId/W)*W by -1]), _)
+    |> (concat IdsMustChange([posId til Math.floor(posId/W)*W+W by 1]), _)
+    |> (filter (!= posId), _)
+  
+  merge do
+    model
+    board:
+      map do
+        ([idx, oldpiece])->
+          if idx in idsMustChange
+            checkType
+          else
+            oldpiece
+        zip [0 til W*H], model.board
   
 SendEvent = (cmd, obj)->
   window.global.onModel.onNext [cmd, obj]
@@ -90,6 +128,7 @@ Main = ->
                   | "ArrowLeft" => [-1, 0]
                   | "ArrowRight" => [1, 0]
                 model
+              |> (VolidateCursor _)
               |> (SendEvent "updateCursor", _)
             | "Space" =>
               ChangePlayerIfSuccessPut = (oldmodel, newmodel)->

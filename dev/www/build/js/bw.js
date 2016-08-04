@@ -8785,8 +8785,8 @@
 }.call(this));
 
 },{}],2:[function(require,module,exports){
-var ref$, repeat, map, zip, merge, equals, W, H, EMPTY, WHITE, BLACK, PosId, PlayerPiece, PutPiece, ChangePlayer, MoveCursor, ApplyBlackWhiteTransform, SendEvent, Main, slice$ = [].slice;
-ref$ = require('ramda'), repeat = ref$.repeat, map = ref$.map, zip = ref$.zip, merge = ref$.merge, equals = ref$.equals;
+var ref$, repeat, map, zip, merge, equals, concat, reduce, takeWhile, filter, W, H, EMPTY, WHITE, BLACK, PosId, PlayerPiece, PutPiece, ChangePlayer, MoveCursor, VolidateCursor, ApplyBlackWhiteTransform, SendEvent, Main, slice$ = [].slice;
+ref$ = require('ramda'), repeat = ref$.repeat, map = ref$.map, zip = ref$.zip, merge = ref$.merge, equals = ref$.equals, concat = ref$.concat, reduce = ref$.reduce, takeWhile = ref$.takeWhile, filter = ref$.filter;
 W = 8;
 H = 8;
 EMPTY = 0;
@@ -8841,8 +8841,100 @@ MoveCursor = function(t, model){
     }, zip(t, model.cursor))
   });
 };
+VolidateCursor = function(model){
+  return merge(model, {
+    cursor: [
+      partialize$.apply(Math, [Math.min, [W - 1, void 8], [1]])(
+      partialize$.apply(Math, [Math.max, [0, void 8], [1]])(
+      model.cursor[0])), partialize$.apply(Math, [Math.min, [H - 1, void 8], [1]])(
+      partialize$.apply(Math, [Math.max, [0, void 8], [1]])(
+      model.cursor[1]))
+    ]
+  });
+};
 ApplyBlackWhiteTransform = function(posId, model){
-  return model;
+  var checkType, IdsMustChange, idsMustChange;
+  checkType = model.board[posId];
+  IdsMustChange = function(checkIds){
+    return takeWhile(function(id){
+      if (id === posId) {
+        return true;
+      } else if (model.board[id] === EMPTY) {
+        return false;
+      } else {
+        return checkType !== model.board[id];
+      }
+    }, checkIds);
+  };
+  idsMustChange = partialize$.apply(this, [
+    filter, [
+      (function(it){
+        return it !== posId;
+      }), void 8
+    ], [1]
+  ])(
+  partialize$.apply(this, [
+    concat, [
+      IdsMustChange((function(){
+        var i$, to$, results$ = [];
+        for (i$ = posId, to$ = Math.floor(posId / W) * W + W; i$ < to$; ++i$) {
+          results$.push(i$);
+        }
+        return results$;
+      }())), void 8
+    ], [1]
+  ])(
+  partialize$.apply(this, [
+    concat, [
+      IdsMustChange((function(){
+        var i$, to$, results$ = [];
+        for (i$ = posId, to$ = Math.floor(posId / W) * W; i$ >= to$; --i$) {
+          results$.push(i$);
+        }
+        return results$;
+      }())), void 8
+    ], [1]
+  ])(
+  partialize$.apply(this, [
+    concat, [
+      IdsMustChange((function(){
+        var i$, step$, to$, results$ = [];
+        for (i$ = posId, to$ = W * H, step$ = W; step$ < 0 ? i$ > to$ : i$ < to$; i$ += step$) {
+          results$.push(i$);
+        }
+        return results$;
+      }())), void 8
+    ], [1]
+  ])(
+  partialize$.apply(this, [
+    concat, [
+      IdsMustChange((function(){
+        var i$, step$, results$ = [];
+        for (i$ = posId, step$ = -W; step$ < 0 ? i$ >= 0 : i$ <= 0; i$ += step$) {
+          results$.push(i$);
+        }
+        return results$;
+      }())), void 8
+    ], [1]
+  ])(
+  [])))));
+  return merge(model, {
+    board: map(function(arg$){
+      var idx, oldpiece;
+      idx = arg$[0], oldpiece = arg$[1];
+      if (in$(idx, idsMustChange)) {
+        return checkType;
+      } else {
+        return oldpiece;
+      }
+    }, zip((function(){
+      var i$, to$, results$ = [];
+      for (i$ = 0, to$ = W * H; i$ < to$; ++i$) {
+        results$.push(i$);
+      }
+      return results$;
+    }()), model.board))
+  });
 };
 SendEvent = function(cmd, obj){
   window.global.onModel.onNext([cmd, obj]);
@@ -8876,6 +8968,7 @@ Main = function(){
       case "ArrowLeft":
       case "ArrowRight":
         return partialize$.apply(this, [SendEvent, ["updateCursor", void 8], [1]])(
+        partialize$.apply(this, [VolidateCursor, [void 8], [0]])(
         MoveCursor((function(){
           switch (params) {
           case "ArrowUp":
@@ -8887,7 +8980,7 @@ Main = function(){
           case "ArrowRight":
             return [1, 0];
           }
-        }()), model));
+        }()), model)));
       case "Space":
         ChangePlayerIfSuccessPut = function(oldmodel, newmodel){
           if (equals(oldmodel.board, newmodel.board)) {
@@ -8932,5 +9025,10 @@ function partialize$(f, args, where){
     return len < wlen && len ?
       partialize$.apply(context, [f, ta, tw]) : f.apply(context, ta);
   };
+}
+function in$(x, xs){
+  var i = -1, l = xs.length >>> 0;
+  while (++i < l) if (x === xs[i]) return true;
+  return false;
 }
 },{"ramda":1}]},{},[2])
