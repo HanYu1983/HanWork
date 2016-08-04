@@ -79,8 +79,7 @@ Main = ->
       console.log model
       switch cmd
         | "init" =>
-          SendEvent ["init", model]
-          model
+          SendEvent "init", model
         | "keyup" =>
           switch params
             | "ArrowUp","ArrowDown","ArrowLeft","ArrowRight" =>

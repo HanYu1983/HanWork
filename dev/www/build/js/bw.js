@@ -8868,8 +8868,7 @@ Main = function(){
     console.log(model);
     switch (cmd) {
     case "init":
-      SendEvent(["init", model]);
-      return model;
+      return SendEvent("init", model);
     case "keyup":
       switch (params) {
       case "ArrowUp":
