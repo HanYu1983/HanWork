@@ -292,9 +292,8 @@ vic.view = vic.view || {};
 
 	}
 	
+	module.putSelect = putSelect;
 	module.startGame = startGame;
 	module.animate = animate;
 	module.syncView = syncView;
 })( vic.view );
-
-vic.view.startGame();
