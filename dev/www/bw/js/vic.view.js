@@ -186,6 +186,17 @@ vic.view = vic.view || {};
 			scene.add( select );
 		select.position.y = 0;
 		
+		//select.material.color.setHex(0xff0000)
+		//console.log( select.material );
+		//select.material =  new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
+		//console.log( select.material );
+		
+		//console.log( plate );
+		
+		//var selectMesh = new THREE.Mesh( select );
+		//selectMesh.position.y = 0;
+		//scene.add( selectMesh );
+		
 		putSelect(1, 1 );
 		putIcon(2, 3, true, cloneMeshFromLib( lib, 'icon' ) );
 		putIcon(3, 6, true, cloneMeshFromLib( lib, 'icon' ) );
