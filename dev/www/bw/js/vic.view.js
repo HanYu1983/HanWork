@@ -152,12 +152,12 @@ vic.view = vic.view || {};
 	
 	function syncView( model ){
 		if( current_board != undefined ){
-			_.each(_.zip( current_board, model.board, _.range(model.board.length) ), function( ary ){
-				var old_icon = ary[0];
-				var new_icon = ary[1];
-				var id = ary[2];
-				var x = id % 8;
-				var y = Math.floor( id / 8 );
+			
+			for( var i = 0; i < current_board.length; ++i ){
+				var old_icon = current_board[i];
+				var new_icon = model.board[i];
+				var x = i % 8;
+				var y = Math.floor( i / 8 );
 				
 				if( new_icon != old_icon ){
 					switch( new_icon ){
@@ -180,7 +180,7 @@ vic.view = vic.view || {};
 							break;
 					}
 				}
-			});
+			}
 			
 		}
 		current_board = model.board;
@@ -281,7 +281,7 @@ vic.view = vic.view || {};
 		renderer.setSize( window.innerWidth, window.innerHeight );
 		div_container.append( renderer.domElement );
 
-		document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+		//document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 
 		window.addEventListener( 'resize', onWindowResize, false );
 		animate();
@@ -298,14 +298,14 @@ vic.view = vic.view || {};
 		renderer.setSize( window.innerWidth, window.innerHeight );
 
 	}
-
+/*
 	function onDocumentMouseMove( event ) {
 
 		mouseX = ( event.clientX - windowHalfX ) / 2;
 		mouseY = ( event.clientY - windowHalfY ) / 2;
 
 	}
-
+*/
 	//
 
 	function animate() {
