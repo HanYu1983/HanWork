@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html>
 	<style>
-	
+	body{
+		margin:0;
+		overflow:hidden;
+	}
 	</style>
 	<body>
 		<div id="webgl" style='position:relative; width:100%; height:100%;'></div>
@@ -31,14 +34,15 @@
 		global.onModel.subscribe(
 			function(cmd){
 			
-				console.log( cmd );
-			
 				var name = cmd[0];
 				var params = cmd[1];
 				
 				switch( name ){
 					case 'init':
-						vic.view.startGame();
+						vic.view.startGame( function(){
+							vic.view.putSelect( params.cursor[0], params.cursor[1] );
+							vic.view.syncView( params );
+						});
 						break;
 					case 'updateCursor':
 						vic.view.putSelect( params.cursor[0], params.cursor[1] );

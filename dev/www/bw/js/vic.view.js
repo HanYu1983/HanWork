@@ -13,6 +13,7 @@ vic.view = vic.view || {};
 	var select;
 	var iconCon;
 	var ary_icons;
+	var current_board;
 	
 	var icon_ori_pos = new THREE.Vector3();
 	icon_ori_pos.x = -8.7;
@@ -59,9 +60,10 @@ vic.view = vic.view || {};
 		}
 	}
 	
-	function startGame(){
+	function startGame( cb ){
 		prepareLib( function( lib ){
 			init( lib, $('#webgl') );
+			cb();
 		});
 	}
 	
@@ -149,7 +151,39 @@ vic.view = vic.view || {};
 	}
 	
 	function syncView( model ){
-		console.log( model );
+		if( current_board != undefined ){
+			_.each(_.zip( current_board, model.board, _.range(model.board.length) ), function( ary ){
+				var old_icon = ary[0];
+				var new_icon = ary[1];
+				var id = ary[2];
+				var x = id % 8;
+				var y = Math.floor( id / 8 );
+				
+				if( new_icon != old_icon ){
+					switch( new_icon ){
+						case 0:
+							deleteIcon( x, y );
+							break;
+						case 1:
+							if( old_icon == 0 ){
+								putIcon(x, y, true, cloneMeshFromLib( vic.view.meshConfig, 'icon' ) );
+							}else{
+								flipIcon(x, y, true );
+							}
+							break;
+						case 2:
+							if( old_icon == 0 ){
+								putIcon(x, y, false, cloneMeshFromLib( vic.view.meshConfig, 'icon' ) );
+							}else{
+								flipIcon(x, y, false );
+							}
+							break;
+					}
+				}
+			});
+			
+		}
+		current_board = model.board;
 	}
 
 	function init( lib, div_container ) {
@@ -197,6 +231,7 @@ vic.view = vic.view || {};
 		//selectMesh.position.y = 0;
 		//scene.add( selectMesh );
 		
+		/*
 		putSelect(1, 1 );
 		putIcon(2, 3, true, cloneMeshFromLib( lib, 'icon' ) );
 		putIcon(3, 6, true, cloneMeshFromLib( lib, 'icon' ) );
@@ -239,7 +274,7 @@ vic.view = vic.view || {};
 			flipIcon( 2, 3, true );
 			flipIcon( 3, 6, false );
 		}, 12000 );
-		
+		*/
 
 		renderer = new THREE.WebGLRenderer();
 		renderer.setPixelRatio( window.devicePixelRatio );
@@ -287,7 +322,9 @@ vic.view = vic.view || {};
 
 		//camera.lookAt( scene.position );
 		
-		select.rotation.y += .01;
+		//select.rotation.y += .01;
+		//select.posit
+		
 		renderer.render( scene, camera );
 
 	}
