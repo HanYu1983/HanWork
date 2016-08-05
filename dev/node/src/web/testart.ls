@@ -42,10 +42,6 @@ testConvnet = ->
       
   layer_defs =
     * type: 'input', out_sx: IMAGE_W, out_sy: IMAGE_H, out_depth: 1
-    * type: 'conv', sx: 3, filters: 16, stride: 1, pad: 2, activation:'relu'
-    * type: 'pool', sx: 2, stride: 2
-    * type: 'conv', sx: 3, filters: 32, stride: 1, pad: 2, activation:'relu'
-    * type: 'pool', sx: 2, stride: 2
     * type: 'regression', num_neurons: NUM_OUTPUT
     
   net = new convnetjs.Net
@@ -58,7 +54,7 @@ testConvnet = ->
       data = nj.images.read img
       input = data2input data.reshape(IMAGE_W*IMAGE_H)
       yhat = net.forward input
-      input2 = data2input nj.zeros([IMAGE_W,IMAGE_H])
+      input2 = data2input nj.zeros(IMAGE_W*IMAGE_H)
       
       setInterval do
         ->
