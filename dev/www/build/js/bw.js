@@ -8785,13 +8785,16 @@
 }.call(this));
 
 },{}],2:[function(require,module,exports){
-var ref$, repeat, map, zip, merge, equals, concat, reduce, takeWhile, filter, W, H, EMPTY, WHITE, BLACK, PosId, PlayerPiece, PutPiece, ChangePlayer, MoveCursor, VolidateCursor, ApplyBlackWhiteTransform, SendEvent, Main, slice$ = [].slice;
-ref$ = require('ramda'), repeat = ref$.repeat, map = ref$.map, zip = ref$.zip, merge = ref$.merge, equals = ref$.equals, concat = ref$.concat, reduce = ref$.reduce, takeWhile = ref$.takeWhile, filter = ref$.filter;
+var ref$, repeat, map, zip, merge, equals, concat, reduce, takeWhile, filter, append, W, H, EMPTY, WHITE, BLACK, Pos, PosId, PlayerPiece, PutPiece, ChangePlayer, MoveCursor, VolidateCursor, ApplyBlackWhiteTransform, SendEvent, Main, slice$ = [].slice;
+ref$ = require('ramda'), repeat = ref$.repeat, map = ref$.map, zip = ref$.zip, merge = ref$.merge, equals = ref$.equals, concat = ref$.concat, reduce = ref$.reduce, takeWhile = ref$.takeWhile, filter = ref$.filter, append = ref$.append;
 W = 8;
 H = 8;
 EMPTY = 0;
 WHITE = 1;
 BLACK = 2;
+Pos = function(posId){
+  return [Math.floor(posId % W), Math.floor(posId / W)];
+};
 PosId = function(arg$){
   var x, y;
   x = arg$[0], y = arg$[1];
@@ -8853,24 +8856,120 @@ VolidateCursor = function(model){
   });
 };
 ApplyBlackWhiteTransform = function(posId, model){
-  var checkType, IdsMustChange, idsMustChange;
+  var checkType, pos, IdsMustChange, idsMustChange;
   checkType = model.board[posId];
+  pos = Pos(posId);
   IdsMustChange = function(checkIds){
-    return takeWhile(function(id){
-      if (id === posId) {
-        return true;
-      } else if (model.board[id] === EMPTY) {
-        return false;
-      } else {
-        return checkType !== model.board[id];
+    var ret, ref$;
+    ret = reduce(function(ctx, id){
+      var ary, state;
+      ary = ctx.ary, state = ctx.state;
+      switch (state) {
+      case 0:
+        if (id === posId) {
+          return ctx;
+        } else {
+          if (model.board[id] === EMPTY) {
+            return merge(ctx, {
+              state: -1
+            });
+          } else {
+            if (model.board[id] !== checkType) {
+              return merge(ctx, {
+                ary: append(id, ary)
+              });
+            } else {
+              return merge(ctx, {
+                state: 1
+              });
+            }
+          }
+        }
+        break;
+      case -1:
+      case 1:
+        return ctx;
       }
+    }, {
+      ary: [],
+      state: 0
     }, checkIds);
+    if ((ref$ = ret.state) === -1 || ref$ === 0) {
+      return [];
+    } else {
+      return ret.ary;
+    }
   };
   idsMustChange = partialize$.apply(this, [
-    filter, [
-      (function(it){
-        return it !== posId;
-      }), void 8
+    concat, [
+      IdsMustChange(partialize$.apply(this, [map, [PosId, void 8], [1]])(
+      zip((function(){
+        var i$, to$, results$ = [];
+        for (i$ = pos[0], to$ = W; i$ <= to$; ++i$) {
+          results$.push(i$);
+        }
+        return results$;
+      }()), (function(){
+        var i$, to$, results$ = [];
+        for (i$ = pos[1], to$ = H; i$ <= to$; ++i$) {
+          results$.push(i$);
+        }
+        return results$;
+      }())))), void 8
+    ], [1]
+  ])(
+  partialize$.apply(this, [
+    concat, [
+      IdsMustChange(partialize$.apply(this, [map, [PosId, void 8], [1]])(
+      zip((function(){
+        var i$, to$, results$ = [];
+        for (i$ = pos[0], to$ = W; i$ <= to$; ++i$) {
+          results$.push(i$);
+        }
+        return results$;
+      }()), (function(){
+        var i$, results$ = [];
+        for (i$ = pos[1]; i$ >= 0; --i$) {
+          results$.push(i$);
+        }
+        return results$;
+      }())))), void 8
+    ], [1]
+  ])(
+  partialize$.apply(this, [
+    concat, [
+      IdsMustChange(partialize$.apply(this, [map, [PosId, void 8], [1]])(
+      zip((function(){
+        var i$, results$ = [];
+        for (i$ = pos[0]; i$ >= 0; --i$) {
+          results$.push(i$);
+        }
+        return results$;
+      }()), (function(){
+        var i$, to$, results$ = [];
+        for (i$ = pos[1], to$ = H; i$ <= to$; ++i$) {
+          results$.push(i$);
+        }
+        return results$;
+      }())))), void 8
+    ], [1]
+  ])(
+  partialize$.apply(this, [
+    concat, [
+      IdsMustChange(partialize$.apply(this, [map, [PosId, void 8], [1]])(
+      zip((function(){
+        var i$, results$ = [];
+        for (i$ = pos[0]; i$ >= 0; --i$) {
+          results$.push(i$);
+        }
+        return results$;
+      }()), (function(){
+        var i$, results$ = [];
+        for (i$ = pos[1]; i$ >= 0; --i$) {
+          results$.push(i$);
+        }
+        return results$;
+      }())))), void 8
     ], [1]
   ])(
   partialize$.apply(this, [
@@ -8917,7 +9016,7 @@ ApplyBlackWhiteTransform = function(posId, model){
       }())), void 8
     ], [1]
   ])(
-  [])))));
+  []))))))));
   return merge(model, {
     board: map(function(arg$){
       var idx, oldpiece;
@@ -8956,8 +9055,6 @@ Main = function(){
   return onInput.reduce(function(model, arg$){
     var cmd, params, ChangePlayerIfSuccessPut, SendUpdateEventIfSuccessPut, piece, posId;
     cmd = arg$[0], params = arg$[1];
-    console.log(cmd, params);
-    console.log(model);
     switch (cmd) {
     case "init":
       return SendEvent("init", model);
