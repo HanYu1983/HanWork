@@ -42,8 +42,8 @@ Main.elm中為相對應的函式寫出它的Type
 
 #### 非純粹函式
 類似Haskell中的IO和purescript的Eff，Elm也是純粹和非純粹是嚴格分離的  
-Elm使用```Task x ()```的Type來處理非純粹任務  
-```()```是Elm中的Tuple0  
+Elm使用Task x ()的Type來處理非純粹任務  
+()是Elm中的Tuple0  
 Task的```map```是用```andThen```來實現的，以下是Task.elm中的代碼  
 
     map : (a -> b) -> Task x a -> Task x b
