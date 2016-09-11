@@ -162,7 +162,7 @@ testConvnet = function(){
   x$.makeLayers(layer_defs2);
   trainer = new convnetjs.SGDTrainer(net, {
     method: 'adadelta',
-    batch_size: 20,
+    batch_size: 4,
     l2_decay: 0.001
   });
   trainSet = cifarImageLabels("../doc/cifar-10-batches-bin/data_batch_1.bin").map(function(arg$){

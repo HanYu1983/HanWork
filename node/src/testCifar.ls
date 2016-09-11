@@ -117,7 +117,7 @@ testConvnet = ->
   trainer = new convnetjs.SGDTrainer do
     net
     * method:'adadelta'
-      batch_size:20
+      batch_size:4
       l2_decay:0.001
   
   trainSet = 
