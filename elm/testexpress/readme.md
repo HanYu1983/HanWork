@@ -78,29 +78,29 @@ Elm編譯出來的代碼沒有```exports```出它的Elm，所以無法require到
 我們可以在Main.js中最下面加入以下的代碼，這樣在```elm make```時就會自動把這段塞到index.js中，這樣就能運行了
 ```
 (function() {
-	if (typeof module == 'undefined') {
-		throw new Error('You are trying to run a node Elm program in the browser!');
-	}
+    if (typeof module == 'undefined') {
+        throw new Error('You are trying to run a node Elm program in the browser!');
+    }
 
-	if (module.exports === Elm) {
-		return;
-	}
+    if (module.exports === Elm) {
+        return;
+    }
 
-	window = global;
+    window = global;
 
-	module.exports = Elm;
-	setTimeout(function() {
-		if (!module.parent) {
-			if ('Main' in Elm) {
-			    var app = Elm.worker(Elm.Main, {})
-			} else {
-				throw new Error('You are trying to run a node Elm program without a Main module.');
-			}
-		}
-	});
+    module.exports = Elm;
+    setTimeout(function() {
+        if (!module.parent) {
+            if ('Main' in Elm) {
+                var app = Elm.worker(Elm.Main, {})
+            } else {
+                throw new Error('You are trying to run a node Elm program without a Main module.');
+            }
+        }
+    }); 
 })();
 ```
 
 [Main.elm]: ./Main.elm
 [Main.js]: ./Native/Main.js
-[elm-package.json] ./elm-package.json
+[elm-package.json]: ./elm-package.json
