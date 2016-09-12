@@ -1,0 +1,24 @@
+<html>
+	<body>
+		<script src='index.js'></script>
+		<script>
+			// 初始情況就會自動發送所有事件
+			// 而因為在同一時間，Elm會以最mergeMany中最左的事件處理，其它的會被捨棄
+			// 所以這行就剛好可以處理初始化事件
+			var app = Elm.worker(Elm.Main, {init:"only once", pause:"ignore", setMoney: 0})
+			
+			app.ports.init.send("init 2")
+			app.ports.pause.send("pause 2")
+			
+			app.ports.init.send("init 3")
+			app.ports.pause.send("pause 3")
+		
+			app.ports.setMoney.send(100)
+			app.ports.setMoney.send(200)
+			
+			app.ports.model.subscribe(function(info){
+				console.log(info)
+			})
+		</script>
+	</body>
+</html>
