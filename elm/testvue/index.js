@@ -5496,32 +5496,21 @@ Elm.Main.make = function (_elm) {
    $Task = Elm.Task.make(_elm);
    var _op = {};
    var defaultModel = {money: 0};
-   var InputAction = function (a) {    return {ctor: "InputAction",_0: a};};
-   var EmptyAction = {ctor: "EmptyAction"};
-   var actionMailbox = $Signal.mailbox(EmptyAction);
+   var Model = function (a) {    return {money: a};};
+   var SetMoneyAction = function (a) {    return {ctor: "SetMoneyAction",_0: a};};
+   var NoAction = {ctor: "NoAction"};
+   var actionMailbox = $Signal.mailbox(NoAction);
    var model = Elm.Native.Port.make(_elm).outboundSignal("model",
    function (v) {
       return {money: v.money};
    },
    A3($Signal.foldp,
-   F2(function (cmd,model) {
-      var _p0 = cmd;
-      if (_p0.ctor === "EmptyAction") {
-            return model;
-         } else {
-            var _p1 = _p0._0;
-            switch (_p1.ctor)
-            {case "InputInit": return model;
-               case "InputPause": return model;
-               default: return _U.update(model,{money: _p1._0});}
-         }
-   }),
+   F2(function (cmd,model) {    var _p0 = cmd;if (_p0.ctor === "NoAction") {    return model;} else {    return _U.update(model,{money: _p0._0});}}),
    defaultModel,
    actionMailbox.signal));
-   var Model = function (a) {    return {money: a};};
-   var InputSetMoney = function (a) {    return {ctor: "InputSetMoney",_0: a};};
-   var InputPause = function (a) {    return {ctor: "InputPause",_0: a};};
-   var InputInit = function (a) {    return {ctor: "InputInit",_0: a};};
+   var CallSetMoney = function (a) {    return {ctor: "CallSetMoney",_0: a};};
+   var CallPause = function (a) {    return {ctor: "CallPause",_0: a};};
+   var CallInit = function (a) {    return {ctor: "CallInit",_0: a};};
    var setMoney = Elm.Native.Port.make(_elm).inboundSignal("setMoney",
    "Int",
    function (v) {
@@ -5537,29 +5526,29 @@ Elm.Main.make = function (_elm) {
    function (v) {
       return typeof v === "string" || typeof v === "object" && v instanceof String ? v : _U.badPort("a string",v);
    });
-   var input = $Signal.mergeMany(_U.list([A2($Signal.map,function (n) {    return InputInit(n);},init)
-                                         ,A2($Signal.map,function (n) {    return InputPause(n);},pause)
-                                         ,A2($Signal.map,function (n) {    return InputSetMoney(n);},setMoney)]));
+   var call = $Signal.mergeMany(_U.list([A2($Signal.map,function (n) {    return CallInit(n);},init)
+                                        ,A2($Signal.map,function (n) {    return CallPause(n);},pause)
+                                        ,A2($Signal.map,function (n) {    return CallSetMoney(n);},setMoney)]));
    var log = $Native$Main.log;
    var processTask = Elm.Native.Task.make(_elm).performSignal("processTask",
    A2($Signal.map,
    function (action) {
-      var _p2 = action;
-      switch (_p2.ctor)
-      {case "InputInit": return log(_p2._0);
-         case "InputPause": return log(_p2._0);
-         default: return A2($Signal.send,actionMailbox.address,InputAction(InputSetMoney(_p2._0)));}
+      var _p1 = action;
+      switch (_p1.ctor)
+      {case "CallInit": return log(_p1._0);
+         case "CallPause": return log(_p1._0);
+         default: return A2($Signal.send,actionMailbox.address,SetMoneyAction(_p1._0));}
    },
-   input));
+   call));
    return _elm.Main.values = {_op: _op
                              ,log: log
-                             ,InputInit: InputInit
-                             ,InputPause: InputPause
-                             ,InputSetMoney: InputSetMoney
-                             ,Model: Model
-                             ,EmptyAction: EmptyAction
-                             ,InputAction: InputAction
+                             ,CallInit: CallInit
+                             ,CallPause: CallPause
+                             ,CallSetMoney: CallSetMoney
+                             ,NoAction: NoAction
+                             ,SetMoneyAction: SetMoneyAction
                              ,actionMailbox: actionMailbox
-                             ,defaultModel: defaultModel
-                             ,input: input};
+                             ,call: call
+                             ,Model: Model
+                             ,defaultModel: defaultModel};
 };
