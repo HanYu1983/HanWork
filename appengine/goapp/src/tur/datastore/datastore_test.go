@@ -14,9 +14,10 @@ func TestBasic(t *testing.T) {
 	}
 	defer ctx.Close()
 
-	var han, somebody User
+	var somebody User
+	han := User{Name: "han", DisplayName: "漢"}
+
 	t.Log("建立han")
-	han = User{Name: "han", DisplayName: "漢"}
 	err = CreateUser(ctx, han)
 	if err != nil {
 		t.Fatal(err)
