@@ -20,7 +20,7 @@ var (
 // 注意：appengine.Context一定要從外部傳進來
 // 因為TDD開發會有自己的Context
 func CreateUser(ctx appengine.Context, user User) error {
-	// 建立和這個User相匹配的鍵
+	// 取得User的主鍵
 	// 使用Ancestor Key(Group)來群組自己的資料
 	// 這樣做會有很多好處
 	// 沒有Ancestor Key無法使用Transaction
@@ -30,7 +30,7 @@ func CreateUser(ctx appengine.Context, user User) error {
 }
 
 func ReadUser(ctx appengine.Context, user User) (User, error) {
-	// 使用匹配的鍵來取得User
+	// 使用主鍵來取得User
 	key := datastore.NewKey(ctx, "User", user.Name, 0, GroupKey(ctx))
 	err := datastore.Get(ctx, key, &user)
 	if err != nil {
@@ -45,14 +45,17 @@ func UpdateUser(ctx appengine.Context, user User) error {
 }
 
 func DeleteUser(ctx appengine.Context, user User) error {
-	// 使用匹配的鍵來刪除User
+	// 使用主鍵來取得User
 	key := datastore.NewKey(ctx, "User", user.Name, 0, GroupKey(ctx))
 	err := datastore.Delete(ctx, key)
 	return err
 }
 
 func GroupKey(ctx appengine.Context) *datastore.Key {
-	return datastore.NewKey(ctx, "yourGroupName", "ignore", 0, nil)
+	// User的父層
+	// 所來代表所屬的群組
+	// 名字可任意
+	return datastore.NewKey(ctx, "Group", "User", 0, nil)
 }
 
 //// 進階 ////
