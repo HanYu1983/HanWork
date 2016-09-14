@@ -63,10 +63,9 @@ func TestBasic(t *testing.T) {
 	}
 
 	t.Log("建立john和bob")
-	var john, bob User
 	var users []User
-	john = User{Name: "john", DisplayName: "花花公子"}
-	bob = User{Name: "bob", DisplayName: "花花公子"}
+	john := User{Name: "john", DisplayName: "花花公子"}
+	bob := User{Name: "bob", DisplayName: "花花公子"}
 
 	err = CreateUser(ctx, john)
 	if err != nil {
