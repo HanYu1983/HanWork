@@ -12,7 +12,7 @@
 
 
 1. [下載SDK](https://cloud.google.com/appengine/docs/go/quickstart)
-1. 建立專案資料夾dir yourname( dir src( dir web() ), app.yaml, hello.go ) <- 以上用程式語言描述，請自行理解
+1. 建立專案資料夾dir yourprojectname( dir src( dir web() ), app.yaml, hello.go ) <- 以上用程式語言描述，請自行理解
 
         // app.yaml
         application: your-project-id
@@ -45,6 +45,6 @@
         func SayHi(w http.ResponseWriter, r *http.Request) {
             fmt.Fprintf(w, "Hello, %q", r.URL.Path)
         }
-1. ```dst/to/go_appengine/goapp serve goapp/src```
+1. ```dst/to/go_appengine/goapp serve yourprojectname/src```
 1. [本機測試](//localhost:8080/go/)與[靜態檔案](//localhost:8080/)
 1. 完成
