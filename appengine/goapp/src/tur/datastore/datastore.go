@@ -21,6 +21,7 @@ var (
 // 因為TDD開發會有自己的Context
 func CreateUser(ctx appengine.Context, user User) error {
 	// 取得User的主鍵
+	// 只使用stringId，intId就用0
 	// 使用Ancestor Key(Group)來群組自己的資料
 	// 這樣做會有很多好處
 	// 沒有Ancestor Key無法使用Transaction
@@ -55,7 +56,7 @@ func GroupKey(ctx appengine.Context) *datastore.Key {
 	// User的父層
 	// 所來代表所屬的群組
 	// 名字可任意
-	return datastore.NewKey(ctx, "Group", "User", 0, nil)
+	return datastore.NewKey(ctx, "Root", "Test", 0, nil)
 }
 
 //// 進階 ////
