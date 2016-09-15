@@ -14,6 +14,9 @@
         rollback;
         signal sqlstate 'ERROR' set message_text = msg;
     end;
+和
+
+    signal sqlstate 'ERROR' set message_text = 'player is not exist';
 
 可以讓procedure丟出一般的例外，這樣可以讓程式很好處理
 
