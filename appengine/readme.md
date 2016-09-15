@@ -1,6 +1,6 @@
 # Google App Engine使用示範
 
-1. [使用datastore](goapp/src/tur/datastore)
+1. [使用datastore](goapp/src/tur/datastore/)
 1. 使用mysql
 1. 處理cookie
 1. 伺服靜態資料

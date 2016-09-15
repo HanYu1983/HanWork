@@ -1,6 +1,7 @@
 package datastore
 
 import (
+	"appengine"
 	"appengine/aetest"
 	"appengine/datastore"
 	"testing"
@@ -90,7 +91,39 @@ func TestBasic(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("q.GetAll(_, &uses)取得的列表:%#v", users)
 	if len(users) != 2 {
 		t.Fatal("人數必須為2")
+	}
+
+	t.Log("使用PutMulti新增linda和satomi")
+	linda := User{Name: "linda", DisplayName: "美女"}
+	satomi := User{Name: "satomi", DisplayName: "里美"}
+	users = []User{linda, satomi}
+	err = CreateMulti(ctx, users)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("使用GetMulti取得linda和satomi")
+	users, err = ReadMulti(ctx, []User{User{Name: "linda"}, User{Name: "satomi"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("datastore.GetMulti(_, _, users)取得的列表:%#v", users)
+	if users[0] != linda {
+		t.Fatal("第1個必須是linda")
+	}
+	if users[1] != satomi {
+		t.Fatal("第2個必須是satomi")
+	}
+
+	t.Log("測試交易")
+	err = UseTransaction(ctx, func(ctx appengine.Context) error {
+		_, err = DisplayNameQuery(ctx, "花花公子")
+		return err
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }

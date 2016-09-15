@@ -1,3 +1,10 @@
+// 注意
+// 以下的方法包裝只是為了寫測試，和實際應用沒有關係
+// 實際應用的包裝會包含遊戲邏輯
+// 意思是不分為 DB存取層 和 遊戲邏輯層
+// 所有datastore的Key, Query, Cursor, Struct, Get, GetMulti, Put, ...
+// 都應該直接配合遊戲邏輯來寫，不需將邏輯拆開
+// 外部只能透過行為介面Protocol(Interface)來操做和DB有關的一切事務
 package datastore
 
 import (
