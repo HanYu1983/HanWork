@@ -3,6 +3,7 @@ package hello
 import (
 	"fmt"
 	"net/http"
+	channel "tur/channel"
 	cookie "tur/cookie"
 	img "tur/image"
 )
@@ -10,9 +11,16 @@ import (
 func init() {
 	// app.yaml中設定的伺服路徑就是go
 	http.HandleFunc("/go/", SayHi)
-	http.HandleFunc("/go/serveImage", img.ServeImage)
-	http.HandleFunc("/go/login", cookie.Login)
-	http.HandleFunc("/go/logout", cookie.Logout)
+	http.HandleFunc("/go/image/serveImage", img.ServeImage)
+
+	http.HandleFunc("/go/cookie/login", cookie.Login)
+	http.HandleFunc("/go/cookie/logout", cookie.Logout)
+
+	http.HandleFunc("/go/channel/login", channel.Login)
+	http.HandleFunc("/go/channel/sendMessage", channel.SendMessage)
+	// 即時訊息傾聽事件
+	http.HandleFunc("/_ah/channel/connected/", channel.OnChannelConnected)
+	http.HandleFunc("/_ah/channel/disconnected/", channel.OnChannelDisconnected)
 }
 
 func SayHi(w http.ResponseWriter, r *http.Request) {

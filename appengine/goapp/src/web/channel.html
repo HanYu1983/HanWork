@@ -1,0 +1,36 @@
+<html>
+	<body>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+		<script type="text/javascript" src="/_ah/channel/jsapi"></script>
+		<script>
+    $.ajax({
+      url: '../go/channel/login',
+      type: 'get',
+      dataType: 'json',
+      data:{ user: 'han' },
+      success: function( ret ){
+				console.log(ret)
+				token = ret[1]
+				var channel = new goog.appengine.Channel(token);
+				console.log(channel)
+				var socket = channel.open()
+				socket.onopen = function(){
+					console.log("onopen")
+				}
+				socket.onmessage = function(path, option){
+					console.log(path)
+				}
+				socket.onerror = function(){
+					console.log("onerror")
+				}
+				socket.onclose = function(){
+					console.log("onclose")
+				}
+      },
+      error: function( xhr, res, err ){
+				console.log(err)
+      }
+    })
+		</script>
+	</body>
+</html>
