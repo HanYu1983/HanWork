@@ -3,10 +3,10 @@
 1. [使用datastore](goapp/src/tur/datastore/)
 1. [使用mysql](goapp/src/tur/cloudsql/)
 1. 處理cookie
-1. 伺服靜態資料
+1. 伺服靜態資料(本頁)
 1. 處理例外
 1. 使用channel做即時通訊
-1. 伺服圖片
+1. [伺服圖片，使用base64](goapp/src/tur/image/basic.go)
 
 ## 基本配置 (使用Goleng)
 
@@ -48,3 +48,6 @@
 1. ```dst/to/go_appengine/goapp serve yourprojectname/src```
 1. [本機測試](//localhost:8080/go/)與[靜態檔案](//localhost:8080/)
 1. 完成
+
+## 靜態資源的快取
+app.yaml中設定```default_expiration: "1d"```，這裡設為1天

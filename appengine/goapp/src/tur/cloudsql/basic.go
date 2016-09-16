@@ -17,6 +17,7 @@ func init() {
 	if appengine.IsDevAppServer() {
 		dbname = "root:@/mmo?charset=utf8"
 	} else {
+		// user:pwd@cloudsql(instanceName)/schemaName
 		dbname = "your instance name"
 	}
 	// 建立db
