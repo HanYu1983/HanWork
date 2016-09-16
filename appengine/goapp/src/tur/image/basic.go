@@ -20,7 +20,7 @@ func ServeImage(w http.ResponseWriter, r *http.Request) {
 			case error:
 				fmt.Fprintf(w, "err:%v", err.(error).Error())
 			default:
-				fmt.Fprintf(w, "err:%v", fmt.Sprintf("%s", err))
+				fmt.Fprintf(w, "err:%s", err)
 			}
 		}
 	}()
