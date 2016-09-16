@@ -2,7 +2,7 @@
 
 1. [使用datastore](goapp/src/tur/datastore/)
 1. [使用mysql](goapp/src/tur/cloudsql/)
-1. 處理cookie
+1. [處理cookie](goapp/src/tur/cookie/basic.go)
 1. 伺服靜態資料(本頁)
 1. 處理例外
 1. 使用channel做即時通訊

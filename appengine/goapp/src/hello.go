@@ -3,13 +3,16 @@ package hello
 import (
 	"fmt"
 	"net/http"
-	"tur/image"
+	cookie "tur/cookie"
+	img "tur/image"
 )
 
 func init() {
 	// app.yaml中設定的伺服路徑就是go
 	http.HandleFunc("/go/", SayHi)
-	http.HandleFunc("/go/serveImage", image.ServeImage)
+	http.HandleFunc("/go/serveImage", img.ServeImage)
+	http.HandleFunc("/go/login", cookie.Login)
+	http.HandleFunc("/go/logout", cookie.Logout)
 }
 
 func SayHi(w http.ResponseWriter, r *http.Request) {
