@@ -1,0 +1,15 @@
+<html>
+	<body>
+		<script src='Main.js'></script>
+		<script>
+			var app = Elm.Main.worker()
+			app.ports.outmsg.subscribe(function(){
+				console.log(arguments)
+			})
+			app.ports.inmsg.send(0)
+			app.ports.inmsg.send(1)
+			app.ports.inmsg.send(2)
+			app.ports.inmsg.send(3)
+		</script>
+	</body>
+</html>
