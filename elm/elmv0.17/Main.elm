@@ -14,6 +14,7 @@ import Time exposing (..)
 port outmsg : String -> Cmd msg
 
 -- 本來的簽名是 Signal anything 變成 (anything -> msg) -> Sub msg
+-- Signal不存在了
 port inmsg : (Int -> msg) -> Sub msg
 
 type alias Model = Int
@@ -62,7 +63,6 @@ subscriptions model =
   ]
 
 -- 變成一定要使用 App.program
--- 不管是不是用worker或embed
 main =
   App.program
     { 
