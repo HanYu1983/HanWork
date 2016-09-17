@@ -52,7 +52,7 @@ view model =
 
 -- subscriptions 大概可以想成是本來的 input signal
 -- 但我還不知道怎麼操做 subscriptions 的事件流
-subscriptions : Int -> Sub Msg
+subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.batch [ 
     -- 以下這行等於every second (\delta -> TimeTick delta)
