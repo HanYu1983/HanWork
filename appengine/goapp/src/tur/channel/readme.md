@@ -1,13 +1,17 @@
-# 使用Channel寫網路聊天室
+# 使用App Engine的Channel寫網路聊天室
 
-## 建立、放送事件
+## 聊天室Source Code
+[Channel.elm](../../../../elm/Channel.elm)
+[channel.index](../../web/channel.html)
+
+## App Engine建立、放送事件
     // 建立
     token, err := channel.Create(ctx, username)
     // 發送
     channel.Send(ctx, username, message)
 
 請參考[basic.go](basic.go)
-## 監聽Channel連線、斷線事件
+## App Engine監聽Channel連線、斷線事件
 在app.yaml最後面加入
 
     # 傾聽事件
@@ -29,7 +33,7 @@ handlers的地方加入
     http.HandleFunc("/_ah/channel/connected/", channel.OnChannelConnected)
     http.HandleFunc("/_ah/channel/disconnected/", channel.OnChannelDisconnected)
 
-## 前台JS配置
+## App Engine前台JS使用
 需引入以下這行
 
     <script type="text/javascript" src="/_ah/channel/jsapi"></script>
@@ -59,6 +63,3 @@ token就是由你的方法而來[basic.go](basic.go)
         panic(err)
     }
     Json(w, token, nil)
-
-## 前台使用Elm
-[如何使用Elm0.16寫出FRP](../../../../elm/Channel.elm)
