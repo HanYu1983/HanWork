@@ -67,8 +67,19 @@ func SendMessage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+
+	r.ParseForm()
+	if len(r.Form["user"]) == 0 {
+		panic("需要user")
+	}
+	if len(r.Form["msg"]) == 0 {
+		panic("需要msg")
+	}
+
+	username := r.Form["user"][0]
+	msg := r.Form["msg"][0]
 	for _, user := range users {
-		err = channel.Send(ctx, user.Name, "Game over!")
+		err = channel.Send(ctx, user.Name, username+":"+msg)
 		if err != nil {
 			panic(err)
 		}
