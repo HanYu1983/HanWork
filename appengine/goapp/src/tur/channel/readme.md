@@ -59,3 +59,6 @@ token就是由你的方法而來[basic.go](basic.go)
         panic(err)
     }
     Json(w, token, nil)
+
+## 前台使用Elm
+[Channel.elm](../../../../elm/Channel.elm)

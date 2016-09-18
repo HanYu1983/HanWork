@@ -10790,7 +10790,7 @@ Elm.Native.Channel.make = function(localRuntime) {
   }
   
   function alert(msg, x){
-    alert(msg)
+    window.alert(msg)
     return x
   }
 
@@ -10822,6 +10822,10 @@ Elm.Channel.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm),
    $Task = Elm.Task.make(_elm);
    var _op = {};
+   var createChannel = $Native$Channel.createChannel;
+   var performBackground = $Native$Channel.performBackground;
+   var alert = $Native$Channel.alert;
+   var log = $Native$Channel.log;
    var messageView = $List.map(function (msg) {    return A2($Html.div,_U.list([$Html$Attributes.$class("list-group-item")]),_U.list([$Html.text(msg)]));});
    var parseOnlyError = A3($Json$Decode.tuple2,
    F2(function (v0,v1) {    return {ctor: "_Tuple2",_0: v0,_1: v1};}),
@@ -10843,6 +10847,66 @@ Elm.Channel.make = function (_elm) {
    var NoAction = {ctor: "NoAction"};
    var action = $Signal.mailbox(NoAction);
    var input = action.signal;
+   var update = F2(function (act,model) {
+      var callUrlAndDecodeAndSendAction = F3(function (decoder,actionConstructor,url) {
+         var sendToAction = function (task) {
+            return A2($Task.andThen,task,function (value) {    return A2($Signal.send,action.address,actionConstructor(value));});
+         };
+         var decodeResult = $Task.map($Json$Decode.decodeString(decoder));
+         return sendToAction(decodeResult($Http.getString(url)));
+      });
+      var _p0 = act;
+      switch (_p0.ctor)
+      {case "NoAction": return model;
+         case "InputNameAction": return _U.update(model,{user: A2($Debug.log,"name:",_p0._0)});
+         case "InputMessageAction": return _U.update(model,{msg: A2($Debug.log,"msg:",_p0._0)});
+         case "ClickLoginAction": return A2(performBackground,
+           function (_p1) {
+              var makeUrl = function (user) {    return A2($Http.url,"go/channel/login",_U.list([{ctor: "_Tuple2",_0: "user",_1: user}]));};
+              return A3(callUrlAndDecodeAndSendAction,parseUserResult,LoginAction,makeUrl(model.user));
+           },
+           model);
+         case "ClickSendMessage": return A2(performBackground,
+           function (_p2) {
+              var makeUrl = function (_p3) {
+                 var _p4 = _p3;
+                 return A2($Http.url,"go/channel/sendMessage",_U.list([{ctor: "_Tuple2",_0: "user",_1: _p4.user},{ctor: "_Tuple2",_0: "msg",_1: _p4.msg}]));
+              };
+              return A3(callUrlAndDecodeAndSendAction,parseOnlyError,SendAction,makeUrl(model));
+           },
+           model);
+         case "LoginAction": var _p5 = _p0._0;
+           if (_p5.ctor === "Ok") {
+                 var _p7 = _p5._0._1;
+                 var _p6 = _p5._0._0;
+                 if (_p6.ctor === "Just") {
+                       return A2(alert,A2($Basics._op["++"],"err:",_p6._0),model);
+                    } else {
+                       return A3(createChannel,
+                       _p7,
+                       function (msg) {
+                          return A2($Signal.send,action.address,OnMessage(msg));
+                       },
+                       A2(alert,"登入成功",_U.update(model,{token: _p7})));
+                    }
+              } else {
+                 return A2(alert,_p5._0,model);
+              }
+         case "SendAction": var _p8 = _p0._0;
+           if (_p8.ctor === "Ok") {
+                 var _p9 = _p8._0._0;
+                 if (_p9.ctor === "Just") {
+                       return A2(alert,A2($Basics._op["++"],"err:",_p9._0),model);
+                    } else {
+                       return model;
+                    }
+              } else {
+                 return A2(alert,_p8._0,model);
+              }
+         default: var _p10 = _p0._0;
+           return A2(log,_p10,_U.update(model,{msgs: A2($List._op["::"],_p10,model.msgs)}));}
+   });
+   var model = A3($Signal.foldp,update,defaultModel,input);
    var view = function (model) {
       var sendAction = F3(function (address,constructor,value) {    return A2($Signal.message,address,constructor(value));});
       return A2($Html.div,
@@ -10864,7 +10928,7 @@ Elm.Channel.make = function (_elm) {
                               ,A3($Html$Events.on,
                               "click",
                               $Html$Events.targetValue,
-                              function (_p0) {
+                              function (_p11) {
                                  return A2($Signal.message,action.address,ClickLoginAction);
                               })]),
                       _U.list([$Html.text("Login")]))]))]))]))
@@ -10885,83 +10949,14 @@ Elm.Channel.make = function (_elm) {
                                       ,A3($Html$Events.on,
                                       "click",
                                       $Html$Events.targetValue,
-                                      function (_p1) {
+                                      function (_p12) {
                                          return A2($Signal.message,action.address,ClickSendMessage);
                                       })]),
                               _U.list([$Html.text("Send")]))]))]))
                       ,A2($Html.div,_U.list([$Html$Attributes.$class("row list-group")]),messageView(model.msgs))]))]));
    };
-   var createChannel = $Native$Channel.createChannel;
-   var performBackground = $Native$Channel.performBackground;
-   var alert = $Native$Channel.alert;
-   var log = $Native$Channel.log;
-   var update = F2(function (act,model) {
-      var _p2 = act;
-      switch (_p2.ctor)
-      {case "NoAction": return model;
-         case "InputNameAction": return _U.update(model,{user: A2($Debug.log,"name:",_p2._0)});
-         case "InputMessageAction": return _U.update(model,{msg: A2($Debug.log,"msg:",_p2._0)});
-         case "ClickLoginAction": return A2(performBackground,
-           function (_p3) {
-              var sendToAction = function (task) {
-                 return A2($Task.andThen,task,function (value) {    return A2($Signal.send,action.address,LoginAction(value));});
-              };
-              var decodeResult = $Task.map($Json$Decode.decodeString(parseUserResult));
-              var makeUrl = function (user) {    return A2($Http.url,"go/channel/login",_U.list([{ctor: "_Tuple2",_0: "user",_1: user}]));};
-              return sendToAction(decodeResult($Http.getString(makeUrl(model.user))));
-           },
-           model);
-         case "ClickSendMessage": return A2(performBackground,
-           function (_p4) {
-              var sendToAction = function (task) {
-                 return A2($Task.andThen,task,function (value) {    return A2($Signal.send,action.address,SendAction(value));});
-              };
-              var decodeResult = $Task.map($Json$Decode.decodeString(parseOnlyError));
-              var makeUrl = function (_p5) {
-                 var _p6 = _p5;
-                 return A2($Http.url,"go/channel/sendMessage",_U.list([{ctor: "_Tuple2",_0: "user",_1: _p6.user},{ctor: "_Tuple2",_0: "msg",_1: _p6.msg}]));
-              };
-              return sendToAction(decodeResult($Http.getString(makeUrl(model))));
-           },
-           model);
-         case "LoginAction": var _p7 = _p2._0;
-           if (_p7.ctor === "Ok") {
-                 var _p9 = _p7._0._1;
-                 var _p8 = _p7._0._0;
-                 if (_p8.ctor === "Just") {
-                       return A2(alert,A2($Basics._op["++"],"err:",_p8._0),model);
-                    } else {
-                       return A3(createChannel,
-                       _p9,
-                       function (msg) {
-                          return A2($Signal.send,action.address,OnMessage(msg));
-                       },
-                       A2(log,_p9,_U.update(model,{token: _p9})));
-                    }
-              } else {
-                 return A2(alert,_p7._0,model);
-              }
-         case "SendAction": var _p10 = _p2._0;
-           if (_p10.ctor === "Ok") {
-                 var _p11 = _p10._0._0;
-                 if (_p11.ctor === "Just") {
-                       return A2(alert,A2($Basics._op["++"],"err:",_p11._0),model);
-                    } else {
-                       return model;
-                    }
-              } else {
-                 return A2(alert,_p10._0,model);
-              }
-         default: var _p12 = _p2._0;
-           return A2(log,_p12,_U.update(model,{msgs: A2($List._op["::"],_p12,model.msgs)}));}
-   });
-   var model = A3($Signal.foldp,update,defaultModel,input);
    var main = A2($Signal.map,view,model);
    return _elm.Channel.values = {_op: _op
-                                ,log: log
-                                ,alert: alert
-                                ,performBackground: performBackground
-                                ,createChannel: createChannel
                                 ,NoAction: NoAction
                                 ,InputNameAction: InputNameAction
                                 ,InputMessageAction: InputMessageAction
@@ -10976,9 +10971,13 @@ Elm.Channel.make = function (_elm) {
                                 ,defaultModel: defaultModel
                                 ,update: update
                                 ,model: model
+                                ,view: view
+                                ,main: main
                                 ,parseUserResult: parseUserResult
                                 ,parseOnlyError: parseOnlyError
-                                ,view: view
                                 ,messageView: messageView
-                                ,main: main};
+                                ,log: log
+                                ,alert: alert
+                                ,performBackground: performBackground
+                                ,createChannel: createChannel};
 };

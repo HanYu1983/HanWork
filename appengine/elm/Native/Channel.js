@@ -42,7 +42,7 @@ Elm.Native.Channel.make = function(localRuntime) {
   }
   
   function alert(msg, x){
-    alert(msg)
+    window.alert(msg)
     return x
   }
 

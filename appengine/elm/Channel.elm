@@ -10,18 +10,6 @@ import Task exposing (..)
 import Json.Decode exposing (..)
 import Native.Channel
 
-log : msg -> x -> x
-log = Native.Channel.log
-
-alert : msg -> x -> x
-alert = Native.Channel.alert
-
-performBackground : (x -> Task err ()) -> y -> y
-performBackground = Native.Channel.performBackground
-
-createChannel : String -> (x -> Task err ()) -> y -> y
-createChannel = Native.Channel.createChannel
-
 type Action = 
   NoAction
   | InputNameAction String
@@ -32,14 +20,15 @@ type Action =
   | SendAction (Result String (Maybe String, Json.Decode.Value))
   | OnMessage String
 
-{-| 一切從Singal開始
-  -}
+---- Step1. 一切從Signal開始 ----
 action : Signal.Mailbox Action
 action = Signal.mailbox NoAction
 
+---- Step2. 定義action接收位置 ----
 input : Signal Action
 input = action.signal
 
+---- Step3. 定義資料 ----
 type alias Model = {
   user : String,
   token : String,
@@ -54,79 +43,79 @@ defaultModel = {
   msg = "",
   msgs = []}
 
+---- Step4. 定義資料更新方法 ----
 update : Action -> Model -> Model
 update act model = 
-  case act of
-    NoAction -> model
-    InputNameAction name -> { model | user = Debug.log "name:" name }
-    InputMessageAction msg -> { model | msg = Debug.log "msg:" msg }
-    ClickLoginAction -> 
-      model
-        |> performBackground (\_ -> 
-          let
-            makeUrl user =
-              Http.url "go/channel/login" [("user", user)]
-            decodeResult = 
-              Task.map (decodeString parseUserResult)
-            sendToAction task=
-              Task.andThen task (\value -> Signal.send action.address (LoginAction value))
-          in
-            model.user 
-              |> makeUrl 
-              |> Http.getString 
-              |> decodeResult
-              |> sendToAction
-        )
-    ClickSendMessage ->
-      model
-        |> performBackground (\_ -> 
-          let
-            makeUrl {user, msg} =
-              Http.url "go/channel/sendMessage" [("user", user), ("msg", msg)]
-            decodeResult = 
-              Task.map (decodeString parseOnlyError)
-            sendToAction task=
-              Task.andThen task (\value -> Signal.send action.address (SendAction value))
-          in
-            model
-              |> makeUrl 
-              |> Http.getString 
-              |> decodeResult
-              |> sendToAction
-        )
-    LoginAction result ->
-      case result of
-        Ok (err, token) -> 
-          case err of 
-            Just msg ->
-              model |> alert ("err:" ++ msg)
-            Nothing ->
-              {model | token = token} 
-                |> log token
-                |> createChannel token (\msg -> 
-                  Signal.send action.address (OnMessage msg)
-                )
-        Err err -> model |> alert err
-    SendAction result ->
-      case result of
-        Ok (err, token) -> 
-          case err of 
-            Just msg ->
-              model |> alert ("err:" ++ msg)
-            Nothing ->
+  -- 剛好有共通的Pattern
+  -- 都是先送http get > 解碼 > 送出Action (Result x y)
+  -- 所以只要將decoder和action的建構子參數化就可以重構成方法
+  let callUrlAndDecodeAndSendAction decoder actionConstructor url=
+    let
+      decodeResult = 
+        Task.map (decodeString decoder)
+      sendToAction task=
+        Task.andThen task (\value -> Signal.send action.address (actionConstructor value))
+    in
+      url
+        |> Http.getString 
+        |> decodeResult
+        |> sendToAction
+  in
+    case act of
+      NoAction -> model
+      InputNameAction name -> { model | user = Debug.log "name:" name }
+      InputMessageAction msg -> { model | msg = Debug.log "msg:" msg }
+      ClickLoginAction -> 
+        model
+          |> performBackground (\_ -> 
+            let
+              makeUrl user =
+                Http.url "go/channel/login" [("user", user)]
+            in
+              model.user 
+                |> makeUrl 
+                |> callUrlAndDecodeAndSendAction parseUserResult LoginAction
+          )
+      ClickSendMessage ->
+        model
+          |> performBackground (\_ -> 
+            let
+              makeUrl {user, msg} =
+                Http.url "go/channel/sendMessage" [("user", user), ("msg", msg)]
+            in
               model
-        Err err -> model |> alert err
-    OnMessage msg -> {model | msgs = msg :: model.msgs} |> log msg
+                |> makeUrl 
+                |> callUrlAndDecodeAndSendAction parseOnlyError SendAction
+          )
+      LoginAction result ->
+        case result of
+          Ok (err, token) -> 
+            case err of 
+              Just msg ->
+                model |> alert ("err:" ++ msg)
+              Nothing ->
+                {model | token = token} 
+                  |> alert "登入成功"
+                  |> createChannel token (\msg -> 
+                    Signal.send action.address (OnMessage msg)
+                  )
+          Err err -> model |> alert err
+      SendAction result ->
+        case result of
+          Ok (err, token) -> 
+            case err of 
+              Just msg ->
+                model |> alert ("err:" ++ msg)
+              Nothing ->
+                model
+          Err err -> model |> alert err
+      OnMessage msg -> {model | msgs = msg :: model.msgs} |> log msg
 
+---- Step5. 串接Signal Action事件流到Model ----
 model : Signal Model
 model = Signal.foldp update defaultModel input
 
-parseUserResult : Decoder (Maybe String, String)
-parseUserResult = Json.Decode.tuple2 (,) (oneOf [null Nothing, Json.Decode.map Just string]) Json.Decode.string
-
-parseOnlyError : Decoder (Maybe String, Json.Decode.Value)
-parseOnlyError = Json.Decode.tuple2 (,) (oneOf [null Nothing, Json.Decode.map Just string]) Json.Decode.value
-
+---- Step6. 定義視覺 ----
 view : Model -> Html
 view model = 
   let sendAction address constructor value = 
@@ -170,11 +159,36 @@ view model =
       ]
     ]
 
+---- Step7. 將資料接到視覺，寫出main ----
+main : Signal Html
+main = Signal.map view model
+
+---- 輔助函式 ----
+parseUserResult : Decoder (Maybe String, String)
+parseUserResult = Json.Decode.tuple2 (,) (oneOf [null Nothing, Json.Decode.map Just string]) Json.Decode.string
+
+{-| 這個函式我們只需要解 error message
+所以將Tuple的第2毎參數就單純解成json value
+是什麼類就不管它了
+-}
+parseOnlyError : Decoder (Maybe String, Json.Decode.Value)
+parseOnlyError = Json.Decode.tuple2 (,) (oneOf [null Nothing, Json.Decode.map Just string]) Json.Decode.value
+
 messageView : List String -> List Html
 messageView = 
   List.map (\msg ->
     div [class "list-group-item"] [text msg]
   )
 
-main : Signal Html
-main = Signal.map view model
+---- 橋接原生方法 ----
+log : msg -> x -> x
+log = Native.Channel.log
+
+alert : msg -> x -> x
+alert = Native.Channel.alert
+
+performBackground : (x -> Task err ()) -> y -> y
+performBackground = Native.Channel.performBackground
+
+createChannel : String -> (x -> Task err ()) -> y -> y
+createChannel = Native.Channel.createChannel

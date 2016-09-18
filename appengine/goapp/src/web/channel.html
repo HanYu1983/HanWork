@@ -1,48 +1,16 @@
 <html>
 	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 	</head>
 	<body>
 		<div id='elm' class='container'></div>
+		<script type="text/javascript" src="/_ah/channel/jsapi"></script>
 		<script src='channel.js'></script>
 		<script>
 			var node = document.getElementById('elm');
 			Elm.embed(Elm.Channel, node)
-		</script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
-		<script type="text/javascript" src="/_ah/channel/jsapi"></script>
-		<script>
-		/*
-    $.ajax({
-      url: '../go/channel/login',
-      type: 'get',
-      dataType: 'json',
-      data:{ user: 'han' },
-      success: function( ret ){
-				console.log(ret)
-				token = ret[1]
-				var channel = new goog.appengine.Channel(token);
-				console.log(channel)
-				var socket = channel.open()
-				socket.onopen = function(){
-					console.log("onopen")
-				}
-				socket.onmessage = function(path, option){
-					console.log(path)
-				}
-				socket.onerror = function(){
-					console.log("onerror")
-				}
-				socket.onclose = function(){
-					console.log("onclose")
-				}
-      },
-      error: function( xhr, res, err ){
-				console.log(err)
-      }
-    })
-		*/
 		</script>
 	</body>
 </html>
