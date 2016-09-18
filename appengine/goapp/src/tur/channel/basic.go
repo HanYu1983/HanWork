@@ -92,7 +92,7 @@ func OnChannelConnected(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	ctx.Infof("OnChannelConnected: %v", from)
+	ctx.Infof("OnChannelConnected: %v", username)
 }
 
 // 監聽channel的離線
@@ -110,5 +110,5 @@ func OnChannelDisconnected(w http.ResponseWriter, r *http.Request) {
 		ctx.Errorf("onChannelDisconnected err:%v", err)
 	}
 
-	ctx.Infof("onChannelDisconnected %v", from)
+	ctx.Infof("onChannelDisconnected %v", username)
 }
