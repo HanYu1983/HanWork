@@ -61,4 +61,4 @@ token就是由你的方法而來[basic.go](basic.go)
     Json(w, token, nil)
 
 ## 前台使用Elm
-[Channel.elm](../../../../elm/Channel.elm)
+[如何使用Elm0.16寫出FRP](../../../../elm/Channel.elm)

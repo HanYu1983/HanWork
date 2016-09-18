@@ -24,7 +24,7 @@ type Action =
 action : Signal.Mailbox Action
 action = Signal.mailbox NoAction
 
----- Step2. 定義action接收位置 ----
+---- Step2. 有了Signal，就能定義主事件流 ----
 input : Signal Action
 input = action.signal
 
@@ -181,14 +181,25 @@ messageView =
   )
 
 ---- 橋接原生方法 ----
+{-| 呼叫原生console.log
+-}
 log : msg -> x -> x
 log = Native.Channel.log
 
+{-| 呼叫原生alert 
+-}
 alert : msg -> x -> x
 alert = Native.Channel.alert
 
+{-| 這個方法非常重要
+所有副作用就透過這個方法處理
+使用這個方法讓Elm0.16沒有像Elm0.17那樣奇怪的subscriptions
+-}
 performBackground : (x -> Task err ()) -> y -> y
 performBackground = Native.Channel.performBackground
 
+{-| 建立appengine的channel
+請參考Native/Channel.js
+-}
 createChannel : String -> (x -> Task err ()) -> y -> y
 createChannel = Native.Channel.createChannel

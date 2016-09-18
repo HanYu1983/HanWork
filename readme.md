@@ -7,3 +7,4 @@
 1. Elm的簡單程式進入點：[Elm假裝很純粹](elm/testsimplemain/Main.elm)
 1. [Google App Engine基本使用](appengine/)
 1. Elm v0.17改很大：[Elm v0.17](elm/elmv0.17/)
+1. 如何使用Elm0.16寫出FRP：[Channel.elm](appengine/elm/Channel.elm)
