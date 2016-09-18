@@ -1,8 +1,8 @@
 # 使用App Engine的Channel寫網路聊天室
 
 ## 聊天室Source Code
-[Channel.elm](../../../../elm/Channel.elm)
-[channel.index](../../web/channel.html)
+1. [Channel.elm](../../../../elm/Channel.elm)
+1. [channel.index](../../web/channel.html)
 
 ## App Engine建立、放送事件
     // 建立
