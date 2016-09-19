@@ -23,7 +23,7 @@ Parser在這[GameManager::loadResource](modelview/SheepManager.mm)
 
 使用這張圖來建立遊戲物件和地形  
 ![B05](images/B05.png)  
-再蓋上這張假圖。感謝當時美術的工匠精神(36精緻的圖片全部手工)  
+再蓋上這張假圖。感謝當時美術的工匠精神(36張精緻的圖片全部手工)  
 ![B05](images/B05.jpg)  
 以下是其它的範例  
 ![B05](images/C01.png)
