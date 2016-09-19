@@ -1,0 +1,21 @@
+attribute vec4 a_position;
+attribute vec2 a_texCoord;
+
+uniform vec2 u_centerPosition;
+uniform mat4 u_transform;
+uniform mat3 u_texTransform;
+uniform vec2 u_imageSize;
+uniform vec2 u_canvasSize;
+
+varying vec2 v_texCoord;
+
+void main()
+{
+    
+    vec4 pos = a_position * vec4( u_imageSize.xy, 1, 1 );
+    pos -= vec4( u_centerPosition.xy, 0, 0 );
+    pos = u_transform * pos;
+    pos = pos * vec4( 2.0/u_canvasSize.x, -2.0/u_canvasSize.y, 1, 1 ) + vec4( -1, 1, 0, 0 );
+    gl_Position = pos;
+    v_texCoord = (u_texTransform * vec3( a_texCoord.st, 1 )).xy;
+}
