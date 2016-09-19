@@ -16,11 +16,16 @@
 
 當時多此一舉，自己還寫了2D Shader-請參考[image shader](gameworks/com.gameworks.opengl.shader.image.mm), [SheepView.mm](modelview/SheepView.mm)
 
-## 使用像素編輯遊戲場景
+## 使用像素編輯遊戲場景內容
 
+這樣做才可以讓企劃/關卡設計師參與  
 Parse在這[GameManager::loadResource](modelview/SheepManager.mm)  
-![B05](images/B05.png)
-![B05](images/B05.jpg)
+
+使用這張圖來建立遊戲物件和地形  
+![B05](images/B05.png)  
+再蓋上這張假圖  
+![B05](images/B05.jpg)  
+以下是其它的範例  
 ![B05](images/C01.png)
 ![B05](images/C01.jpg)
 ![B05](images/C12.png)
