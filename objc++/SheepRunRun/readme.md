@@ -1,6 +1,6 @@
 # 跑跑羊的部分原始碼
 
-這是2012年左右的程式，沒有註解  
+這是2012年左右的程式，註解很少  
 示範了如何協同使用obj-c和c++\(.mm\)，雖然現在這個技術過時了(?)
 
 ## 遊戲影片
@@ -18,11 +18,11 @@
 
 ## 使用像素編輯遊戲場景
 
-![B05](images/B05.jpg)
+Parse在這[GameManager::loadResource](modelview/SheepManager.mm)  
 ![B05](images/B05.png)
-![B05](images/C01.jpg)
+![B05](images/B05.jpg)
 ![B05](images/C01.png)
-![B05](images/C12.jpg)
-![B05](images/C12.png)  
+![B05](images/C01.jpg)
+![B05](images/C12.png)
+![B05](images/C12.jpg)  
 
-Parse在這[GameManager::loadResource](modelview/SheepManager.mm)
