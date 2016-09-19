@@ -1,4 +1,6 @@
-# Python使用案例
+# Python Demo
+
+本篇Demo都是使用PyQt4  
 
 ## 套件管理
 [使用pip,easy_install/yolk](http://www.openfoundry.org/tw/tech-column/8536-introduction-of-python-extension-management-tools)
@@ -9,7 +11,7 @@
 僅將Source Code給大家參考  
 很遺憾，當時沒有寫註解的習慣
 
-## RPG Demo主要展示腳本使用
+## RPG
 
 使用了Design Pattern中的Interpreter Pattern來解譯腳本：[script2.py](hanlib/script2.py)  
 
