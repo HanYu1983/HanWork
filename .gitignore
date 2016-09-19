@@ -3,3 +3,4 @@ output/
 doc/
 elm-stuff/
 github.com/
+*.pyc
