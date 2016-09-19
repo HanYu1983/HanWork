@@ -4,9 +4,11 @@
 1. FRP遊戲開發：[livescript寫黑白棋](dev/node/src/web/bw.ls)
 1. [使用Elm](elm/)
 1. [Google App Engine基本使用](appengine/)
+
+## 前朝遺臣
 1. [Python Demo](python/demo/)
 1. [跑跑羊部分原碼ObjC++](objc++/SheepRunRun/)
 
 ## 特別記念
 
-[連結](spec/)
+[三國鋼彈](spec/)
