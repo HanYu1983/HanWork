@@ -1,0 +1,33 @@
+<html>
+	<body>
+		<script src='Main.js'></script>
+		<script>
+			var winesList = {
+				Error: null,
+				Info:[
+					{
+						name:"wow wine",
+						region:null,
+						image: null,
+						description: null,
+						type: null,
+						producer: null,
+						varietal: null,
+						winery: null,
+						acidity: null,
+						ph: null,
+						sugar: null,
+						alcohol: null,
+						foods: [{
+							name: "test",
+							image: null,
+							description: null
+						}]
+					}
+				]
+			}
+
+			var app = Elm.worker(Elm.Main, {inputJson:winesList})
+		</script>
+	</body>
+</html>
