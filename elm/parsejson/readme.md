@@ -72,7 +72,16 @@
     = Decoder (b -> c -> Wine)
     
     ...
-    = Decocder Wine
+    = Decoder Wine
 
+想成這樣就明白了
+
+    (object2 
+        (<|) 
+        (object2 (<|) (succeed (+)) (succeed 1))
+        (succeed 2))
+    = Decoder number
+
+將兩個參數遂一推入(+)裡  
 總之就是curry  
 你也可以直接使用[elm-json-extra](http://package.elm-lang.org/packages/circuithub/elm-json-extra/2.2.1/Json-Decode-Extra)
