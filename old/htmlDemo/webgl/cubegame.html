@@ -1,0 +1,122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=BIG5">
+<title>Insert title here</title>
+<script src='../lib/jquery/jquery-1.6.4.min.js'></script>
+<script src="../lib/gameworks.lib/webgl-utils.js"></script>
+<script src='../lib/gameworks/com.gameworks.js'></script>
+<script src="../lib/gameworks/com.gameworks.debug.js"></script>
+<script src='../lib/gameworks/com.gameworks.device.js'></script>
+<script src='../lib/gameworks/com.gameworks.seqment.js'></script>
+<script src="../lib/gameworks/com.gameworks.util.js"></script>
+<script src="../lib/gameworks/com.gameworks.math.js"></script>
+<script src='../lib/gameworks/com.gameworks.go.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.mesh.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.shader.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.sample.js'></script>
+<script src="../lib/gameworks/com.gameworks.cube.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.alg.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.control.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.swapbomb.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.skill.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.viewer.js"></script>
+
+<script>
+
+jQuery(function(){
+	
+	var cubesize = 50
+	var stageViewer = new com.gameworks.cube.stage.viewer.SimpleCubeStageViewer().init({ size: cubesize })
+	var stageClass = com.gameworks.cube.stage.ext.skill.SkillCubeStage;
+	var stageCallbackClass = com.gameworks.cube.stage.ext.skill.SkillCubeStageCallback;
+	var stage = new stageClass().init({ 
+		w: 8, 
+		h: 8,
+		size: cubesize,
+		callback: com.gameworks.copy( 
+			new stageCallbackClass().init({ 
+				linkCount: 3, 
+				autoDropWhenInit: true, 
+				autoDrop: true,
+				newCubeList: 0 
+			}),
+			{
+				onDeleteCube: function( stage, cube ){
+					stageCallbackClass.prototype.onDeleteCube.call( this, stage, cube )
+					stageViewer.onDeleteCube( stage, cube )
+				},
+				onUpdateCube: function( stage, cube, elapsed ){
+					stageCallbackClass.prototype.onUpdateCube.call( this, stage, cube, elapsed )
+					stageViewer.onUpdateCube( stage, cube )
+				},
+				onNewCube: function( stage, cube ){
+					stageCallbackClass.prototype.onNewCube.call( this, stage, cube )
+					stageViewer.onNewCube( stage, cube )
+				}
+			}
+		)
+	})
+	var control = new com.gameworks.cube.control.SimpleControl().init({ 
+		checkPos: true, 
+		callback: {
+			onSwapCR: function( control, cr, cr2 ){
+				if( stage.swapWithRuntimeCR( cr, cr2 ) )
+					control.clear()
+			},
+			onTouchBegin: function( control, cr ){
+				
+			},
+			onTouchMove: function( control, cr ){
+				
+			}
+		}
+	})
+	
+	var hgl = com.gameworks.gl
+	var sample = new com.gameworks.gl.sample.SampleGame().init({
+		cw: 1024, ch: 768, zoom: 1, autoClearState: true
+	})
+	com.gameworks.device.bindTouchStart( sample.dom, function(e){
+		var cr = {}
+		var mx = e.touches[0].pageX
+		var my = e.touches[0].pageY
+		mx/= sample.zoom
+		my/= sample.zoom
+		stage.storeCRWithPosition( [mx, my], cr )
+		control.handleTouchBegin( cr )
+	})
+	com.gameworks.device.bindTouchMove( sample.dom, function(e){
+		var cr = {}
+		var mx = e.touches[0].pageX
+		var my = e.touches[0].pageY
+		mx/= sample.zoom
+		my/= sample.zoom
+		stage.storeCRWithPosition( [mx, my], cr )
+		control.handleTouchMove( cr )
+	})
+	com.gameworks.device.bindTouchEnd( sample.dom, function(e){
+		control.handleTouchEnd()
+	})
+	var tick = 0
+	function update(){
+		control.update()
+		stage.update( 33/1000 )
+		
+		sample.clearCanvas()
+		sample.begin2d()
+		stageViewer.draw( sample.shader, sample.plane, -25, -25 )
+	    ++tick
+	    setTimeout( arguments.callee, 33 )
+	}
+	update()
+	
+})
+
+</script>
+</head>
+<body>
+</body>
+</html>

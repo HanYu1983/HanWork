@@ -1,0 +1,74 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=BIG5">
+<title>Insert title here</title>
+<script src='../lib/three/Three.js'></script>
+<script src='../lib/jquery/jquery-1.6.4.min.js'></script>
+<script src="../lib/gameworks.lib/webgl-utils.js"></script>
+<script src='../lib/gameworks/com.gameworks.js'></script>
+<script src="../lib/gameworks/com.gameworks.debug.js"></script>
+<script src='../lib/gameworks/com.gameworks.device.js'></script>
+<script src='../lib/gameworks/com.gameworks.seqment.js'></script>
+<script src="../lib/gameworks/com.gameworks.util.js"></script>
+<script src="../lib/gameworks/com.gameworks.math.js"></script>
+<script src='../lib/gameworks/com.gameworks.go.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.mesh.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.shader.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.sample.js'></script>
+<script src="../lib/gameworks/com.gameworks.cube.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.alg.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.control.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.swapbomb.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.skill.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.viewer.js"></script>
+
+<script>
+
+jQuery(function(){
+	
+	var three = THREE
+	var hgl = com.gameworks.gl
+	var sample = new com.gameworks.gl.sample.SampleGame().init({
+		cw: 1024, ch: 768, zoom: 1, autoClearState: true
+	})
+	var obj = new three.Object3D
+	obj.useQuaternion = true
+	var obj2 = new three.Object3D
+	obj2.useQuaternion = true
+	obj2.position.set( 100, 0, 0 )
+	obj.add( obj2 )
+	
+	var rot = new three.Quaternion
+	rot.setFromEuler( new three.Vector3(0,0,1) )
+	var tick = 0
+	function update(){
+		obj2.quaternion.multiplySelf( rot )
+		obj2.updateMatrix()
+		
+		obj.position.addSelf( new three.Vector3(1,1,0) )
+		obj.quaternion.multiplySelf( rot )
+		obj.updateMatrix()
+		obj.updateMatrixWorld()
+		
+		obj.matrixWorld.translate( new three.Vector3( -50, -50, 0 ))
+		obj2.matrixWorld.translate( new three.Vector3( -25, -25, 0 ))
+		
+		sample.clearCanvas()
+		sample.begin2d()
+		sample.drawRect( obj.matrixWorld.elements, 100, 100, [1,1,0,1])
+		sample.drawRect( obj2.matrixWorld.elements, 50, 50, [1,0,1,1])
+	    ++tick
+	    setTimeout( arguments.callee, 33 )
+	}
+	update()
+	
+})
+
+</script>
+</head>
+<body>
+</body>
+</html>

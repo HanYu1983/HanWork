@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=BIG5">
+<title>Insert title here</title>
+<script src='../lib/three/Three.js'></script>
+<script src='../lib/jquery/jquery-1.6.4.min.js'></script>
+<script src="../lib/gameworks.lib/webgl-utils.js"></script>
+<script src='../lib/gameworks/com.gameworks.js'></script>
+<script src="../lib/gameworks/com.gameworks.debug.js"></script>
+<script src='../lib/gameworks/com.gameworks.device.js'></script>
+<script src='../lib/gameworks/com.gameworks.seqment.js'></script>
+<script src="../lib/gameworks/com.gameworks.util.js"></script>
+<script src="../lib/gameworks/com.gameworks.math.js"></script>
+<script src='../lib/gameworks/com.gameworks.go.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.mesh.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.shader.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.sample.js'></script>
+<script src="../lib/gameworks/com.gameworks.cube.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.alg.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.control.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.swapbomb.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.skill.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.viewer.js"></script>
+
+<script>
+
+jQuery(function(){
+	var three = THREE
+	var hgl = com.gameworks.gl
+	var mat4 = com.gameworks.math.mat4
+	var quat4 = com.gameworks.math.quat4
+	
+	var mgr = new com.gameworks.go.GameObjectManager().init()
+	var scene = mgr.createGameObject(0)
+	var go1 = mgr.createGameObject(1)
+	var go2 = mgr.createGameObject(2)
+	go2.transform.position.set( 50, 50, 0 )
+	
+	scene.transform.add( go1.transform )
+	go1.transform.add( go2.transform )
+	
+	var sample = new com.gameworks.gl.sample.SampleGame().init({cw: 1024, ch: 768, zoom: 1, autoClearState: true })
+	
+	var tick = 0
+	
+	var rot = new three.Quaternion
+	rot.setFromEuler( new three.Vector3(0,0,1) )
+	function update(){
+		
+		go1.transform.position.x += 1
+		go1.transform.position.y += 1
+		go1.transform.quaternion.multiplySelf( rot )
+		go1.transform.updateMatrix()
+		
+		go2.transform.quaternion.multiplySelf( rot )
+		go2.transform.updateMatrix()
+		
+		if( tick % 10 == 0 )
+		{
+			var bullet = mgr.createGameObject(3)
+			bullet.addComponent( 'life', new com.gameworks.go.Life().init({duration: 0.5}))
+			var global = go2.transform.matrixWorld
+			bullet.transform.position.copy( go2.transform.matrixWorld.getPosition() )
+			bullet.transform.updateMatrix()
+			scene.transform.add( bullet.transform )
+		}
+		for( var k in mgr.objs )
+		{
+			var o = mgr.objs[k]
+			if( o.type == 3 )
+			{
+				o.transform.position.x+=20
+				o.transform.updateMatrix()
+			}
+		}
+		scene.transform.updateMatrixWorld()
+		
+		sample.clearCanvas()
+		
+		var tmp = new three.Matrix4
+		for( var k in mgr.objs )
+		{
+			var o = mgr.objs[k]
+			tmp.copy( o.transform.matrixWorld )
+			if( o.type == 3 )
+			{
+				tmp.translate( new three.Vector3(-5,-5))
+				sample.drawRect( tmp.elements, 10, 10, [.5,.5,.4,1] )
+			}
+			else if( o.type == 2 )
+			{
+				tmp.translate( new three.Vector3(-25,-25))
+				sample.drawRect( tmp.elements, 50, 50, [0.5,.1,.4,1] )
+			}
+			else if( o.type == 1 )
+			{
+				tmp.translate( new three.Vector3(-100,-100))
+				sample.drawRect( tmp.elements, 200, 200, [0,.7,.4,1] )
+			}
+		}
+		
+	    mgr.update( 0.03 )
+	    ++tick
+	    setTimeout( arguments.callee, 33 )
+	}
+	update()
+	
+})
+
+</script>
+</head>
+<body>
+</body>
+</html>

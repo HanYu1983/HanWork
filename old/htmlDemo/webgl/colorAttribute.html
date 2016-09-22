@@ -1,0 +1,76 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=BIG5">
+<title>Insert title here</title>
+<script src='../lib/jquery/jquery-1.6.4.min.js'></script>
+<script src="../lib/gameworks.lib/webgl-utils.js"></script>
+<script src='../lib/gameworks/com.gameworks.js'></script>
+<script src="../lib/gameworks/com.gameworks.debug.js"></script>
+<script src='../lib/gameworks/com.gameworks.seqment.js'></script>
+<script src="../lib/gameworks/com.gameworks.util.js"></script>
+<script src="../lib/gameworks/com.gameworks.math.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.alg.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.control.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.swapbomb.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.skill.js"></script>
+<script src='../lib/gameworks/com.gameworks.gl.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.shader.js'></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.viewer.js"></script>
+<script>
+
+jQuery(function(){
+    var hgl = com.gameworks.gl
+	var gl = com.gameworks.gl.createGL( 'canvas' )
+	
+	var shaderLoader = new hgl.ShaderLoader()
+	hgl.createShaderProgramWithShaderLoader( gl, shaderLoader, 'shader-vs', 'shader-fs', {
+		onload: function( program ){
+			
+			var imesh = com.gameworks.gl.createMeshPlain( gl )
+			
+	        var loc_position = gl.getAttribLocation(program, "aVertexPosition");
+	        gl.enableVertexAttribArray(loc_position);
+	        var loc_color = gl.getAttribLocation(program, "aVertexColor");
+	        gl.enableVertexAttribArray(loc_color);
+
+	        imesh.bindColor( loc_color )
+	        imesh.bindVertex( loc_position )
+	       
+        	gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        	function drawScene() {
+                gl.viewport(0, 0, 300, 300);
+                gl.clear(gl.COLOR_BUFFER_BIT)
+                
+                gl.useProgram(program);
+				imesh.draw()
+            }
+        	drawScene()
+		}
+	})
+})
+</script>
+
+<script id='shader-fs' type='x-shader/x-fragment'>
+varying lowp vec4 vColor;
+void main(void) {
+	gl_FragColor = vColor;  
+} 
+</script>
+
+<script id='shader-vs' type='x-shader/x-vertex'>
+attribute vec3 aVertexPosition;  
+attribute vec4 aVertexColor;
+varying lowp vec4 vColor;
+void main(void) {  
+	gl_Position = vec4(aVertexPosition, 1.0);
+	vColor = aVertexColor;
+}  
+</script>
+</head>
+<body>
+<canvas id='canvas' width=300 height=300 ></canvas>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=BIG5">
+<title>Insert title here</title>
+<script src='../lib/jquery/jquery-1.6.4.min.js'></script>
+<script src="../lib/gameworks.lib/webgl-utils.js"></script>
+<script src='../lib/gameworks/com.gameworks.js'></script>
+<script src="../lib/gameworks/com.gameworks.debug.js"></script>
+<script src='../lib/gameworks/com.gameworks.seqment.js'></script>
+<script src="../lib/gameworks/com.gameworks.util.js"></script>
+<script src="../lib/gameworks/com.gameworks.math.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.alg.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.control.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.swapbomb.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.skill.js"></script>
+<script src='../lib/gameworks/com.gameworks.gl.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.mesh.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.shader.js'></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.viewer.js"></script>
+
+<script>
+
+jQuery(function(){
+	var hgl = com.gameworks.gl
+	var gl = hgl.createGL( 'canvas', {preserveDrawingBuffer: true} )
+	var math = com.gameworks.math
+	
+    var crateImage = new Image()
+    crateImage.onload = function () {
+		var textObj = hgl.createTextImage( 30, 20 )
+		var textTex = hgl.createTexture( gl, textObj.image )
+		
+    	var tex = hgl.createTexture( gl, crateImage )
+    	var imesh = hgl.createMeshPlain( gl )
+    	var shader = new hgl.shader.SimpleShader().init({gl: gl})
+    	shader.initAttributeAndUniformLocation()
+    	imesh.bindVertex( shader.getVertexLocation() )
+    	imesh.bindTex( shader.getTexLocation() )
+    
+    	math.mat4.makeRightMatrix2DProjection( 1024, 768, shader.state.projection )
+    	
+    	gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    	function drawScene(){
+            gl.viewport(0, 0, 1024, 768);
+            gl.clear(gl.COLOR_BUFFER_BIT)
+            
+            shader.state.tex = tex
+            math.mat4.scale( shader.state.transform, [500,500,1], shader.state.transform )
+	    	math.mat3.makeTextureRightMatrixWithSrcRect( 
+	    		crateImage.width, 
+	    		crateImage.height, 
+	    		{ x:50, y:0, width: 100, height: 100 },
+	    		shader.state.texTransform 
+	    	)
+            shader.bind()
+            imesh.draw()
+            
+            math.mat4.translate( shader.state.colorTransform, [0.5,0.2,1] )
+            var mat = math.mat4.create()
+            math.mat4.identity( mat )
+            math.mat4.translate( mat, [80, 60, 0 ])
+            
+            shader.state.tex = textTex
+            hgl.blendImage( gl, function(){
+            	math.mat4.identity( mat )
+                math.mat4.translate( mat, [80, 60, 0 ])
+            	hgl.drawText( shader, imesh, textObj, 'abc!@#$%123', 80, 60, mat )
+            	
+            	math.mat4.translate( mat, [80, 60, 0 ])
+            	hgl.drawText( shader, imesh, textObj, 'center', 80, 40, mat )
+            })
+        }
+    	drawScene()
+    }
+    crateImage.src = 'images/btn_checkin.png'
+    
+})
+
+</script>
+</head>
+<body>
+<canvas id='canvas' width=1024 height=768 ></canvas>
+</body>
+</html>

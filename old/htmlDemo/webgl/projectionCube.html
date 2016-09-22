@@ -1,0 +1,96 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=BIG5">
+<title>Insert title here</title>
+<script src='../lib/jquery/jquery-1.6.4.min.js'></script>
+<script src="../lib/gameworks.lib/webgl-utils.js"></script>
+<script src='../lib/gameworks/com.gameworks.js'></script>
+<script src="../lib/gameworks/com.gameworks.debug.js"></script>
+<script src='../lib/gameworks/com.gameworks.seqment.js'></script>
+<script src="../lib/gameworks/com.gameworks.util.js"></script>
+<script src="../lib/gameworks/com.gameworks.math.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.alg.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.control.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.swapbomb.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.skill.js"></script>
+<script src='../lib/gameworks/com.gameworks.gl.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.mesh.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.shader.js'></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.viewer.js"></script>
+
+<script>
+
+jQuery(function(){
+	var hgl = com.gameworks.gl
+	var gl = hgl.createGL( 'canvas', {preserveDrawingBuffer: true} )
+	var math = com.gameworks.math
+	
+    var crateImage = new Image()
+    crateImage.onload = function () {
+		var textObj = hgl.createTextImage( 30, 20 )
+		var textTex = hgl.createTexture( gl, textObj.image )
+		
+    	var tex = hgl.createTexture( gl, crateImage )
+    	var cube = hgl.mesh.createIndicesMeshCube( gl )
+    	var plane = hgl.createMeshPlain( gl )
+    	var shader = new hgl.shader.SimpleShader().init({gl: gl})
+    	shader.initAttributeAndUniformLocation()
+    	
+    	gl.clearColor(0.0, 0.0, 0.0, 1.0);
+		var tick = 0
+    	function drawScene(){
+            gl.viewport(0, 0, 1024, 768);
+            gl.clear( gl.COLOR_BUFFER_BIT| gl.DEPTH_BUFFER_BIT)
+            
+            gl.enable( gl.DEPTH_TEST )
+            shader.clearState()
+            shader.state.tex = tex
+            math.mat4.perspective(45, 1, 0.1, 100.0, shader.state.projection );
+            math.mat4.identity( shader.state.transform )
+            math.mat4.translate( shader.state.transform, [ 0, 0, -10 ] )
+            math.mat4.rotate( shader.state.transform, .1* tick, [1,1,0])
+            shader.bind()
+            cube.bindVertex( shader.getVertexLocation() )
+    		cube.bindTex( shader.getTexLocation() )
+            cube.draw()
+            
+            gl.disable( gl.DEPTH_TEST )
+            shader.clearState()
+            math.mat4.makeRightMatrix2DProjection( 1024, 768, shader.state.projection )
+            math.mat4.translate( shader.state.colorTransform, [0.5,0.2,1] )
+            shader.state.tex = textTex
+            plane.bindVertex( shader.getVertexLocation() )
+        	plane.bindTex( shader.getTexLocation() )
+        	
+        	var mat = math.mat4.create()
+            math.mat4.identity( mat )
+            math.mat4.translate( mat, [80, 60, 0 ])
+            hgl.blendImage( gl, function(){
+            	math.mat4.identity( mat )
+                math.mat4.translate( mat, [80, 60, 0 ])
+            	hgl.drawText( shader, plane, textObj, 'abc!@#$%123', 80, 60, mat )
+            	
+            	math.mat4.translate( mat, [300, 300, 0 ])
+            	math.mat4.rotate( mat, tick* .1, [0, 0, 1])
+            	math.mat4.translate( mat, [-120, -40, 0 ])
+            	hgl.drawText( shader, plane, textObj, 'center', 80, 40, mat )
+            })
+            
+            setTimeout( arguments.callee, 33 )
+            ++tick
+        }
+    	drawScene()
+    }
+    crateImage.src = 'images/btn_checkin.png'
+    
+})
+
+</script>
+</head>
+<body>
+<canvas id='canvas' width=1024 height=768 ></canvas>
+</body>
+</html>

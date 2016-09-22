@@ -1,0 +1,229 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+
+<style>
+#canvas{
+border: 1px solid gray;
+}
+</style>
+
+<script src='../lib/jquery/jquery-1.6.4.min.js'></script>
+<script src="../lib/gameworks.lib/webgl-utils.js"></script>
+<script src='../lib/gameworks/com.gameworks.js'></script>
+<script src="../lib/gameworks/com.gameworks.debug.js"></script>
+<script src='../lib/gameworks/com.gameworks.seqment.js'></script>
+<script src="../lib/gameworks/com.gameworks.util.js"></script>
+<script src="../lib/gameworks/com.gameworks.math.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.alg.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.control.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.swapbomb.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.skill.js"></script>
+<script src='../lib/gameworks/com.gameworks.gl.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.mesh.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.shader.js'></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.viewer.js"></script>
+
+<script id='shader-fs' type='x-shader/x-fragment'>
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+   // Default precision
+   precision highp float;
+#else
+   precision mediump float;
+#endif
+
+uniform sampler2D baseMap;
+uniform sampler2D bumpMap;
+
+varying vec2 Texcoord;
+varying vec3 ViewDirection;
+varying vec3 LightDirection;
+
+void main( void )
+{
+   vec3  fvLightDirection = normalize( LightDirection );
+   vec3  fvNormal         = normalize( ( texture2D( bumpMap, Texcoord ).xyz * 2.0 ) - 1.0 );
+   float fNDotL           = dot( fvNormal, fvLightDirection ); 
+   
+   vec3  fvReflection     = normalize( ( ( 2.0 * fvNormal ) * fNDotL ) - fvLightDirection ); 
+   vec3  fvViewDirection  = normalize( ViewDirection );
+   float fRDotV           = max( 0.0, dot( fvReflection, fvViewDirection ) );
+   
+   vec4  fvBaseColor      = texture2D( baseMap, Texcoord );
+   
+   vec4  fvTotalAmbient   = vec4(0.5,0.5,0.5,1) * fvBaseColor; 
+   vec4  fvTotalDiffuse   = vec4(0.7,0.7,0.7,1) * fNDotL * fvBaseColor; 
+   vec4  fvTotalSpecular  = vec4(1,1,1,1) * ( pow( fRDotV, 25.0 ) );
+  
+   gl_FragColor = ( fvTotalAmbient + fvTotalDiffuse + fvTotalSpecular );
+       
+}
+</script>
+
+<script id='shader-vs' type='x-shader/x-vertex'>
+uniform mat4 matViewProjectionInverse;
+uniform mat4 matViewProjection;
+uniform vec3 fvLightPosition;
+
+varying vec2 Texcoord;
+varying vec3 ViewDirection;
+varying vec3 LightDirection;
+
+attribute vec4 rm_Vertex;
+attribute vec2 rm_TexCoord0;
+   
+void main( void )
+{
+	gl_Position = matViewProjection * rm_Vertex;
+   Texcoord    = rm_TexCoord0.xy;
+
+   vec4 fvObjectPosition = matViewProjection * rm_Vertex;
+
+   vec3 fvViewDirection  = vec3(0,0,0) - fvObjectPosition.xyz;
+   vec3 fvLightDirection = fvLightPosition - fvObjectPosition.xyz;
+ 
+   vec3 fvNormal         = (vec4(0,0,1,1) * matViewProjectionInverse).xyz;
+   vec3 fvBinormal       = (vec4(1,0,0,1) * matViewProjectionInverse).xyz;
+   vec3 fvTangent        = (vec4(0,1,0,1) * matViewProjectionInverse).xyz;
+ 
+   ViewDirection.x  = dot( fvTangent, fvViewDirection );
+   ViewDirection.y  = dot( fvBinormal, fvViewDirection );
+   ViewDirection.z  = dot( fvNormal, fvViewDirection );
+
+   LightDirection.x  = dot( fvTangent, fvLightDirection.xyz );
+   LightDirection.y  = dot( fvBinormal, fvLightDirection.xyz );
+   LightDirection.z  = dot( fvNormal, fvLightDirection.xyz );
+   
+}
+</script>
+
+
+<script type="text/javascript">
+
+    jQuery(function(){
+		var hgl = com.gameworks.gl
+		var gl = hgl.createGL( 'canvas', {preserveDrawingBuffer: true} )
+		var math = com.gameworks.math
+		var mat4 = math.mat4
+		var vec3 = math.vec3
+		
+    	var shaderLoader = new hgl.ShaderLoader()
+		hgl.createShaderProgramWithShaderLoader( gl, shaderLoader, 'shader-vs', 'shader-fs', {
+			onload: function( program ){
+				
+		        var loc_position = gl.getAttribLocation(program, "rm_Vertex");
+		        gl.enableVertexAttribArray(loc_position);
+		        var loc_texCoord = gl.getAttribLocation(program, "rm_TexCoord0");
+		        gl.enableVertexAttribArray(loc_texCoord);
+		        
+		        var imesh = hgl.createMeshPlain( gl )
+		        imesh.bindVertex( loc_position )
+		        imesh.bindTex( loc_texCoord )
+		        
+		        var u_baseMap = gl.getUniformLocation(program, "baseMap");
+		        var u_bumpMap = gl.getUniformLocation(program, "bumpMap");
+		        var u_matViewProjectionInverse = gl.getUniformLocation(program, "matViewProjectionInverse");
+		        var u_matViewProjection = gl.getUniformLocation(program, "matViewProjection");
+		        var u_fvLightPosition = gl.getUniformLocation(program, "fvLightPosition");
+		       
+		        var mvp = mat4.create()
+		        var mvpi = mat4.create()
+		        mat4.identity( mvp )
+		        mat4.identity( mvpi )
+		        
+		        var lightPos = vec3.create()
+		        lightPos[0] = 100
+		        
+		        
+		        var m_p = mat4.create()
+		        var m_m = mat4.create()
+		        mat4.identity( m_p )
+		        mat4.perspective(45, 1024/768, 0.1, 100.0, m_p);
+		        
+		        mat4.identity( m_m )
+		        mat4.translate( m_m, [0,0,-1])
+		        mvp = mat4.multiply( m_p, m_m )
+		        
+		        mat4.set( mvp, mvpi )
+		        mat4.inverse( mvpi )
+		        
+		        
+		    	var shader = new hgl.shader.SimpleShader().init({gl: gl})
+		    	shader.initAttributeAndUniformLocation()
+				
+				mat4.makeRightMatrix2DProjection( 1024, 768, shader.state.projection )
+				
+		        var imesh2 = hgl.createMeshPlain( gl )
+		    	imesh2.bindVertex( shader.getVertexLocation() )
+		    	imesh2.bindTex( shader.getTexLocation() )
+		        
+		        var baseImage = new Image()
+		        baseImage.onload = startLoadBump
+		        baseImage.src = 'images/Fieldstone.png'
+		        
+		        function startLoadBump(){
+		        	var crateImage = new Image()
+			        crateImage.onload = function () {
+		        		var base = hgl.createTexture( gl, baseImage )
+			        	var bump = hgl.createTexture( gl, crateImage )
+			        	
+			        	var tick = 0
+			        	gl.clearColor(0.0, 0.0, 0.0, 1.0);
+			        	function drawScene() {
+			                gl.viewport(0, 0, 1024, 768);
+			                gl.clear(gl.COLOR_BUFFER_BIT)
+			   
+			                gl.useProgram(program);
+			                
+			                gl.uniformMatrix4fv( u_matViewProjection, false, mvp)
+					        gl.uniformMatrix4fv( u_matViewProjectionInverse, false, mvpi)
+					        gl.uniform3fv( u_fvLightPosition, lightPos )
+					        hgl.bindTexture2D( gl, base, 0, u_baseMap );
+			        		hgl.bindTexture2D( gl, bump, 1, u_bumpMap );
+			                imesh.draw()
+			                
+			                gl.useProgram( shader.program )
+			                //shader.state.imageSize = new Float32Array([100,100])
+			                shader.state.tex = bump
+			                shader.bind()
+			                imesh2.draw()
+			                
+			                
+			                mat4.identity( m_m )
+			                mat4.rotate( m_m, 0.01, [0,0,1])
+					        //mat4.translate( m_m, [-0.001,-0.001,0])
+					        mvp = mat4.multiply( m_p, m_m )
+					        mat4.set( mvp, mvpi )
+			        		mat4.inverse( mvpi )
+			      			//lightPos[0] = Math.sin( tick/100 )*100
+			        		
+			                setTimeout( arguments.callee, 1000/60 )
+			   				++tick
+			            }
+			        	drawScene()
+			        }
+			        crateImage.src = 'images/FieldstoneBumpDOT3.png'
+		        }
+		        
+		        
+	        	
+		        
+			}
+		})
+    })
+
+</script>
+
+</head>
+
+
+<body>
+	<canvas id='canvas' width=1024 height=768 ></canvas>
+</body>
+
+
+</html>

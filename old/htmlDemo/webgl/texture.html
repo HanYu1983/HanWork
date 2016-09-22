@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=BIG5">
+<title>Insert title here</title>
+<script src='../lib/jquery/jquery-1.6.4.min.js'></script>
+<script src="../lib/gameworks.lib/webgl-utils.js"></script>
+<script src='../lib/gameworks/com.gameworks.js'></script>
+<script src="../lib/gameworks/com.gameworks.debug.js"></script>
+<script src='../lib/gameworks/com.gameworks.seqment.js'></script>
+<script src="../lib/gameworks/com.gameworks.util.js"></script>
+<script src="../lib/gameworks/com.gameworks.math.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.alg.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.control.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.swapbomb.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.skill.js"></script>
+<script src='../lib/gameworks/com.gameworks.gl.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.shader.js'></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.viewer.js"></script>
+
+
+<script>
+
+jQuery(function(){
+	var hgl = com.gameworks.gl
+	var gl = hgl.createGL( 'canvas', {preserveDrawingBuffer: true} )
+	var math = com.gameworks.math
+	
+	
+    var crateImage = new Image()
+    crateImage.onload = function () {
+    	var tex = hgl.createTexture( gl, crateImage )
+    	var imesh = hgl.createMeshPlain( gl )
+    	var shader = new hgl.shader.SimpleShader().init({gl: gl})
+    	shader.initAttributeAndUniformLocation()
+    	imesh.bindVertex( shader.getVertexLocation() )
+    	imesh.bindTex( shader.getTexLocation() )
+    	
+    	gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    	function drawScene(){
+            gl.viewport(0, 0, 300, 300);
+            gl.clear(gl.COLOR_BUFFER_BIT)
+            shader.state.tex = tex
+            shader.bind()
+            imesh.draw()
+        }
+    	drawScene()
+    }
+    crateImage.src = 'resources/capman/logo.png'
+    
+})
+
+</script>
+
+<script id='shader-fs' type='x-shader/x-fragment'>
+varying lowp vec4 vColor;
+void main(void) {
+	gl_FragColor = vColor;  
+} 
+</script>
+
+<script id='shader-vs' type='x-shader/x-vertex'>
+attribute vec3 aVertexPosition;  
+attribute vec4 aVertexColor;
+varying lowp vec4 vColor;
+void main(void) {  
+	gl_Position = vec4(aVertexPosition, 1.0);
+	vColor = aVertexColor;
+}  
+</script>
+</head>
+<body>
+<canvas id='canvas' width=300 height=300 ></canvas>
+</body>
+</html>

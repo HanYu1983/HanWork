@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=BIG5">
+<title>Insert title here</title>
+<script src='../lib/jquery/jquery-1.6.4.min.js'></script>
+<script src="../lib/gameworks.lib/webgl-utils.js"></script>
+<script src='../lib/gameworks/com.gameworks.js'></script>
+<script src="../lib/gameworks/com.gameworks.debug.js"></script>
+<script src='../lib/gameworks/com.gameworks.device.js'></script>
+<script src='../lib/gameworks/com.gameworks.seqment.js'></script>
+<script src="../lib/gameworks/com.gameworks.util.js"></script>
+<script src="../lib/gameworks/com.gameworks.math.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.alg.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.control.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.swapbomb.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.skill.js"></script>
+<script src='../lib/gameworks/com.gameworks.gl.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.loader.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.mesh.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.shader.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.flash.js'></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.viewer.js"></script>
+
+<script>
+
+jQuery(function(){
+	var hgl = com.gameworks.gl
+	var gl = hgl.createGL( 'canvas', {preserveDrawingBuffer: true} )
+	var math = com.gameworks.math
+	
+	var plane = hgl.createMeshPlain( gl )
+	var shader = new hgl.shader.SimpleShader().init({gl: gl})
+	shader.initAttributeAndUniformLocation()
+        	
+	var drawer = new hgl.flash.Drawer().init({ gl: gl, mesh: plane, shader: shader })
+   	drawer.loadDescription('images/testAvatar.txt', function(){
+   		drawer.loadImage( 'images', function(){
+   			var len = drawer.description.movieClip['mid1334657609776'].frame.length
+   			var tick = 0
+   			
+        	function drawScene(){
+   	            gl.viewport(0, 0, 1024, 768);
+   	            gl.clear( gl.COLOR_BUFFER_BIT)
+   	            
+   	            shader.clearState()
+   	            math.mat4.makeRightMatrix2DProjection( 1024, 768, shader.state.projection )
+   	        	plane.bindVertex( shader.getVertexLocation() )
+   	        	plane.bindTex( shader.getTexLocation() )
+   	        	var global = math.mat4.create()
+   	        	math.mat4.identity( global )
+   	        	hgl.blendImage( gl, function(){
+   	        		math.mat4.translate( global, [100, 300, 0 ] )
+   	        		drawer.drawMovieClip('mid1334657609776', tick% len, global )
+   	        		
+   	        		math.mat4.translate( global, [300, 120, 0 ] )
+   	        		math.mat4.scale( global, [2,2,1])
+   	        		drawer.drawMovieClip('mid1334657609776', tick% len, global )
+   	        		
+   	        		math.mat4.scale( global, [-1,1,1])
+   	        		drawer.drawMovieClip('mid1334657609776', tick% len, global )
+   	        	})
+   	        	setTimeout( arguments.callee, 33 )
+   	        	++tick
+   	        }
+   	    	drawScene()
+   		})
+   	})
+})
+
+</script>
+</head>
+<body>
+<canvas id='canvas' width=1024 height=768 ></canvas>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=BIG5">
+<title>Insert title here</title>
+<script src='../lib/three/Three.js'></script>
+<script src='../lib/jquery/jquery-1.6.4.min.js'></script>
+<script src="../lib/gameworks.lib/webgl-utils.js"></script>
+<script src='../lib/gameworks/com.gameworks.js'></script>
+<script src='../lib/gameworks/com.gameworks.three.js'></script>
+<script src="../lib/gameworks/com.gameworks.debug.js"></script>
+<script src='../lib/gameworks/com.gameworks.device.js'></script>
+<script src='../lib/gameworks/com.gameworks.seqment.js'></script>
+<script src="../lib/gameworks/com.gameworks.util.js"></script>
+<script src="../lib/gameworks/com.gameworks.math.js"></script>
+<script src='../lib/gameworks/com.gameworks.go.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.mesh.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.shader.js'></script>
+<script src='../lib/gameworks/com.gameworks.gl.sample.js'></script>
+<script src="../lib/gameworks/com.gameworks.cube.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.alg.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.control.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.swapbomb.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.ext.skill.js"></script>
+<script src="../lib/gameworks/com.gameworks.cube.stage.viewer.js"></script>
+
+<script>
+
+jQuery(function(){
+	var three = THREE
+	var hgl = com.gameworks.gl
+	var sample = new hgl.sample.SampleGame().init({
+		cw: 1024, ch: 768, zoom: 1, autoClearState: true 
+	})
+	
+	var scene = new three.Object3D
+	var g1 = new three.Object3D
+	g1.useQuaternion = true
+	
+	var g2 = new three.Object3D
+	g1.useQuaternion = true
+	g1.position.set( 0, 700, 0 )
+	g2.position.set( 300, 300, 0 )
+	scene.add( g1 )
+	scene.add( g2 )
+	scene.updateMatrixWorld()
+	
+	
+	var mx=0, my=0
+	com.gameworks.device.bindTouchMove( sample.dom, function(e){
+		var cr = {}
+		var tmx = e.touches[0].pageX
+		var tmy = e.touches[0].pageY
+		tmx/= sample.zoom
+		tmy/= sample.zoom
+		mx= tmx, my = tmy
+		
+	})
+	com.gameworks.device.bindTouchStart( sample.dom, function(e){
+		
+	})
+	com.gameworks.device.bindTouchEnd( sample.dom, function(e){
+		
+	})
+	
+	var tex = null
+	var img =new Image
+	img.onload = function(){
+		tex = hgl.createTexture( sample.gl, this )
+	}
+	img.src = 'images/btn_checkin.png'
+	
+	var objs = []
+	objs.push( g1 )
+	objs.push( g2 )
+	var tick = 0
+	function update(){
+		// 兩種旋轉的方法 //
+		var dirMat = com.gameworks.three.lookAtFor2d( 
+			new three.Matrix4, 
+			g1.matrixWorld.getPosition().clone(), 
+			g2.matrixWorld.getPosition().clone() 
+		)
+		var quat1 = new three.Quaternion().setFromRotationMatrix( g1.matrixWorld )
+		var quat2 = new three.Quaternion().setFromRotationMatrix( dirMat )
+		if( false )
+		{	// 直接指定方向 //
+			var quat3 = three.Quaternion.slerp( quat1, quat2, new three.Quaternion, 1 )
+			g1.quaternion.copy( quat3 )
+		}
+		else
+		{	// 計算角度差後累加 //
+			var d = com.gameworks.three.quatSub( quat1, quat2 )
+			var little = com.gameworks.three.quatScale( d, .2 )
+			g1.quaternion.multiplySelf( little )
+		}
+		g1.position.set( mx, my, 0 )
+		scene.updateMatrixWorld()
+		
+		sample.clearCanvas()
+		var tmp = new three.Matrix4
+		for( var i in objs )
+		{
+			var go = objs[i]
+			tmp.copy( go.matrixWorld )
+			tmp.translate( new three.Vector3( -150, -75, 0 ) )
+			if( tex )
+			{
+				hgl.blendImage( sample.gl, function(){
+					sample.drawTexture( tex, tmp.elements, 300, 150 )
+				})
+			}
+			else
+				sample.drawRect( tmp.elements, 300, 150, [0,.7,.4,1] )
+		}
+		var m = new three.Matrix4
+		m.translate( new three.Vector3(0,0,0) )
+		hgl.blendImage( sample.gl, function(){
+			sample.drawText( 'drag mouse to move', m.elements, 50, 40, [1,1,1,1])
+		})
+	    ++tick
+	    setTimeout( arguments.callee, 33 )
+	}
+	update()
+	
+})
+</script>
+</head>
+<body style='margin:0'>
+</body>
+</html>
