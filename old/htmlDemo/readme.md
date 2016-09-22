@@ -1,7 +1,7 @@
 # Html Demo
 
 這裡示範了比較大型的javascript專案  
-示範了如何用js實現namespace、與繼承等概念
+示範了如何用js實現名稱空間與繼承等概念
 
 ## javascript的繼承
 最簡單的寫法為
@@ -12,10 +12,12 @@
         A.call(this)
         this.newAttribute = 0
     }
-    A.prototype = {
+    B.prototype = {
         __proto__ : A.prototype,
         newMethod: function(){}
     }
+    
+    var b = new B
 
 但程式用使用copy
 
