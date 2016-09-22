@@ -6,9 +6,11 @@
 1. [Google App Engine基本使用](appengine/)
 
 ## 前朝遺臣
-1. [Python Demo](python/demo/)
-1. [跑跑羊部分原碼ObjC++](objc++/SheepRunRun/)
-
+1. [Python Demo](old/pythongamedemo/)
+1. [跑跑羊部分原碼ObjC++](old/SheepRunRun/)
+1. 退火演算法[Scala解養魚問題](old/houseq.scala)
+1. 退火演算法[Clojure解養魚問題](old/houseq.clj)
+1. [Scala實做Astar+四元樹](old/scalaAstar)
 ## 特別記念
 
 [三國鋼彈](spec/)
