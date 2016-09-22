@@ -39,7 +39,7 @@ object Astar {
               // 只須要比較成本，不須要比較估計成本
               // 因為同樣一個點計算出來的估計成本一樣
               if (has.cost > cost)
-                // 將這個點直接列表，並將原有的點移除
+                // 將這個點加入列表，並將原有的點移除
                 Node(nextId, cost, costFunc(nextId, goal, false), nextId :: cur.path) :: nopen.filterNot(elm => elm == has)
               else
                 nopen
