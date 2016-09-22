@@ -19,7 +19,7 @@
     
     var b = new B
 
-但程式用使用copy
+但程式中使用copy
 
 	function copy( target, obj ){
 		for( var k in obj )
@@ -34,3 +34,9 @@
 ## 運行
 1. 將htmlDemo整包丟到服務靜態檔案的環境
 1. 打開browser並輸入```localhost:8080/htmlDemo/demo.html```
+
+## 比較重要的Demo
+
+1. 方塊遊戲引擎。還不夠泛用化，距離沒有使用虛擬座標。使用了繼承也不是挺好：cubegame.html
+1. flash輸出的動畫轉成webgl：flashDrawer.html
+1. normalmap.html
