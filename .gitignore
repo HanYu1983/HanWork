@@ -4,3 +4,4 @@ doc/
 elm-stuff/
 github.com/
 *.pyc
+pkg/
