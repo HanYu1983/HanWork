@@ -124,6 +124,8 @@ func ReadMulti(ctx appengine.Context, users []User) ([]User, error) {
 	// 注意
 	// 這裡給的dst參數(users)不需要加上&
 	// 這和Query的GetAll不一樣，請參照DisplayNameQuery
+	// 放進來的Array size必須和keys的長度一樣
+	// 可以像這個宣告 make([]User, len(keys))
 	err := datastore.GetMulti(ctx, keys, users)
 	return users, err
 }
