@@ -28,6 +28,7 @@ func init() {
 	http.HandleFunc("/go/cardgame/goal", cg.GetGoalHttp)
 	http.HandleFunc("/go/cardgame/goal/dep", cg.GetDependsGoal)
 	http.HandleFunc("/go/cardgame/solve", cg.SolveGoalHttp)
+	http.HandleFunc("/go/cardgame/step", cg.StepGoalHttp)
 }
 
 func SayHi(w http.ResponseWriter, r *http.Request) {

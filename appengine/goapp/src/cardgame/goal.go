@@ -74,7 +74,13 @@ func GetDependGoal(ctx appengine.Context, gameID string, goal Goal) (Goal, bool,
 
 func GetIncompleteGoal(ctx appengine.Context, gameID string, user string) ([]Goal, error) {
 	var err error
-	var goals []Goal
+	// datastore的GetAll的回傳如果沒有半個row
+	// 則goals不會被影響
+	// 意思是說若var goals []Goal的初值為nil
+	// GetAll之後也會是nil
+	// 這樣前台處理會比較麻煩
+	// 所以先給goals初值為空slice
+	goals := []Goal{}
 	var keys []*datastore.Key
 	q := datastore.NewQuery("Goal").Ancestor(GameKey(ctx, gameID)).Filter("Completed =", false)
 	if user != "" {

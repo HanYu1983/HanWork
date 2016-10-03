@@ -157,7 +157,7 @@ func HasCardInStack(ctx appengine.Context, game Game, stackName string, card Car
 		return -1
 	}
 	for idx, c := range game.CardStack[has].Card {
-		if c == card {
+		if c.ID == card.ID {
 			return idx
 		}
 	}

@@ -85,6 +85,10 @@ func InitGameHttp(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return err
 		}
+		game, err = CreateCardStack(ctx, game, "common-stack", "")
+		if err != nil {
+			return err
+		}
 		game, err = AddCardTo(ctx, game, kd0, "A-hand")
 		if err != nil {
 			return err
@@ -113,7 +117,7 @@ func InitGameHttp(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
-		_, err = CreateGoal(ctx, game.ID, Goal{Description: "drop all selected card", Depends: []int64{g1.ID, g2.ID}})
+		_, err = CreateGoal(ctx, game.ID, Goal{User: "sys", Description: "drop all selected card", Depends: []int64{g1.ID, g2.ID}})
 		if err != nil {
 			return err
 		}
@@ -230,7 +234,77 @@ func HandleSolveError(ctx appengine.Context, gameId string, goalId int64, result
 	}
 	if goals[0].Description == "select {0} cards" {
 		// TODO 判斷式balabala
-		return nil
+		return CompleteGoal(ctx, gameId, goalId, results)
 	}
-	return CompleteGoal(ctx, gameId, goalId, results)
+	return nil
+}
+
+func StepGoalHttp(w http.ResponseWriter, r *http.Request) {
+	defer Recover(w)
+	ctx := appengine.NewContext(r)
+	r.ParseForm()
+	if len(r.Form["game"]) == 0 {
+		panic("need game")
+	}
+	gameID := r.Form["game"][0]
+
+	var game Game
+	var err error
+	option := datastore.TransactionOptions{
+		Attempts: 3,
+	}
+	err = datastore.RunInTransaction(ctx, func(ctx appengine.Context) error {
+		var err error
+		var goals []Goal
+		game, err = LoadGame(ctx, gameID)
+		if err != nil {
+			return err
+		}
+		goals, err = GetIncompleteGoal(ctx, gameID, "sys")
+		if err != nil {
+			return err
+		}
+		if len(goals) == 0 {
+			return nil
+		}
+		var goal Goal
+		var has bool
+		goal, has, err = GetDependGoal(ctx, gameID, goals[0])
+		if has {
+			switch goal.Description {
+			case "drop all selected card":
+				goals, err = GetGoals(ctx, gameID, goal.Depends)
+				if err != nil {
+					return err
+				}
+				playerAResult := goals[0].Results
+				playerBResult := goals[1].Results
+
+				game, err = MoveCardTo(ctx, game, Card{ID: playerAResult[0]}, "A-hand", "common-stack", 0)
+				if err != nil {
+					return err
+				}
+				game, err = MoveCardTo(ctx, game, Card{ID: playerAResult[1]}, "A-hand", "common-stack", 0)
+				if err != nil {
+					return err
+				}
+				game, err = MoveCardTo(ctx, game, Card{ID: playerBResult[0]}, "B-hand", "common-stack", 0)
+				if err != nil {
+					return err
+				}
+				game, err = MoveCardTo(ctx, game, Card{ID: playerBResult[1]}, "B-hand", "common-stack", 0)
+				if err != nil {
+					return err
+				}
+				game, err = SaveGame(ctx, game)
+				if err != nil {
+					return err
+				}
+				CompleteGoal(ctx, gameID, goal.ID, nil)
+				break
+			}
+		}
+		return nil
+	}, &option)
+	Json(w, game, err)
 }
