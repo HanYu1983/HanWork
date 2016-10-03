@@ -77,6 +77,14 @@ func InitGameHttp(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return err
 		}
+		kd4, err := CreateCard(ctx, game, "KD-4")
+		if err != nil {
+			return err
+		}
+		kd5, err := CreateCard(ctx, game, "KD-5")
+		if err != nil {
+			return err
+		}
 		game, err = CreateCardStack(ctx, game, "A-hand", "hand")
 		if err != nil {
 			return err
@@ -97,11 +105,19 @@ func InitGameHttp(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return err
 		}
-		game, err = AddCardTo(ctx, game, kd2, "B-hand")
+		game, err = AddCardTo(ctx, game, kd2, "A-hand")
 		if err != nil {
 			return err
 		}
 		game, err = AddCardTo(ctx, game, kd3, "B-hand")
+		if err != nil {
+			return err
+		}
+		game, err = AddCardTo(ctx, game, kd4, "B-hand")
+		if err != nil {
+			return err
+		}
+		game, err = AddCardTo(ctx, game, kd5, "B-hand")
 		if err != nil {
 			return err
 		}
