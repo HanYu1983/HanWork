@@ -1,6 +1,7 @@
 package hello
 
 import (
+	cg "cardgame"
 	"fmt"
 	"net/http"
 	channel "tur/channel"
@@ -21,6 +22,12 @@ func init() {
 	// 即時訊息傾聽事件
 	http.HandleFunc("/_ah/channel/connected/", channel.OnChannelConnected)
 	http.HandleFunc("/_ah/channel/disconnected/", channel.OnChannelDisconnected)
+
+	// cardgame
+	http.HandleFunc("/go/cardgame/init", cg.InitGameHttp)
+	http.HandleFunc("/go/cardgame/goal", cg.GetGoalHttp)
+	http.HandleFunc("/go/cardgame/goal/dep", cg.GetDependsGoal)
+	http.HandleFunc("/go/cardgame/solve", cg.SolveGoalHttp)
 }
 
 func SayHi(w http.ResponseWriter, r *http.Request) {

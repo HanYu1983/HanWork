@@ -8,14 +8,15 @@ import (
 )
 
 type Card struct {
-	ID    int
-	Ref   int
+	ID    int64
+	Ref   string
 	Face  int
 	Owner string
 }
 
 type CardStack struct {
 	ID   string
+	Type string
 	Card []Card
 }
 
@@ -38,10 +39,6 @@ var (
 	ErrCardNotExist          = errors.New("card not exist")
 )
 
-func GameKey(ctx appengine.Context) *datastore.Key {
-	return datastore.NewKey(ctx, "Root", "Game", 0, nil)
-}
-
 // datastore直接存struct會有很多限制
 // 所以要先轉成json string
 // GameWrapper單純用來承載
@@ -56,14 +53,14 @@ func SaveGame(ctx appengine.Context, game Game) (Game, error) {
 	if err != nil {
 		return game, err
 	}
-	key := datastore.NewKey(ctx, "Game", game.ID, 0, GameKey(ctx))
+	key := GameKey(ctx, game.ID)
 	// 存入GameWrapper
 	_, err = datastore.Put(ctx, key, &GameWrapper{Bytes: bytes})
 	return game, err
 }
 
 func LoadGame(ctx appengine.Context, gameID string) (Game, error) {
-	key := datastore.NewKey(ctx, "Game", gameID, 0, GameKey(ctx))
+	key := GameKey(ctx, gameID)
 	var err error
 	var wrapper GameWrapper
 	err = datastore.Get(ctx, key, &wrapper)
@@ -85,7 +82,7 @@ func CreateGame(ctx appengine.Context, id string) (Game, error) {
 
 func DefPhase(ctx appengine.Context, game Game, phase []string) (Game, error) {
 	game.Phase = phase
-	return SaveGame(ctx, game)
+	return game, nil
 }
 
 func HasPhase(ctx appengine.Context, game Game, phase string) int {
@@ -100,13 +97,13 @@ func HasPhase(ctx appengine.Context, game Game, phase string) int {
 func JumpToPhase(ctx appengine.Context, game Game, phase string, phaseIdx int) (Game, error) {
 	if phaseIdx != -1 {
 		game.CurrentPhase = phaseIdx % len(game.Phase)
-		return SaveGame(ctx, game)
+		return game, nil
 	}
 
 	idx := HasPhase(ctx, game, phase)
 	if idx != -1 {
 		game.CurrentPhase = idx
-		return SaveGame(ctx, game)
+		return game, nil
 	}
 
 	return game, ErrPhaseNotExist
@@ -121,17 +118,27 @@ func HasCardStack(ctx appengine.Context, game Game, stackName string) int {
 	return -1
 }
 
-func CreateCard(ctx appengine.Context, ref int) (Card, error) {
-	return Card{ID: 0, Ref: ref}, nil
+// 為了區分不同一個牌局的卡牌
+// 必須將卡牌全部存在所屬game的主鍵之下
+func CreateCard(ctx appengine.Context, game Game, ref string) (Card, error) {
+	cardkey := datastore.NewIncompleteKey(ctx, "Card", GameKey(ctx, game.ID))
+	card := Card{Ref: ref}
+	var err error
+	updatedKey, err := datastore.Put(ctx, cardkey, &card)
+	if err != nil {
+		return Card{}, err
+	}
+	card.ID = updatedKey.IntID()
+	return card, nil
 }
 
-func CreateCardStack(ctx appengine.Context, game Game, stackName string) (Game, error) {
+func CreateCardStack(ctx appengine.Context, game Game, stackName string, stackType string) (Game, error) {
 	has := HasCardStack(ctx, game, stackName)
 	if has != -1 {
 		return game, ErrCardStackAlreadyExist
 	}
-	game.CardStack = append(game.CardStack, CardStack{ID: stackName, Card: []Card{}})
-	return SaveGame(ctx, game)
+	game.CardStack = append(game.CardStack, CardStack{ID: stackName, Type: stackType, Card: []Card{}})
+	return game, nil
 }
 
 func AddCardTo(ctx appengine.Context, game Game, card Card, stackName string) (Game, error) {
@@ -142,7 +149,7 @@ func AddCardTo(ctx appengine.Context, game Game, card Card, stackName string) (G
 	targetCardStack := game.CardStack[has]
 	targetCardStack.Card = append(targetCardStack.Card, card)
 	game.CardStack[has] = targetCardStack
-	return SaveGame(ctx, game)
+	return game, nil
 }
 
 func HasCardInStack(ctx appengine.Context, game Game, stackName string, card Card) int {
@@ -191,5 +198,5 @@ func MoveCardTo(ctx appengine.Context, game Game, card Card, fromStackName strin
 
 	game.CardStack[hasFrom] = fromStack
 	game.CardStack[hasTo] = toStack
-	return SaveGame(ctx, game)
+	return game, nil
 }

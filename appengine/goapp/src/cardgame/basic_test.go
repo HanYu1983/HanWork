@@ -45,13 +45,13 @@ func TestBasic(t *testing.T) {
 	}
 
 	t.Log("建立牌堆john-drawStack")
-	game, err = CreateCardStack(ctx, game, "john-drawStack")
+	game, err = CreateCardStack(ctx, game, "john-drawStack", "drawStack")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	t.Log("建立cardA")
-	cardA, err := CreateCard(ctx, 0)
+	cardA, err := CreateCard(ctx, game, "KD-0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func TestBasic(t *testing.T) {
 	}
 
 	t.Log("建立牌堆john-hand")
-	game, err = CreateCardStack(ctx, game, "john-hand")
+	game, err = CreateCardStack(ctx, game, "john-hand", "hand")
 	if err != nil {
 		t.Fatal(err)
 	}

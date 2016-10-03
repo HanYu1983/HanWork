@@ -9,17 +9,15 @@ type Goal struct {
 	ID          int64
 	Depends     []int64
 	Results     []string
+	User        string
 	Description string
+	Parameters  []string
 	Completed   bool
 }
 
-func GoalKey(ctx appengine.Context) *datastore.Key {
-	return datastore.NewKey(ctx, "Root", "Goal", 0, nil)
-}
-
-func CreateGoal(ctx appengine.Context, goal Goal) (Goal, error) {
+func CreateGoal(ctx appengine.Context, gameID string, goal Goal) (Goal, error) {
 	var err error
-	key := datastore.NewIncompleteKey(ctx, "Goal", GoalKey(ctx))
+	key := datastore.NewIncompleteKey(ctx, "Goal", GameKey(ctx, gameID))
 	updatedKey, err := datastore.Put(ctx, key, &goal)
 	if err != nil {
 		return Goal{}, err
@@ -28,9 +26,9 @@ func CreateGoal(ctx appengine.Context, goal Goal) (Goal, error) {
 	return goal, nil
 }
 
-func GetDependGoal(ctx appengine.Context, goal Goal) (Goal, bool, error) {
+func GetDependGoal(ctx appengine.Context, gameID string, goal Goal) (Goal, bool, error) {
 	var err error
-	key := datastore.NewKey(ctx, "Goal", "", goal.ID, GoalKey(ctx))
+	key := datastore.NewKey(ctx, "Goal", "", goal.ID, GameKey(ctx, gameID))
 	err = datastore.Get(ctx, key, &goal)
 	if err != nil {
 		return Goal{}, false, err
@@ -45,7 +43,7 @@ func GetDependGoal(ctx appengine.Context, goal Goal) (Goal, bool, error) {
 	// 檢查所有的依賴
 	if len(goal.Depends) > 0 {
 		for _, id := range goal.Depends {
-			depGoal, has, err := GetDependGoal(ctx, Goal{ID: id})
+			depGoal, has, err := GetDependGoal(ctx, gameID, Goal{ID: id})
 			if err != nil {
 				return Goal{}, false, err
 			}
@@ -59,18 +57,25 @@ func GetDependGoal(ctx appengine.Context, goal Goal) (Goal, bool, error) {
 	return goal, true, nil
 }
 
-func GetIncompleteGoal(ctx appengine.Context) ([]Goal, error) {
+func GetIncompleteGoal(ctx appengine.Context, gameID string, user string) ([]Goal, error) {
 	var err error
 	var goals []Goal
-	q := datastore.NewQuery("Goal").Filter("Completed =", false).Ancestor(GoalKey(ctx))
-	_, err = q.GetAll(ctx, &goals)
+	var keys []*datastore.Key
+	q := datastore.NewQuery("Goal").Ancestor(GameKey(ctx, gameID)).Filter("Completed =", false)
+	if user != "" {
+		q = q.Filter("User =", user)
+	}
+	keys, err = q.GetAll(ctx, &goals)
+	for idx, key := range keys {
+		goals[idx].ID = key.IntID()
+	}
 	return goals, err
 }
 
-func CompleteGoal(ctx appengine.Context, goalID int64, result []string) error {
+func CompleteGoal(ctx appengine.Context, gameID string, goalID int64, result []string) error {
 	var err error
 	var goal Goal
-	key := datastore.NewKey(ctx, "Goal", "", goalID, GoalKey(ctx))
+	key := datastore.NewKey(ctx, "Goal", "", goalID, GameKey(ctx, gameID))
 	err = datastore.Get(ctx, key, &goal)
 	if err != nil {
 		return err
@@ -81,10 +86,10 @@ func CompleteGoal(ctx appengine.Context, goalID int64, result []string) error {
 	return err
 }
 
-func GetGoals(ctx appengine.Context, goalIds []int64) ([]Goal, error) {
+func GetGoals(ctx appengine.Context, gameID string, goalIds []int64) ([]Goal, error) {
 	var keys []*datastore.Key
 	for _, goalID := range goalIds {
-		keys = append(keys, datastore.NewKey(ctx, "Goal", "", goalID, GoalKey(ctx)))
+		keys = append(keys, datastore.NewKey(ctx, "Goal", "", goalID, GameKey(ctx, gameID)))
 	}
 	var goals = make([]Goal, len(goalIds))
 	err := datastore.GetMulti(ctx, keys, goals)

@@ -13,27 +13,29 @@ func TestGoal(t *testing.T) {
 	}
 	defer ctx.Close()
 
+	gameId := "first game"
+
 	t.Log("建立g1")
-	g1, err := CreateGoal(ctx, Goal{Description: "playerA select 2 cards"})
+	g1, err := CreateGoal(ctx, gameId, Goal{User: "playerA", Description: "select {0} cards", Parameters: []string{"2"}})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	t.Log("建立g2")
-	g2, err := CreateGoal(ctx, Goal{Description: "playerB select 2 cards"})
+	g2, err := CreateGoal(ctx, gameId, Goal{User: "playerB", Description: "select {0} cards", Parameters: []string{"2"}})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	t.Log("建立g3")
-	g3, err := CreateGoal(ctx, Goal{Description: "drop all selected card", Depends: []int64{g1.ID, g2.ID}})
+	g3, err := CreateGoal(ctx, gameId, Goal{Description: "drop all selected card", Depends: []int64{g1.ID, g2.ID}})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	t.Log("取得未完成goal")
 	var goals []Goal
-	goals, err = GetIncompleteGoal(ctx)
+	goals, err = GetIncompleteGoal(ctx, gameId, "")
 	if len(goals) != 3 {
 		t.Fatal("未完成的數量必須是3")
 	}
@@ -41,7 +43,7 @@ func TestGoal(t *testing.T) {
 	t.Log("取得g1的depends goal")
 	var goal Goal
 	var has bool
-	goal, has, err = GetDependGoal(ctx, g1)
+	goal, has, err = GetDependGoal(ctx, gameId, g1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +52,7 @@ func TestGoal(t *testing.T) {
 	}
 
 	t.Log("取得g2的depends goal")
-	goal, has, err = GetDependGoal(ctx, g2)
+	goal, has, err = GetDependGoal(ctx, gameId, g2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +61,7 @@ func TestGoal(t *testing.T) {
 	}
 
 	t.Log("取得g3的depends goal")
-	goal, has, err = GetDependGoal(ctx, g3)
+	goal, has, err = GetDependGoal(ctx, gameId, g3)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,13 +70,13 @@ func TestGoal(t *testing.T) {
 	}
 
 	t.Log("完成g1")
-	err = CompleteGoal(ctx, g1.ID, []string{"cardA", "cardB"})
+	err = CompleteGoal(ctx, gameId, g1.ID, []string{"cardA", "cardB"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	t.Log("再次取得g3的depends goal")
-	goal, has, err = GetDependGoal(ctx, g3)
+	goal, has, err = GetDependGoal(ctx, gameId, g3)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,13 +85,13 @@ func TestGoal(t *testing.T) {
 	}
 
 	t.Log("完成g2")
-	err = CompleteGoal(ctx, g2.ID, []string{"cardC", "cardD"})
+	err = CompleteGoal(ctx, gameId, g2.ID, []string{"cardC", "cardD"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	t.Log("再次取得g3的depends goal")
-	goal, has, err = GetDependGoal(ctx, g3)
+	goal, has, err = GetDependGoal(ctx, gameId, g3)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,7 +100,7 @@ func TestGoal(t *testing.T) {
 	}
 
 	t.Log("取得要完成g3的參數")
-	g3Deps, err := GetGoals(ctx, g3.Depends)
+	g3Deps, err := GetGoals(ctx, gameId, g3.Depends)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,13 +109,13 @@ func TestGoal(t *testing.T) {
 		t.Fatal("收集到的結果必須是cardA,cardB,cardC,cardD")
 	}
 	t.Log("完成g3")
-	err = CompleteGoal(ctx, g3.ID, nil)
+	err = CompleteGoal(ctx, gameId, g3.ID, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	t.Log("再次取得g3的depends goal")
-	_, has, err = GetDependGoal(ctx, g3)
+	_, has, err = GetDependGoal(ctx, gameId, g3)
 	if err != nil {
 		t.Fatal(err)
 	}
