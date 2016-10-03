@@ -5,10 +5,11 @@ import (
 	"appengine/datastore"
 	"encoding/json"
 	"errors"
+	"github.com/satori/go.uuid"
 )
 
 type Card struct {
-	ID    int64
+	ID    string
 	Ref   string
 	Face  int
 	Owner string
@@ -75,9 +76,15 @@ func LoadGame(ctx appengine.Context, gameID string) (Game, error) {
 	return game, nil
 }
 
-func CreateGame(ctx appengine.Context, id string) (Game, error) {
-	game := Game{ID: id, CardStack: []CardStack{}}
+func CreateGame(ctx appengine.Context, gameID string) (Game, error) {
+	game := Game{ID: gameID, CardStack: []CardStack{}}
 	return SaveGame(ctx, game)
+}
+
+func DeleteGame(ctx appengine.Context, gameID string) error {
+	key := GameKey(ctx, gameID)
+	err := datastore.Delete(ctx, key)
+	return err
 }
 
 func DefPhase(ctx appengine.Context, game Game, phase []string) (Game, error) {
@@ -121,15 +128,7 @@ func HasCardStack(ctx appengine.Context, game Game, stackName string) int {
 // 為了區分不同一個牌局的卡牌
 // 必須將卡牌全部存在所屬game的主鍵之下
 func CreateCard(ctx appengine.Context, game Game, ref string) (Card, error) {
-	cardkey := datastore.NewIncompleteKey(ctx, "Card", GameKey(ctx, game.ID))
-	card := Card{Ref: ref}
-	var err error
-	updatedKey, err := datastore.Put(ctx, cardkey, &card)
-	if err != nil {
-		return Card{}, err
-	}
-	card.ID = updatedKey.IntID()
-	return card, nil
+	return Card{ID: uuid.NewV4().String(), Ref: ref}, nil
 }
 
 func CreateCardStack(ctx appengine.Context, game Game, stackName string, stackType string) (Game, error) {

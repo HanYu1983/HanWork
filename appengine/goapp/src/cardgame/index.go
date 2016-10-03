@@ -49,6 +49,14 @@ func InitGameHttp(w http.ResponseWriter, r *http.Request) {
 	err = datastore.RunInTransaction(ctx, func(ctx appengine.Context) error {
 		var err error
 		var game Game
+		err = DeleteAllGoal(ctx, "first game")
+		if err != nil {
+			return err
+		}
+		err = DeleteGame(ctx, "first game")
+		if err != nil {
+			return err
+		}
 		game, err = CreateGame(ctx, "first game")
 		if err != nil {
 			return err
@@ -220,7 +228,7 @@ func HandleSolveError(ctx appengine.Context, gameId string, goalId int64, result
 	if err != nil {
 		return err
 	}
-	if goals[0].Description == "A select 2 cards" {
+	if goals[0].Description == "select {0} cards" {
 		// TODO 判斷式balabala
 		return nil
 	}

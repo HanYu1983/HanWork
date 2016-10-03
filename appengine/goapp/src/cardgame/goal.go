@@ -26,6 +26,21 @@ func CreateGoal(ctx appengine.Context, gameID string, goal Goal) (Goal, error) {
 	return goal, nil
 }
 
+func DeleteAllGoal(ctx appengine.Context, gameID string) error {
+	var err error
+	var keys []*datastore.Key
+	q := datastore.NewQuery("Goal").Ancestor(GameKey(ctx, gameID)).KeysOnly()
+	keys, err = q.GetAll(ctx, nil)
+	if err != nil {
+		return err
+	}
+	err = datastore.DeleteMulti(ctx, keys)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func GetDependGoal(ctx appengine.Context, gameID string, goal Goal) (Goal, bool, error) {
 	var err error
 	key := datastore.NewKey(ctx, "Goal", "", goal.ID, GameKey(ctx, gameID))
