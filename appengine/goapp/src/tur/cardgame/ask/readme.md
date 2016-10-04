@@ -61,3 +61,4 @@
 
 ## 參考
 1. [前台原始碼](/appengine/elm/Ask.elm)
+1. [問題的運作流程](ask/goal_test.go)

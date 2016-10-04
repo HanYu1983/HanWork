@@ -111,6 +111,8 @@ update act model =
                 op = NoOp,
                 handA = List.map (\c -> {c | selected = False}) model.handA,
                 handB = List.map (\c -> {c | selected = False}) model.handB}
+    -- 3. 取完相依問題後，解決問題
+    -- 依問題內容將操作模式切換
     OnLoadSingalGoal result ->
       case result of
         Err msg -> alert msg model
@@ -123,6 +125,8 @@ update act model =
                   {model | 
                     op = OpSelectCard (goal.id, 2)}
                 otherwise -> model
+    -- 2. 由問題列表的第一個問題取得相依問題
+    -- 都由第一個問題來取就行了，因為解決完的問題會自動被後面的問題補上
     OnLoadGoal result -> 
       case result of
         Err msg -> alert msg model
@@ -172,6 +176,7 @@ update act model =
     ClickChangeUser ->
       { model | 
         currUser = if model.currUser == "playerA" then "playerB" else "playerA" }
+    -- 4. 最後上傳答案
     ClickCommit ->
       model
         |> performBackground (\_ ->
@@ -194,6 +199,7 @@ update act model =
                     |> callUrlAndDecodeAndSendAction parseOnlyError OnCommited
             otherwise -> Task.succeed () 
         )
+    -- 1. 從服務端取得問題，觸發OnLoadGoal
     ClickLoadGoal -> 
       model
         |> performBackground (\_ ->
