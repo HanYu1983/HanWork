@@ -117,5 +117,8 @@ func GetGoals(ctx appengine.Context, gameID string, goalIds []int64) ([]Goal, er
 	if err != nil {
 		return nil, err
 	}
+	for idx, goalId := range goalIds {
+		goals[idx].ID = goalId
+	}
 	return goals, nil
 }
