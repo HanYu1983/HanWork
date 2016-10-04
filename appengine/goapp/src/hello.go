@@ -1,9 +1,9 @@
 package hello
 
 import (
-	cg "cardgame"
 	"fmt"
 	"net/http"
+	ask "tur/cardgame/ask"
 	channel "tur/channel"
 	cookie "tur/cookie"
 	img "tur/image"
@@ -24,11 +24,11 @@ func init() {
 	http.HandleFunc("/_ah/channel/disconnected/", channel.OnChannelDisconnected)
 
 	// cardgame
-	http.HandleFunc("/go/cardgame/init", cg.InitGameHttp)
-	http.HandleFunc("/go/cardgame/goal", cg.GetGoalHttp)
-	http.HandleFunc("/go/cardgame/goal/dep", cg.GetDependsGoal)
-	http.HandleFunc("/go/cardgame/solve", cg.SolveGoalHttp)
-	http.HandleFunc("/go/cardgame/step", cg.StepGoalHttp)
+	http.HandleFunc("/go/cardgame/ask/init", ask.InitGameHttp)
+	http.HandleFunc("/go/cardgame/ask/goal", ask.GetGoalHttp)
+	http.HandleFunc("/go/cardgame/ask/goal/dep", ask.GetDependsGoal)
+	http.HandleFunc("/go/cardgame/ask/solve", ask.SolveGoalHttp)
+	http.HandleFunc("/go/cardgame/ask/step", ask.StepGoalHttp)
 }
 
 func SayHi(w http.ResponseWriter, r *http.Request) {

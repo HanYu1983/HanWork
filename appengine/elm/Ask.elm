@@ -1,4 +1,4 @@
-module CardGame0 where
+module Ask where
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -138,7 +138,7 @@ update act model =
                   Just goal ->
                     model
                       |> performBackground (\_ ->
-                        Http.url "go/cardgame/goal/dep" [("id", toString goal.id), ("game", "first game")]
+                        Http.url "go/cardgame/ask/goal/dep" [("id", toString goal.id), ("game", "first game")]
                           |> callUrlAndDecodeAndSendAction parseSingalGoalResult OnLoadSingalGoal
                       )
     OnLoadGame result -> 
@@ -166,7 +166,7 @@ update act model =
     ClickStep ->
       model
         |> performBackground (\_ ->
-          Http.url "go/cardgame/step" [("game", "first game")]
+          Http.url "go/cardgame/ask/step" [("game", "first game")]
             |> callUrlAndDecodeAndSendAction parseGameResult OnLoadGame
         )
     ClickChangeUser ->
@@ -188,7 +188,7 @@ update act model =
                   alert "select 2 card" (Task.succeed ())
                 else
                   Http.url 
-                    "go/cardgame/solve" 
+                    "go/cardgame/ask/solve" 
                     ([("game", "first game"), ("id", toString goalId)] 
                       ++ (List.map (\c -> ("cardId", c.id)) selected))
                     |> callUrlAndDecodeAndSendAction parseOnlyError OnCommited
@@ -197,13 +197,13 @@ update act model =
     ClickLoadGoal -> 
       model
         |> performBackground (\_ ->
-          Http.url "go/cardgame/goal" [("game", "first game"), ("user", model.currUser)]
+          Http.url "go/cardgame/ask/goal" [("game", "first game"), ("user", model.currUser)]
             |> callUrlAndDecodeAndSendAction parseGoalResult OnLoadGoal 
         )
     ClickLoadGame -> 
       model
         |> performBackground (\_ ->
-          "go/cardgame/init"
+          "go/cardgame/ask/init"
             |> callUrlAndDecodeAndSendAction parseGameResult OnLoadGame 
         )
     ClickCard card ->

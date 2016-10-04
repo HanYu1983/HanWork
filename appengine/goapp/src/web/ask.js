@@ -10804,11 +10804,11 @@ Elm.HanLib.Tool.make = function (_elm) {
    var log = $Native$HanLib$Tool.log;
    return _elm.HanLib.Tool.values = {_op: _op,log: log,alert: alert,performBackground: performBackground};
 };
-Elm.CardGame0 = Elm.CardGame0 || {};
-Elm.CardGame0.make = function (_elm) {
+Elm.Ask = Elm.Ask || {};
+Elm.Ask.make = function (_elm) {
    "use strict";
-   _elm.CardGame0 = _elm.CardGame0 || {};
-   if (_elm.CardGame0.values) return _elm.CardGame0.values;
+   _elm.Ask = _elm.Ask || {};
+   if (_elm.Ask.values) return _elm.Ask.values;
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
@@ -11037,7 +11037,7 @@ Elm.CardGame0.make = function (_elm) {
                                 parseSingalGoalResult,
                                 OnLoadSingalGoal,
                                 A2($Http.url,
-                                "go/cardgame/goal/dep",
+                                "go/cardgame/ask/goal/dep",
                                 _U.list([{ctor: "_Tuple2",_0: "id",_1: $Basics.toString(_p17._0.id)},{ctor: "_Tuple2",_0: "game",_1: "first game"}])));
                              },
                              model);
@@ -11088,7 +11088,7 @@ Elm.CardGame0.make = function (_elm) {
               return A3(callUrlAndDecodeAndSendAction,
               parseGameResult,
               OnLoadGame,
-              A2($Http.url,"go/cardgame/step",_U.list([{ctor: "_Tuple2",_0: "game",_1: "first game"}])));
+              A2($Http.url,"go/cardgame/ask/step",_U.list([{ctor: "_Tuple2",_0: "game",_1: "first game"}])));
            },
            model);
          case "ClickChangeUser": return _U.update(model,{currUser: _U.eq(model.currUser,"playerA") ? "playerB" : "playerA"});
@@ -11110,7 +11110,7 @@ Elm.CardGame0.make = function (_elm) {
                     parseOnlyError,
                     OnCommited,
                     A2($Http.url,
-                    "go/cardgame/solve",
+                    "go/cardgame/ask/solve",
                     A2($Basics._op["++"],
                     _U.list([{ctor: "_Tuple2",_0: "game",_1: "first game"},{ctor: "_Tuple2",_0: "id",_1: $Basics.toString(_p33._0._0)}]),
                     A2($List.map,function (c) {    return {ctor: "_Tuple2",_0: "cardId",_1: c.id};},selected))));
@@ -11124,12 +11124,12 @@ Elm.CardGame0.make = function (_elm) {
               return A3(callUrlAndDecodeAndSendAction,
               parseGoalResult,
               OnLoadGoal,
-              A2($Http.url,"go/cardgame/goal",_U.list([{ctor: "_Tuple2",_0: "game",_1: "first game"},{ctor: "_Tuple2",_0: "user",_1: model.currUser}])));
+              A2($Http.url,"go/cardgame/ask/goal",_U.list([{ctor: "_Tuple2",_0: "game",_1: "first game"},{ctor: "_Tuple2",_0: "user",_1: model.currUser}])));
            },
            model);
          case "ClickLoadGame": return A2($HanLib$Tool.performBackground,
            function (_p36) {
-              return A3(callUrlAndDecodeAndSendAction,parseGameResult,OnLoadGame,"go/cardgame/init");
+              return A3(callUrlAndDecodeAndSendAction,parseGameResult,OnLoadGame,"go/cardgame/ask/init");
            },
            model);
          default: var _p38 = _p8._0;
@@ -11148,34 +11148,34 @@ Elm.CardGame0.make = function (_elm) {
    });
    var model = A3($Signal.foldp,update,defaultModel,input);
    var main = A2($Signal.map,view,model);
-   return _elm.CardGame0.values = {_op: _op
-                                  ,Game: Game
-                                  ,Goal: Goal
-                                  ,parseGameResult: parseGameResult
-                                  ,parseOnlyError: parseOnlyError
-                                  ,parseGoalResult: parseGoalResult
-                                  ,parseSingalGoalResult: parseSingalGoalResult
-                                  ,NoAction: NoAction
-                                  ,ClickCard: ClickCard
-                                  ,ClickLoadGame: ClickLoadGame
-                                  ,ClickLoadGoal: ClickLoadGoal
-                                  ,ClickCommit: ClickCommit
-                                  ,ClickChangeUser: ClickChangeUser
-                                  ,ClickStep: ClickStep
-                                  ,OnLoadGame: OnLoadGame
-                                  ,OnLoadGoal: OnLoadGoal
-                                  ,OnLoadSingalGoal: OnLoadSingalGoal
-                                  ,OnCommited: OnCommited
-                                  ,action: action
-                                  ,Card: Card
-                                  ,NoOp: NoOp
-                                  ,OpSelectCard: OpSelectCard
-                                  ,Model: Model
-                                  ,defaultModel: defaultModel
-                                  ,input: input
-                                  ,update: update
-                                  ,callUrlAndDecodeAndSendAction: callUrlAndDecodeAndSendAction
-                                  ,model: model
-                                  ,view: view
-                                  ,main: main};
+   return _elm.Ask.values = {_op: _op
+                            ,Game: Game
+                            ,Goal: Goal
+                            ,parseGameResult: parseGameResult
+                            ,parseOnlyError: parseOnlyError
+                            ,parseGoalResult: parseGoalResult
+                            ,parseSingalGoalResult: parseSingalGoalResult
+                            ,NoAction: NoAction
+                            ,ClickCard: ClickCard
+                            ,ClickLoadGame: ClickLoadGame
+                            ,ClickLoadGoal: ClickLoadGoal
+                            ,ClickCommit: ClickCommit
+                            ,ClickChangeUser: ClickChangeUser
+                            ,ClickStep: ClickStep
+                            ,OnLoadGame: OnLoadGame
+                            ,OnLoadGoal: OnLoadGoal
+                            ,OnLoadSingalGoal: OnLoadSingalGoal
+                            ,OnCommited: OnCommited
+                            ,action: action
+                            ,Card: Card
+                            ,NoOp: NoOp
+                            ,OpSelectCard: OpSelectCard
+                            ,Model: Model
+                            ,defaultModel: defaultModel
+                            ,input: input
+                            ,update: update
+                            ,callUrlAndDecodeAndSendAction: callUrlAndDecodeAndSendAction
+                            ,model: model
+                            ,view: view
+                            ,main: main};
 };
