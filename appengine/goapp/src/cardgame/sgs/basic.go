@@ -175,7 +175,13 @@ func StepSystem(ctx appengine.Context, game core.Game) (core.Game, error) {
 	if err != nil {
 		return game, err
 	}
+	// 若切入的所有效果都解決了，完成這個切入
+	// 等待下一個切入發生
 	if has == false {
+		err = core.CompleteCut(ctx, game.ID)
+		if err != nil {
+			return game, err
+		}
 		return game, nil
 	}
 	// 如果存在，就取得最後一個問題的前置問題
