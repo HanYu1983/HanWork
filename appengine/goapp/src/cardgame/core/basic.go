@@ -1,4 +1,4 @@
-package cardgame
+package core
 
 import (
 	"appengine"
@@ -50,6 +50,12 @@ var (
 	ErrCardStackAlreadyExist = errors.New("card stack already exist")
 	ErrCardStackNotExist     = errors.New("card stack not exist")
 	ErrCardNotExist          = errors.New("card not exist")
+)
+
+const (
+	UserA   = "A"
+	UserB   = "B"
+	UserSys = "sys"
 )
 
 // datastore直接存struct會有很多限制
@@ -165,6 +171,8 @@ func AddCardTo(ctx appengine.Context, game Game, cardRef string, stackName strin
 	targetCardStack := game.CardStack[has]
 	targetCardStack.Card = append(targetCardStack.Card, card)
 	game.CardStack[has] = targetCardStack
+
+	NotifyEvent(ctx, game, "AddCardTo", []string{cardRef, stackName})
 	return game, card, nil
 }
 

@@ -1,6 +1,7 @@
 package hello
 
 import (
+	sgs "cardgame/sgs"
 	"fmt"
 	"net/http"
 	ask "tur/cardgame/ask"
@@ -23,12 +24,15 @@ func init() {
 	http.HandleFunc("/_ah/channel/connected/", channel.OnChannelConnected)
 	http.HandleFunc("/_ah/channel/disconnected/", channel.OnChannelDisconnected)
 
-	// cardgame
+	// 測試Ask
 	http.HandleFunc("/go/cardgame/ask/init", ask.InitGameHttp)
 	http.HandleFunc("/go/cardgame/ask/goal", ask.GetGoalHttp)
 	http.HandleFunc("/go/cardgame/ask/goal/dep", ask.GetDependsGoal)
 	http.HandleFunc("/go/cardgame/ask/solve", ask.SolveGoalHttp)
 	http.HandleFunc("/go/cardgame/ask/step", ask.StepGoalHttp)
+
+	// Sgs
+	http.HandleFunc("/go/cardgame/sgs/installPackage", sgs.InstallPackageHttp)
 }
 
 func SayHi(w http.ResponseWriter, r *http.Request) {

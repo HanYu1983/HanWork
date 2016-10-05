@@ -1,4 +1,4 @@
-package cardgame
+package core
 
 import (
 	"appengine/aetest"
