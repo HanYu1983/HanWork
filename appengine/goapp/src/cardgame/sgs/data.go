@@ -32,6 +32,10 @@ func CardKey(ctx appengine.Context, id string) *datastore.Key {
 	return datastore.NewKey(ctx, "SgsCard", id, 0, SgsKey(ctx))
 }
 
+func GameKey(ctx appengine.Context, gameId string) *datastore.Key {
+	return datastore.NewKey(ctx, "SgsGame", gameId, 0, SgsKey(ctx))
+}
+
 var (
 	Packages = []func([]Card) []Card{
 		初陣,
@@ -53,4 +57,15 @@ func InstallPackage(ctx appengine.Context) error {
 		}
 	}
 	return nil
+}
+
+func GetCard(ctx appengine.Context, id string) (Card, error) {
+	key := CardKey(ctx, id)
+	var card Card
+	var err error
+	err = datastore.Get(ctx, key, &card)
+	if err != nil {
+		return Card{}, err
+	}
+	return card, nil
 }

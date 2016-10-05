@@ -18,7 +18,7 @@ func TestIndex(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	game, err = InitCardSet(ctx, game, core.UserA, []string{"KD0", "KD1"})
+	game, err = InitCardSet(ctx, game, core.UserA, []string{"22", "22"})
 	if err != nil {
 		t.Fatal(err)
 	}
