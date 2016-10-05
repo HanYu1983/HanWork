@@ -111,6 +111,11 @@ func Listen(ctx appengine.Context, game core.Game, evt string, parameters interf
 // 這個方法會巡訪指定玩家的所有卡，將所有動作方案收集起來
 // 每個動作方案會起錄它的需求Cost和執行目標，兩項都是審核過可以支付的
 // 之後玩家再呼叫PerformAction
+//
+// 基本流程是
+// 1. 玩家呼叫GetCut，判斷切入狀態
+// 2. 若要切入或發起新的切入，呼叫CheckAction來取得動作方案
+// 3. 呼叫PerformAction
 func CheckAction(ctx appengine.Context, game core.Game, user string) []Action {
 	// if phase == set
 	stackId := core.HasCardStack(ctx, game, user+"-hand")
