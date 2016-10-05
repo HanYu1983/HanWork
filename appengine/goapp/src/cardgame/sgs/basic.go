@@ -142,11 +142,10 @@ func PerformAction(ctx appengine.Context, game core.Game, user string, action Ac
 		if err != nil {
 			return err
 		}
-		// TODO 支付費用
 		// TODO 巡訪所有包的發動，直到solved變成true
 		// TODO 是否新建切入
 		var solidCard core.Card
-		var abilityId int
+		var abilityId string
 		solved, err := 初陣能力發動(ctx, user, sgs, solidCard, abilityId, target)
 		if err != nil {
 			return err
@@ -199,6 +198,12 @@ func StepSystem(ctx appengine.Context, game core.Game) (core.Game, error) {
 	// 處理系統問題
 	var goals []core.Goal
 	switch goal.Description {
+	case "{0}卡和移到陣地{0}":
+		break
+	case "對玩家{0}造成{1}傷害":
+		break
+	case "對卡牌{0}造成{1}傷害":
+		break
 	case "{0}和{1}決鬥":
 		unitA := goal.Parameters[0]
 		unitB := goal.Parameters[1]

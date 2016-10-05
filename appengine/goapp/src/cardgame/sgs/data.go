@@ -8,7 +8,7 @@ import (
 type Card struct {
 	CardID    string
 	Name      string
-	Cost      int
+	Cost      string
 	Color     string
 	ColorCost []string
 	Class     string
