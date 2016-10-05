@@ -4,6 +4,7 @@ import (
 	"appengine"
 	"appengine/datastore"
 	core "cardgame/core"
+	"errors"
 )
 
 func init() {
@@ -23,25 +24,28 @@ type Game struct {
 }
 
 type Action struct {
+	FromID      string
 	User        string
 	Description string
 	Parameters  interface{}
 }
 
-func GetCardInfo(ctx appengine.Context, sgs Game, card core.Card) (Game, CardInfo, error) {
+func GetCardInfo(ctx appengine.Context, sgs Game, card core.Card) (CardInfo, error) {
 	for _, info := range sgs.CardInfo {
 		if info.CardID == card.ID {
-			return sgs, info, nil
+			return info, nil
 		}
 	}
-	var err error
-	info, err := GetCard(ctx, card.ID)
-	if err != nil {
-		return sgs, CardInfo{}, err
-	}
-	cardInfo := CardInfo{card.ID, info, info}
-	sgs.CardInfo = append(sgs.CardInfo, cardInfo)
-	return sgs, cardInfo, nil
+	/*
+		var err error
+		info, err := GetCard(ctx, card.ID)
+		if err != nil {
+			return sgs, CardInfo{}, err
+		}
+		cardInfo := CardInfo{card.ID, info, info}
+		sgs.CardInfo = append(sgs.CardInfo, cardInfo)
+	*/
+	return CardInfo{}, errors.New("xxx")
 }
 
 func CreateGame(ctx appengine.Context, gameId string) (Game, error) {
@@ -105,7 +109,7 @@ func Listen(ctx appengine.Context, game core.Game, evt string, parameters interf
 // 核對可發動能力
 // 每個玩家在各個階段可以呼叫，取得可以使用的動作
 // 這個方法會巡訪指定玩家的所有卡，將所有動作方案收集起來
-// 每個動作方案會起錄它的需求Cost，需求Cost會是審核過可以支付的
+// 每個動作方案會起錄它的需求Cost和執行目標，兩項都是審核過可以支付的
 // 之後玩家再呼叫PerformAction
 func CheckAction(ctx appengine.Context, game core.Game, user string) []Action {
 	// if phase == set
@@ -117,48 +121,37 @@ func CheckAction(ctx appengine.Context, game core.Game, user string) []Action {
 	return nil
 }
 
-func CheckAction2(ctx appengine.Context, game core.Game, card core.Card, user string) []Action {
-	return []Action{Action{Description: "出id為{0}的手牌, cost為{1}", Parameters: []string{card.ID}}}
-}
-
+// 玩家將所選的Target上傳
 // 執行動作
 // 這個方法會將需求支付解決
 // 然後將這個動作方案轉變成Goal和Effect
 // 會自動判斷有沒有在切入中
 // 若有，發生切入
 // 若沒有，新增切入堆疊
-func PerformAction(ctx appengine.Context, game core.Game, action Action, user string) error {
+func PerformAction(ctx appengine.Context, game core.Game, user string, action Action, target interface{}) error {
 	switch action.Description {
-	case "{user}出id為{0}的手牌, cost為{1}":
-		// TODO consume cost
-
-		g1, err := core.CreateGoal(ctx, game.ID, core.Goal{User: core.UserSys, Description: action.Description})
-		if err != nil {
-			return err
-		}
-
-		err = core.AddEffect(ctx, game.ID, core.Effect{UserID: user, GoalID: g1.ID})
-		if err != nil {
-			return err
-		}
-
-		break
 	case "發動id為{0}的卡的{1}技能":
-		// TODO consume cost
-		// 以下為決鬥實做
-		g1, err := core.CreateGoal(ctx, game.ID, core.Goal{User: user, Description: "select your 1 unit, and enemy 1 unit"})
+		var sgs Game
+		var err error
+		sgs, err = LoadGame(ctx, game.ID)
 		if err != nil {
 			return err
 		}
-		g2, err := core.CreateGoal(ctx, game.ID, core.Goal{User: core.UserSys, Description: "duel each", Depends: []int64{g1.ID}})
+		// TODO 支付費用
+		// TODO 巡訪所有包的發動，直到solved變成true
+		// TODO 是否新建切入
+		var solidCard core.Card
+		var abilityId int
+		solved, err := 初陣能力發動(ctx, user, sgs, solidCard, abilityId, target)
 		if err != nil {
 			return err
 		}
-		err = core.AddEffect(ctx, game.ID, core.Effect{UserID: user, GoalID: g2.ID})
+		var _ = solved
+
+		_, err = SaveGame(ctx, sgs)
 		if err != nil {
 			return err
 		}
-		break
 	}
 	return nil
 }
@@ -169,6 +162,11 @@ func StepSystem(ctx appengine.Context, game core.Game) (core.Game, error) {
 	var has bool
 	// 取得切入的最後一個問題
 	goal, has, err = core.GetLastGoal(ctx, game.ID)
+	// 忽略掉這個錯誤
+	// 反正切入在未解決狀態就什麼事都沒發生就好了
+	if err == core.ErrNotSolvingNow {
+		return game, nil
+	}
 	if err != nil {
 		return game, err
 	}
@@ -190,6 +188,14 @@ func StepSystem(ctx appengine.Context, game core.Game) (core.Game, error) {
 	// 處理系統問題
 	var goals []core.Goal
 	switch goal.Description {
+	case "{0}和{1}決鬥":
+		unitA := goal.Parameters[0]
+		unitB := goal.Parameters[1]
+		// TODO 決鬥
+		var _ = unitA
+		var _ = unitB
+		core.CompleteGoal(ctx, game.ID, goal.ID, nil)
+		break
 	case "{user}出id為{0}的手牌, cost為{1}":
 		goals, err = core.GetGoals(ctx, game.ID, goal.Depends)
 		if err != nil {
@@ -202,11 +208,15 @@ func StepSystem(ctx appengine.Context, game core.Game) (core.Game, error) {
 		var sgs Game
 		var err error
 		sgs, err = LoadGame(ctx, game.ID)
+		if err != nil {
+			return game, err
+		}
 		_, err = SaveGame(ctx, sgs)
 		if err != nil {
 			return game, err
 		}
 
+		// === 以下為暫時，Listener之後可能會取消 === //
 		// core的任一方法可能都會觸發Listener事件
 		// 所以遊戲狀態sgs一定要各別在操作完core.Game前後做Load和Save
 		// 不然遊戲狀態會不一致
