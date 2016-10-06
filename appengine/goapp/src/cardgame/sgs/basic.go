@@ -4,12 +4,9 @@ import (
 	"appengine"
 	"appengine/datastore"
 	core "cardgame/core"
+	"encoding/json"
 	"errors"
 )
-
-func init() {
-	core.AddListener(Listen)
-}
 
 type CardInfo struct {
 	CardID    string
@@ -27,8 +24,12 @@ type Action struct {
 	FromID      string
 	User        string
 	Description string
-	Parameters  interface{}
+	Parameters  map[string]interface{}
 }
+
+var (
+	CardInfoNotExist = errors.New("card info not exist")
+)
 
 func GetCardInfo(ctx appengine.Context, sgs Game, card core.Card) (CardInfo, error) {
 	for _, info := range sgs.CardInfo {
@@ -36,39 +37,50 @@ func GetCardInfo(ctx appengine.Context, sgs Game, card core.Card) (CardInfo, err
 			return info, nil
 		}
 	}
-	/*
-		var err error
-		info, err := GetCard(ctx, card.ID)
-		if err != nil {
-			return sgs, CardInfo{}, err
-		}
-		cardInfo := CardInfo{card.ID, info, info}
-		sgs.CardInfo = append(sgs.CardInfo, cardInfo)
-	*/
-	return CardInfo{}, errors.New("xxx")
+	return CardInfo{}, CardInfoNotExist
 }
 
-func CreateGame(ctx appengine.Context, gameId string) (Game, error) {
+func InstallCardInfo(ctx appengine.Context, sgs Game, stage core.Game) (Game, error) {
+	var _, err = core.MapCard(ctx, stage, func(ctx appengine.Context, stage core.Game, card core.Card) (core.Card, error) {
+		var err error
+		_, err = GetCardInfo(ctx, sgs, card)
+		if err == CardInfoNotExist {
+			info, err := GetCard(ctx, card.Ref)
+			if err != nil {
+				return card, err
+			}
+			cardInfo := CardInfo{card.ID, info, info}
+			sgs.CardInfo = append(sgs.CardInfo, cardInfo)
+		} else if err != nil {
+			return card, err
+		}
+		return card, nil
+	})
+	return sgs, err
+}
+
+func CreateGame(ctx appengine.Context, gameId string) (Game, core.Game, error) {
 	var game core.Game
 	var err error
 	game, err = core.CreateGame(ctx, gameId)
 	if err != nil {
-		return Game{}, err
+		return Game{}, game, err
 	}
 	game, err = core.CreateCardStack(ctx, game, "A-base", "base")
 	if err != nil {
-		return Game{}, err
+		return Game{}, game, err
 	}
-	game, err = core.CreateCardStack(ctx, game, "A-mana", "mana")
+	game, err = core.CreateCardStack(ctx, game, "A-hand", "hand")
 	if err != nil {
-		return Game{}, err
+		return Game{}, game, err
 	}
 	_, err = core.SaveGame(ctx, game)
 	if err != nil {
-		return Game{}, err
+		return Game{}, game, err
 	}
 	sgs := Game{ID: gameId}
-	return SaveGame(ctx, sgs)
+	sgs, err = SaveGame(ctx, sgs)
+	return sgs, game, err
 }
 
 func LoadGame(ctx appengine.Context, gameID string) (Game, error) {
@@ -86,24 +98,31 @@ func SaveGame(ctx appengine.Context, game Game) (Game, error) {
 	return game, err
 }
 
-func InitCardSet(ctx appengine.Context, game core.Game, user string, cardIds []string) (core.Game, error) {
-	var err error
-	for _, cardId := range cardIds {
-		game, _, err = core.AddCardTo(ctx, game, cardId, user+"-base")
-		if err != nil {
-			return game, err
+// 由各個卡片實做中來呼叫
+func PerformCost(ctx appengine.Context, game Game, stage core.Game, user string, cardIds []string) (Game, core.Game, error) {
+	stage, err := core.MapCard(ctx, stage, func(ctx appengine.Context, stage core.Game, card core.Card) (core.Card, error) {
+		isCard := false
+		for _, cardId := range cardIds {
+			if card.ID == cardId {
+				isCard = true
+			}
 		}
-	}
-	return game, nil
-}
-
-// 處理台面變動事件
-func Listen(ctx appengine.Context, game core.Game, evt string, parameters interface{}) error {
-	// ctx.Infof("onEvent %v %v", evt, parameters.([]string)[1])
-	var err error
-	sgs, err := LoadGame(ctx, game.ID)
-	_, err = SaveGame(ctx, sgs)
-	return err
+		if isCard == false {
+			return card, nil
+		}
+		if card.Owner != user {
+			return card, errors.New("you are not owner")
+		}
+		if core.HasCardInStack(ctx, stage, user+"-G", card) == -1 {
+			return card, errors.New("used card is not G")
+		}
+		if card.Direction == core.DirectionTap {
+			return card, errors.New("used card already used")
+		}
+		card.Direction = core.DirectionTap
+		return card, nil
+	})
+	return game, stage, err
 }
 
 // 核對可發動能力
@@ -116,14 +135,17 @@ func Listen(ctx appengine.Context, game core.Game, evt string, parameters interf
 // 1. 玩家呼叫GetCut，判斷切入狀態
 // 2. 若要切入或發起新的切入，呼叫CheckAction來取得動作方案
 // 3. 呼叫PerformAction
-func CheckAction(ctx appengine.Context, game core.Game, user string) []Action {
-	// if phase == set
-	stackId := core.HasCardStack(ctx, game, user+"-hand")
-	cards := game.CardStack[stackId].Card
-	for _, card := range cards {
-		var _ = card
-	}
-	return nil
+func CheckAction(ctx appengine.Context, sgs Game, game core.Game, user string) ([]Action, error) {
+	actions := []Action{}
+	var _, err = core.MapCard(ctx, game, func(ctx appengine.Context, game core.Game, card core.Card) (core.Card, error) {
+		cardAction, err := CheckCardAction(ctx, sgs, game, user, card)
+		if err != nil {
+			return card, err
+		}
+		actions = append(actions, cardAction...)
+		return card, nil
+	})
+	return actions, err
 }
 
 // 玩家將所選的Target上傳
@@ -133,122 +155,77 @@ func CheckAction(ctx appengine.Context, game core.Game, user string) []Action {
 // 會自動判斷有沒有在切入中
 // 若有，發生切入
 // 若沒有，新增切入堆疊
-func PerformAction(ctx appengine.Context, game core.Game, user string, action Action, target interface{}) error {
-	switch action.Description {
-	case "發動id為{0}的卡的{1}技能":
-		var sgs Game
-		var err error
-		sgs, err = LoadGame(ctx, game.ID)
-		if err != nil {
-			return err
-		}
-		// TODO 巡訪所有包的發動，直到solved變成true
-		// TODO 是否新建切入
-		var solidCard core.Card
-		var abilityId string
-		solved, err := 初陣能力發動(ctx, user, sgs, solidCard, abilityId, target)
-		if err != nil {
-			return err
-		}
-		var _ = solved
-
-		_, err = SaveGame(ctx, sgs)
-		if err != nil {
-			return err
+func PerformAction(ctx appengine.Context, sgs Game, stage core.Game, user string, action Action) (Game, core.Game, error) {
+	var err error
+	for _, stk := range stage.CardStack {
+		for _, card := range stk.Card {
+			sgs, stage, err = PerformCardAction(ctx, sgs, stage, user, action, true, card)
+			if err != nil {
+				return sgs, stage, err
+			}
 		}
 	}
-	return nil
+	return sgs, stage, nil
 }
 
-func StepSystem(ctx appengine.Context, game core.Game) (core.Game, error) {
+func StepSystem(ctx appengine.Context, sgs Game, stage core.Game) (Game, core.Game, error) {
 	var err error
 	var goal core.Goal
 	var has bool
 	// 取得切入的最後一個問題
-	goal, has, err = core.GetLastGoal(ctx, game.ID)
-	// 忽略掉這個錯誤
-	// 反正切入在未解決狀態就什麼事都沒發生就好了
-	if err == core.ErrNotSolvingNow {
-		return game, nil
-	}
+	goal, has, err = core.GetLastGoal(ctx, sgs.ID)
 	if err != nil {
-		return game, err
+		return sgs, stage, err
 	}
 	// 若切入的所有效果都解決了，完成這個切入
 	// 等待下一個切入發生
 	if has == false {
-		err = core.CompleteCut(ctx, game.ID)
+		err = core.CompleteCut(ctx, sgs.ID)
 		if err != nil {
-			return game, err
+			return sgs, stage, err
 		}
-		return game, nil
+		return sgs, stage, nil
 	}
 	// 如果存在，就取得最後一個問題的前置問題
-	goal, has, err = core.GetDependGoal(ctx, game.ID, goal)
+	goal, has, err = core.GetDependGoal(ctx, sgs.ID, goal)
 	if err != nil {
-		return game, err
+		return sgs, stage, err
 	}
+	// 沒有問題就略過
 	if has == false {
-		return game, nil
+		return sgs, stage, nil
 	}
 	// 如果不是系統問題，就略過
 	if goal.User != core.UserSys {
-		return game, nil
+		return sgs, stage, nil
 	}
 	// 處理系統問題
-	var goals []core.Goal
 	switch goal.Description {
-	case "{0}卡和移到陣地{0}":
-		break
-	case "對玩家{0}造成{1}傷害":
-		break
-	case "對卡牌{0}造成{1}傷害":
-		break
-	case "{0}和{1}決鬥":
-		unitA := goal.Parameters[0]
-		unitB := goal.Parameters[1]
-		// TODO 決鬥
-		var _ = unitA
-		var _ = unitB
-		core.CompleteGoal(ctx, game.ID, goal.ID, nil)
-		break
-	case "{user}出id為{0}的手牌, cost為{1}":
-		goals, err = core.GetGoals(ctx, game.ID, goal.Depends)
-		if err != nil {
-			return game, err
-		}
-		goal = goals[0]
+	case "玩家{0}觸發{1}的能力{2}":
 		user := goal.Parameters[0]
 		cardId := goal.Parameters[1]
-
-		var sgs Game
-		var err error
-		sgs, err = LoadGame(ctx, game.ID)
+		payload := goal.Parameters[2]
+		var action Action
+		err = json.Unmarshal([]byte(payload), &action)
 		if err != nil {
-			return game, err
+			return sgs, stage, err
 		}
-		_, err = SaveGame(ctx, sgs)
+		for _, stk := range stage.CardStack {
+			for _, card := range stk.Card {
+				if card.ID != cardId {
+					continue
+				}
+				sgs, stage, err = PerformCardAction(ctx, sgs, stage, user, action, false, card)
+				if err != nil {
+					return sgs, stage, err
+				}
+			}
+		}
+		err = core.CompleteGoal(ctx, sgs.ID, goal.ID, nil)
 		if err != nil {
-			return game, err
+			return sgs, stage, err
 		}
-
-		// === 以下為暫時，Listener之後可能會取消 === //
-		// core的任一方法可能都會觸發Listener事件
-		// 所以遊戲狀態sgs一定要各別在操作完core.Game前後做Load和Save
-		// 不然遊戲狀態會不一致
-		game, err = core.MoveCardTo(ctx, game, core.Card{ID: cardId}, user+"-hand", user+"-field", 0)
-		if err != nil {
-			return game, err
-		}
-
-		sgs, err = LoadGame(ctx, game.ID)
-		_, err = SaveGame(ctx, sgs)
-		if err != nil {
-			return game, err
-		}
-
-		core.CompleteGoal(ctx, game.ID, goal.ID, nil)
 		break
 	}
-	return game, nil
+	return sgs, stage, nil
 }

@@ -3,6 +3,8 @@ package sgs
 import (
 	"appengine"
 	core "cardgame/core"
+	"encoding/json"
+	_ "errors"
 )
 
 func 初陣(total []Card) []Card {
@@ -12,7 +14,7 @@ func 初陣(total []Card) []Card {
 			Name:      "决斗",
 			Cost:      "0",
 			Color:     ColorRed,
-			ColorCost: []string{ColorRed},
+			ColorCost: ColorRed,
 			Class:     "{通常}锦囊",
 			Package:   "初阵",
 			Attack:    "",
@@ -24,7 +26,7 @@ func 初陣(total []Card) []Card {
 			Name:      "火攻",
 			Cost:      "X",
 			Color:     ColorGreen,
-			ColorCost: []string{ColorGreen, ColorGreen, ColorGreen},
+			ColorCost: ColorGreen + ColorGreen + ColorGreen,
 			Class:     "{通常}锦囊",
 			Package:   "初阵",
 			Attack:    "",
@@ -36,127 +38,200 @@ func 初陣(total []Card) []Card {
 			Name:      "青州探马",
 			Cost:      "1",
 			Color:     ColorBlue,
-			ColorCost: []string{ColorBlue},
+			ColorCost: ColorBlue,
 			Class:     "單位~斥候",
 			Package:   "初阵",
 			Attack:    "1",
 			Defence:   "2",
 			Text:      "转移（具有转移能力且不处于整备状态的单位可于你回合的{通常}时机向相邻的空阵地进行一次移动）",
 		},
+		{
+			CardID:    "179",
+			Name:      "魏领土",
+			Cost:      "0",
+			Color:     ColorBlue,
+			ColorCost: ColorBlue,
+			Class:     "基本领土",
+			Package:   "初阵",
+			Attack:    "",
+			Defence:   "",
+			Text:      "{瞬发}{3}，将此领土翻面→抓一张牌。",
+		},
 	}
 	return append(total, cards...)
 }
 
-func 初陣能力核對(ctx appengine.Context, user string, sgs Game, card core.Card) []Action {
+// 取得指定卡牌的行動方案
+// 由前台去補足Action中的Parameters
+// 補完後呼叫PerformCardAction
+func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card) ([]Action, error) {
 	info, err := GetCardInfo(ctx, sgs, card)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	switch info.CardID {
+	switch card.Ref {
 	case "90":
 		// target =
 		// {"num", "card", "cardid"} | {"num", "user", "userid"}
 		return []Action{{
-			FromID:      info.CardID,
+			FromID:      card.ID,
 			User:        user,
-			Description: "支付{0}，擇選{1}支對手操控的單位或玩家，觸發{2}的{3}",
-			Parameters:  []string{"X", "1", card.ID, "火攻"},
-		}}
+			Description: "使用{cardIds}支付{cost}，擇選對手操控的{targetEnemyCardId}或{userId}，觸發{cardId}的{abilityId}",
+			Parameters: map[string]interface{}{
+				"cost":      info.Current.Cost,
+				"cardId":    card.ID,
+				"abilityId": "決鬥",
+			},
+		}}, nil
 	case "51":
 		// TODO check if you has 1 unit and enemy has 1 unit
 		return []Action{{
-			FromID:      info.CardID,
+			FromID:      card.ID,
 			User:        user,
-			Description: "支付{0}，擇選{1}支你操控的單位和{2}支對手操控的單位，觸發{2}的{3}",
-			Parameters:  []string{info.Current.Cost, "1", "1", card.ID, "決鬥"},
-		}}
+			Description: "使用{cardIds}支付{cost}，擇選你操控的{targetCardId}和對手操控的{targetEnemyCardId}，觸發{cardId}的{abilityId}",
+			Parameters: map[string]interface{}{
+				"cost":      info.Current.Cost,
+				"cardId":    card.ID,
+				"abilityId": "決鬥",
+			},
+		}}, nil
 	case "22":
 		// TODO 看看現在是不是通常時機
 		return []Action{{
-			FromID:      info.CardID,
+			FromID:      card.ID,
 			User:        user,
-			Description: "擇選{0}卡的相鄰空陣地，觸發{1}的{2}",
-			Parameters:  []string{card.ID, card.ID, "轉移"},
-		}}
+			Description: "擇選{cardId}卡的相鄰空陣地{slotId}，觸發{cardId}的{abilityId}",
+			Parameters: map[string]interface{}{
+				"cardId":    card.ID,
+				"abilityID": "轉移",
+			},
+		}}, nil
+	case "179":
+		return []Action{{
+			FromID:      card.ID,
+			User:        user,
+			Description: "使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}",
+			Parameters: map[string]interface{}{
+				"cost":      "無無無",
+				"cardId":    card.ID,
+				"abilityId": "翻面抓牌",
+			},
+		}}, nil
 	}
-	return nil
+	return nil, nil
 }
 
-func 初陣能力發動(ctx appengine.Context, user string, sgs Game, card core.Card, abilityId string, target interface{}) (bool, error) {
+// 執行指定卡牌的行動方案
+// 注意
+// invoke為true代表是不是要啟動能力
+// 啟動能力代表只將效果移至切入堆疊，效果還沒有解決
+// 啟動能力就會先將動作方案中的支付解決
+// 若invoke為false代表要解決行動方案的效果
+// 也是實做效果的地方
+func PerformCardAction(ctx appengine.Context, sgs Game, stage core.Game, user string, action Action, invoke bool, card core.Card) (Game, core.Game, error) {
+	// 不是發動的卡就略過
+	if action.FromID != card.ID {
+		return sgs, stage, nil
+	}
+	// 取得狀態
 	info, err := GetCardInfo(ctx, sgs, card)
+	var _ = info
 	if err != nil {
-		return false, err
+		return sgs, stage, err
 	}
-	switch info.CardID {
-	// 火攻
-	case "90":
-		switch abilityId {
-		case "火攻":
-			// target =
-			// {"num", "card", "cardid"} | {"num", "user", "userid"}
-			cost := target.([]string)[0]
-			// TODO 支付費用
-			targetType := target.([]string)[1]
-			targetId := target.([]string)[2]
-			var g1 core.Goal
-			if targetType == "card" {
-				g1, err = core.CreateGoal(ctx, sgs.ID, core.Goal{
-					User:        core.UserSys,
-					Description: "對卡牌{0}造成{1}傷害",
-					Parameters:  []string{targetId, cost},
-				})
-			}
-			if targetType == "user" {
-				g1, err = core.CreateGoal(ctx, sgs.ID, core.Goal{
-					User:        core.UserSys,
-					Description: "對玩家{0}造成{1}傷害",
-					Parameters:  []string{targetId, cost},
-				})
-			}
-			if err != nil {
-				return false, err
-			}
-			err = core.AddEffect(ctx, sgs.ID, core.Effect{UserID: user, GoalID: g1.ID})
-			if err != nil {
-				return false, err
-			}
-			break
-		}
-		break
-	// 決鬥
-	case "51":
-		g1, err := core.CreateGoal(ctx, sgs.ID, core.Goal{
-			User:        core.UserSys,
-			Description: "{0}和{1}決鬥",
-			Parameters:  target.([]string),
-		})
-		if err != nil {
-			return false, err
-		}
-		err = core.AddEffect(ctx, sgs.ID, core.Effect{UserID: user, GoalID: g1.ID})
-		if err != nil {
-			return false, err
-		}
-		break
+	switch card.Ref {
 	case "22":
-		switch abilityId {
-		case "轉移":
-			targetG := target.([]string)[0]
-			g1, err := core.CreateGoal(ctx, sgs.ID, core.Goal{
-				User:        core.UserSys,
-				Description: "{0}卡和移到陣地{0}",
-				Parameters:  []string{card.ID, targetG},
-			})
-			if err != nil {
-				return false, err
+		if action.Description == "擇選{cardId}卡的相鄰空陣地{slotId}，觸發{cardId}的{abilityId}" {
+			if invoke {
+				payload, err := json.Marshal(action)
+				if err != nil {
+					return sgs, stage, err
+				}
+				// 再放入效果
+				g1, err := core.CreateGoal(ctx, sgs.ID, core.Goal{
+					User:        core.UserSys,
+					Description: "玩家{0}觸發{1}的能力{2}",
+					Parameters:  []string{user, card.ID, string(payload)},
+				})
+				if err != nil {
+					return sgs, stage, err
+				}
+				err = core.AddEffect(ctx, sgs.ID, core.Effect{UserID: user, GoalID: g1.ID})
+				if err != nil {
+					return sgs, stage, err
+				}
+				return sgs, stage, nil
 			}
-			err = core.AddEffect(ctx, sgs.ID, core.Effect{UserID: user, GoalID: g1.ID})
-			if err != nil {
-				return false, err
+			abilityId := action.Parameters["abilityId"].(string)
+			if abilityId == "轉移" {
+				cardId := action.Parameters["cardId"].(string)
+				slotId := action.Parameters["slotId"].(string)
+				// TODO 轉移效果
+				var _, _ = cardId, slotId
 			}
-			break
+		}
+		break
+	case "179":
+		if action.Description == "使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}" {
+			// 啟動效果，放入堆疊
+			if invoke {
+				cardIds := action.Parameters["cardIds"].([]string)
+				cost := action.Parameters["cost"].(string)
+				// 先執行支付
+				// TODO check cost is valid
+				var _ = cost
+				sgs, stage, err = PerformCost(ctx, sgs, stage, user, cardIds)
+				if err != nil {
+					return sgs, stage, err
+				}
+				payload, err := json.Marshal(action)
+				if err != nil {
+					return sgs, stage, err
+				}
+				// 再放入效果
+				g1, err := core.CreateGoal(ctx, sgs.ID, core.Goal{
+					User:        core.UserSys,
+					Description: "玩家{0}觸發{1}的能力{2}",
+					Parameters:  []string{user, card.ID, string(payload)},
+				})
+				if err != nil {
+					return sgs, stage, err
+				}
+				err = core.AddEffect(ctx, sgs.ID, core.Effect{UserID: user, GoalID: g1.ID})
+				if err != nil {
+					return sgs, stage, err
+				}
+				return sgs, stage, nil
+			}
+			abilityId := action.Parameters["abilityId"].(string)
+			if abilityId == "翻面抓牌" {
+				// 將地翻面
+				stage, err = core.MapCard(ctx, stage, func(ctx appengine.Context, stage core.Game, currCard core.Card) (core.Card, error) {
+					if currCard.ID == card.ID {
+						currCard.Face = core.FaceOpen
+					}
+					return currCard, nil
+				})
+				// 取得本國最上方的卡
+				userCardBaseId := core.HasCardStack(ctx, stage, user+"-base")
+				if userCardBaseId == -1 {
+					return sgs, stage, core.ErrCardStackNotExist
+				}
+				cardCnt := len(stage.CardStack[userCardBaseId].Card)
+				// 無牌可抽，先暫時略過
+				if cardCnt == 0 {
+					// TODO 完成客製化error讓StepSystem來判斷要不要略過
+					return sgs, stage, nil
+				}
+				topCardInCardBase := stage.CardStack[userCardBaseId].Card[cardCnt-1]
+				// 移到手上
+				stage, err = core.MoveCardTo(ctx, stage, topCardInCardBase, user+"-base", user+"-hand", 0)
+				if err != nil {
+					return sgs, stage, err
+				}
+			}
 		}
 		break
 	}
-	return true, nil
+	return sgs, stage, nil
 }

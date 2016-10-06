@@ -10,7 +10,7 @@ type Card struct {
 	Name      string
 	Cost      string
 	Color     string
-	ColorCost []string
+	ColorCost string
 	Class     string
 	Package   string
 	Attack    string

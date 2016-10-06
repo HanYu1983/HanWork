@@ -13,10 +13,11 @@ import (
 // 翻開還是蓋著(Face)
 // 所有者是誰(Owner)
 type Card struct {
-	ID    string
-	Ref   string
-	Face  int
-	Owner string
+	ID        string
+	Ref       string
+	Face      int
+	Direction int
+	Owner     string
 }
 
 // 牌堆
@@ -45,17 +46,22 @@ const (
 	FaceClose = 1
 )
 
+const (
+	UserA   = "A"
+	UserB   = "B"
+	UserSys = "sys"
+)
+
+const (
+	DirectionUntap = 0
+	DirectionTap   = 90
+)
+
 var (
 	ErrPhaseNotExist         = errors.New("phase not exist")
 	ErrCardStackAlreadyExist = errors.New("card stack already exist")
 	ErrCardStackNotExist     = errors.New("card stack not exist")
 	ErrCardNotExist          = errors.New("card not exist")
-)
-
-const (
-	UserA   = "A"
-	UserB   = "B"
-	UserSys = "sys"
 )
 
 // datastore直接存struct會有很多限制
@@ -162,12 +168,12 @@ func CreateCardStack(ctx appengine.Context, game Game, stackName string, stackTy
 
 // 建立卡牌並加入牌堆
 // 指定的牌堆不存在的話會吐出ErrCardStackNotExist
-func AddCardTo(ctx appengine.Context, game Game, cardRef string, stackName string) (Game, Card, error) {
+func AddCardTo(ctx appengine.Context, game Game, cardRef string, stackName string, owner string) (Game, Card, error) {
 	has := HasCardStack(ctx, game, stackName)
 	if has == -1 {
 		return game, Card{}, ErrCardStackNotExist
 	}
-	card := Card{ID: uuid.NewV4().String(), Ref: cardRef}
+	card := Card{ID: uuid.NewV4().String(), Ref: cardRef, Owner: owner}
 	targetCardStack := game.CardStack[has]
 	targetCardStack.Card = append(targetCardStack.Card, card)
 	game.CardStack[has] = targetCardStack
@@ -178,6 +184,33 @@ func AddCardTo(ctx appengine.Context, game Game, cardRef string, stackName strin
 		return game, card, err
 	}
 	return game, card, nil
+}
+
+func AddCardsTo(ctx appengine.Context, game Game, cardRefs []string, stackName string, owner string) (Game, []Card, error) {
+	var cards []Card
+	var card Card
+	var err error
+	for _, cardRef := range cardRefs {
+		game, card, err = AddCardTo(ctx, game, cardRef, stackName, owner)
+		if err != nil {
+			return game, nil, err
+		}
+		cards = append(cards, card)
+	}
+	return game, cards, nil
+}
+
+func MapCard(ctx appengine.Context, game Game, fn func(appengine.Context, Game, Card) (Card, error)) (Game, error) {
+	for _, stk := range game.CardStack {
+		for idx, card := range stk.Card {
+			updatedCard, err := fn(ctx, game, card)
+			if err != nil {
+				return game, err
+			}
+			stk.Card[idx] = updatedCard
+		}
+	}
+	return game, nil
 }
 
 // 牌堆中只否有指定的卡

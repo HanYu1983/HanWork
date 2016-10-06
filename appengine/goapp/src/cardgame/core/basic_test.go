@@ -51,14 +51,14 @@ func TestBasic(t *testing.T) {
 	}
 
 	t.Log("新增cardA並加到john-drawStack")
-	game, cardA, err := AddCardTo(ctx, game, "KD-0", "john-drawStack")
+	game, cardA, err := AddCardTo(ctx, game, "KD-0", "john-drawStack", "john")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(game.CardStack[0].Card) != 1 {
 		t.Fatal("john-drawStack牌堆的卡數必須是1")
 	}
-	game, _, err = AddCardTo(ctx, game, "KD-0", "john-drawStack2")
+	game, _, err = AddCardTo(ctx, game, "KD-0", "john-drawStack2", "john")
 	if err != ErrCardStackNotExist {
 		t.Fatal("加入的沒有的牌堆必須丟出例外")
 	}
