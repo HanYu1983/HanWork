@@ -8,18 +8,31 @@ import (
 	"errors"
 )
 
+// 卡牌狀態
+// 陣面對決的數值
 type CardInfo struct {
 	CardID    string
 	Prototype Card
 	Current   Card
 }
 
+// 遊戲
+// ID會和core.Game的ID一致
+// 用這個ID來取得core.Game
+// core.Game記錄的是卡牌的位置、面向等資訊
+// 這個Game記錄的是陣面對決的遊戲狀態
 type Game struct {
 	ID        string
 	CurrPhase string
 	CardInfo  []CardInfo
 }
 
+// 行動方案
+// 用來和玩家互動的，沒有存入datastore
+// 系統提出行動方案後，有些參數沒有填滿
+// 那些參數就由玩家來補足
+// 之後再將補足完的方案回傳服務器
+// 服務器有完整的參數資訊就能執行方案
 type Action struct {
 	FromID      string
 	User        string
@@ -28,23 +41,34 @@ type Action struct {
 }
 
 var (
-	CardInfoNotExist = errors.New("card info not exist")
+	ErrCardInfoNotExist      = errors.New("card info not exist")
+	ErrYouAreNotTheCardOwner = errors.New("you are not the card owner")
+	ErrTargetCardIsntMana    = errors.New("target card is not mana")
+	ErrTargetManaAlreadyUsed = errors.New("target mana already used")
+	ErrManaIsntEnougth       = errors.New("mana is not enought ")
 )
 
+// 取得卡牌的遊戲狀態
+// 遊戲狀態會在遊戲剛建立時叫用InstallCardInfo來將所有用到的卡牌的資訊存到Game中
+// GetCardInfo一定能取到自己的狀態
+// 若取不到，代表這場遊戲有問題。這場遊戲就必須放棄
 func GetCardInfo(ctx appengine.Context, sgs Game, card core.Card) (CardInfo, error) {
 	for _, info := range sgs.CardInfo {
 		if info.CardID == card.ID {
 			return info, nil
 		}
 	}
-	return CardInfo{}, CardInfoNotExist
+	return CardInfo{}, ErrCardInfoNotExist
 }
 
+// 將台面上所有的卡牌的遊戲資料加入
+// 在將玩家的牌組加入遊戲時呼叫
+// 這個方法一定要呼叫，不然遊戲不能玩
 func InstallCardInfo(ctx appengine.Context, sgs Game, stage core.Game) (Game, error) {
 	var _, err = core.MapCard(ctx, stage, func(ctx appengine.Context, stage core.Game, card core.Card) (core.Card, error) {
 		var err error
 		_, err = GetCardInfo(ctx, sgs, card)
-		if err == CardInfoNotExist {
+		if err == ErrCardInfoNotExist {
 			info, err := GetCard(ctx, card.Ref)
 			if err != nil {
 				return card, err
@@ -59,18 +83,64 @@ func InstallCardInfo(ctx appengine.Context, sgs Game, stage core.Game) (Game, er
 	return sgs, err
 }
 
+const (
+	CardStackBase      = "base"
+	CardStackHand      = "hand"
+	CardStackMana      = "mana"
+	CardStackGraveyard = "graveyard"
+	CardStackSlot      = "slot"
+)
+
+// 建立陣面對決的牌局
+// 這個方法會一并建立core.Game的台面狀態
+// 建立場上所有牌堆（手牌、本國、地、墓地、陣地）
 func CreateGame(ctx appengine.Context, gameId string) (Game, core.Game, error) {
 	var game core.Game
 	var err error
+	// 建立台面
 	game, err = core.CreateGame(ctx, gameId)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.CreateCardStack(ctx, game, "A-base", "base")
+	// 建立A玩家牌堆
+	game, err = core.CreateCardStack(ctx, game, core.UserA+CardStackBase, CardStackBase)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.CreateCardStack(ctx, game, "A-hand", "hand")
+	game, err = core.CreateCardStack(ctx, game, core.UserA+CardStackHand, CardStackHand)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.CreateCardStack(ctx, game, core.UserA+CardStackMana, CardStackMana)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.CreateCardStack(ctx, game, core.UserA+CardStackGraveyard, CardStackGraveyard)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.CreateCardStack(ctx, game, core.UserA+CardStackSlot, CardStackSlot)
+	if err != nil {
+		return Game{}, game, err
+	}
+	// 建立B玩家牌堆
+	game, err = core.CreateCardStack(ctx, game, core.UserB+CardStackBase, CardStackBase)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.CreateCardStack(ctx, game, core.UserB+CardStackHand, CardStackHand)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.CreateCardStack(ctx, game, core.UserB+CardStackMana, CardStackMana)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.CreateCardStack(ctx, game, core.UserB+CardStackGraveyard, CardStackGraveyard)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.CreateCardStack(ctx, game, core.UserB+CardStackSlot, CardStackSlot)
 	if err != nil {
 		return Game{}, game, err
 	}
@@ -78,11 +148,13 @@ func CreateGame(ctx appengine.Context, gameId string) (Game, core.Game, error) {
 	if err != nil {
 		return Game{}, game, err
 	}
+	// 建立陣面對決
 	sgs := Game{ID: gameId}
 	sgs, err = SaveGame(ctx, sgs)
 	return sgs, game, err
 }
 
+// 讀取陣面對決
 func LoadGame(ctx appengine.Context, gameID string) (Game, error) {
 	key := GameKey(ctx, gameID)
 	var game Game
@@ -91,6 +163,7 @@ func LoadGame(ctx appengine.Context, gameID string) (Game, error) {
 	return game, err
 }
 
+// 記錄陣面對決
 func SaveGame(ctx appengine.Context, game Game) (Game, error) {
 	key := GameKey(ctx, game.ID)
 	var err error
@@ -98,31 +171,25 @@ func SaveGame(ctx appengine.Context, game Game) (Game, error) {
 	return game, err
 }
 
+// 支付費用
 // 由各個卡片實做中來呼叫
 func PerformCost(ctx appengine.Context, game Game, stage core.Game, user string, cardIds []string) (Game, core.Game, error) {
-	stage, err := core.MapCard(ctx, stage, func(ctx appengine.Context, stage core.Game, card core.Card) (core.Card, error) {
-		isCard := false
-		for _, cardId := range cardIds {
-			if card.ID == cardId {
-				isCard = true
+	userManaStack := stage.CardStack[core.HasCardStack(ctx, stage, user+CardStackMana)]
+	for _, cardId := range cardIds {
+		var succeed bool
+		for idx, cardInMana := range userManaStack.Card {
+			if cardInMana.ID == cardId {
+				if cardInMana.Direction == core.DirectionUntap {
+					userManaStack.Card[idx].Direction = core.DirectionTap
+					succeed = true
+				}
 			}
 		}
-		if isCard == false {
-			return card, nil
+		if succeed == false {
+			return game, stage, ErrManaIsntEnougth
 		}
-		if card.Owner != user {
-			return card, errors.New("you are not owner")
-		}
-		if core.HasCardInStack(ctx, stage, user+"-G", card) == -1 {
-			return card, errors.New("used card is not G")
-		}
-		if card.Direction == core.DirectionTap {
-			return card, errors.New("used card already used")
-		}
-		card.Direction = core.DirectionTap
-		return card, nil
-	})
-	return game, stage, err
+	}
+	return game, stage, nil
 }
 
 // 核對可發動能力
@@ -216,9 +283,29 @@ func StepSystem(ctx appengine.Context, sgs Game, stage core.Game) (Game, core.Ga
 					continue
 				}
 				sgs, stage, err = PerformCardAction(ctx, sgs, stage, user, action, false, card)
-				if err != nil {
-					return sgs, stage, err
+
+				switch err.(type) {
+				case SgsError:
+					var sgsErr = err
+					// 卡牌內容錯誤
+					// 代表目標遺失
+					// 一樣將問題完成並回傳錯誤
+					// 讓前台有機會處理對玩家的回應
+					err = core.CompleteGoal(ctx, sgs.ID, goal.ID, nil)
+					if err != nil {
+						return sgs, stage, err
+					}
+					return sgs, stage, sgsErr
+				default:
+					// 系統錯誤
+					// 中斷執行
+					if err != nil {
+						return sgs, stage, err
+					}
+					break
 				}
+				// 執行到目標卡就立刻退出
+				break
 			}
 		}
 		err = core.CompleteGoal(ctx, sgs.ID, goal.ID, nil)

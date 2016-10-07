@@ -26,11 +26,28 @@ func TestIndex(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	manaStackId := core.HasCardStack(ctx, stage, core.UserA+CardStackMana)
+	handStackId := core.HasCardStack(ctx, stage, core.UserA+CardStackHand)
+
 	var cards []core.Card
 	t.Log("加入玩家卡組")
-	stage, cards, err = core.AddCardsTo(ctx, stage, []string{"179"}, core.UserA+"-hand", core.UserA)
+	stage, _, err = core.AddCardsTo(ctx, stage, []string{"179"}, core.UserA+CardStackBase, core.UserA)
 	if err != nil {
 		t.Fatal(err)
+	}
+	stage, cards, err = core.AddCardsTo(ctx, stage, []string{"179", "179", "179"}, core.UserA+CardStackMana, core.UserA)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("確認初始狀態")
+	for _, card := range cards {
+		if card.Direction != core.DirectionUntap {
+			t.Fatal("剛加入的卡必須是直立狀態")
+		}
+	}
+	if len(stage.CardStack[handStackId].Card) != 0 {
+		t.Fatal("手牌必須有0張卡")
 	}
 
 	t.Log("安裝卡組資訊")
@@ -66,7 +83,7 @@ func TestIndex(t *testing.T) {
 	// 前台先複制一份
 	// 把剩下的參數補足
 	userAction := actions[0]
-	userAction.Parameters["cardIds"] = []string{"cardId,cardId,cardId"}
+	userAction.Parameters["cardIds"] = []string{cards[0].ID, cards[1].ID, cards[2].ID}
 
 	t.Log("取得現在的切入狀態")
 	var cut core.Cut
@@ -96,12 +113,27 @@ func TestIndex(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log("解決效果")
+	t.Log("解決效果，解決了把地蓋掉抽一張，但因為沒牌可抽，所以有SgsError會出現")
 	game, stage, err = StepSystem(ctx, game, stage)
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	t.Log("確認效果後狀態")
+
+	for _, card := range stage.CardStack[manaStackId].Card {
+		if card.Direction != core.DirectionTap {
+			t.Fatal("執行完效果後必須是横置狀態")
+		}
+	}
+	if len(stage.CardStack[handStackId].Card) != 1 {
+		t.Fatal("手牌必須有1張卡")
+	}
+	if stage.CardStack[handStackId].Card[0].Ref != "179" {
+		t.Fatal("必須抽到179的卡")
+	}
+
+	t.Log("取得現在切入狀態")
 	cut, err = core.GetCut(ctx, game.ID)
 	if err != nil {
 		t.Fatal(err)
@@ -116,6 +148,7 @@ func TestIndex(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	t.Log("取得現在切入狀態")
 	cut, err = core.GetCut(ctx, game.ID)
 	if err != nil {
 		t.Fatal(err)
