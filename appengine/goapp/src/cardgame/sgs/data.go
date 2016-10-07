@@ -82,18 +82,20 @@ func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user stri
 	info := GetCardInfo(sgs, card)
 	switch card.Ref {
 	case "90":
-		// target =
-		// {"num", "card", "cardid"} | {"num", "user", "userid"}
-		return []Action{{
-			FromID:      card.ID,
-			User:        user,
-			Description: "使用{cardIds}支付{cost}，擇選對手操控的{targetEnemyCardId}或{userId}，觸發{cardId}的{abilityId}",
-			Parameters: map[string]interface{}{
-				"cost":      "X",
-				"cardId":    card.ID,
-				"abilityId": "火攻",
-			},
-		}}, nil
+		// TODO 判斷cost夠不夠支付
+		if core.HasCardInStack(ctx, stage, user+CardStackHand, card) != -1 {
+			return []Action{{
+				FromID:      card.ID,
+				User:        user,
+				Description: "使用{cardIds}支付{cost}，擇選對手操控的{targetEnemyCardId}或{userId}，觸發{cardId}的{abilityId}",
+				Parameters: map[string]interface{}{
+					"cost":      "X",
+					"cardId":    card.ID,
+					"abilityId": "火攻",
+				},
+			}}, nil
+		}
+		return nil, nil
 	case "51":
 		// TODO check if you has 1 unit and enemy has 1 unit
 		return []Action{{
@@ -121,6 +123,19 @@ func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user stri
 		if card.Owner != user {
 			return nil, nil
 		}
+		// 如果在手上，就可以打出來
+		if core.HasCardInStack(ctx, stage, user+CardStackHand, card) != -1 {
+			// TODO 判斷這回合有沒有打過mana
+			return []Action{{
+				FromID:      card.ID,
+				User:        user,
+				Description: "打出{cardId}到{stackId}",
+				Parameters: map[string]interface{}{
+					"cardId":  card.ID,
+					"stackId": user + CardStackMana,
+				},
+			}}, nil
+		}
 		// 在魔力池中並且是打開狀態才能有這個能力
 		if core.HasCardInStack(ctx, stage, user+CardStackMana, card) != -1 && card.Face == core.FaceOpen {
 			return []Action{{
@@ -145,6 +160,27 @@ func (err SgsError) Error() string {
 	return string(err)
 }
 
+func AddEffectFromAction(ctx appengine.Context, gameId string, user string, action Action, cardId string) error {
+	payload, err := json.Marshal(action)
+	if err != nil {
+		return err
+	}
+	// 再放入效果
+	g1, err := core.CreateGoal(ctx, gameId, core.Goal{
+		User:        core.UserSys,
+		Description: "玩家{0}觸發{1}的能力{2}",
+		Parameters:  []string{user, cardId, string(payload)},
+	})
+	if err != nil {
+		return err
+	}
+	err = core.AddEffect(ctx, gameId, core.Effect{UserID: user, GoalID: g1.ID})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // 執行指定卡牌的行動方案
 // 注意
 // invoke為true代表是不是要啟動能力
@@ -165,12 +201,12 @@ func PerformCardAction(ctx appengine.Context, sgs Game, stage core.Game, user st
 	switch card.Ref {
 	case "90":
 		if action.Description == "使用{cardIds}支付{cost}，擇選對手操控的{targetEnemyCardId}或{userId}，觸發{cardId}的{abilityId}" {
-			cardIds := action.Parameters["cardIds"].([]string)
 			cost := action.Parameters["cost"].(string)
 			targetEnemyCardId := action.Parameters["targetEnemyCardId"].(string)
 			userId := action.Parameters["userId"].(string)
 			abilityId := action.Parameters["abilityId"].(string)
 			if invoke {
+				cardIds := action.Parameters["cardIds"].([]string)
 				if userId == user {
 					return sgs, stage, errors.New("user id is me")
 				}
@@ -179,32 +215,18 @@ func PerformCardAction(ctx appengine.Context, sgs Game, stage core.Game, user st
 				if hasEnemy == -1 {
 					return sgs, stage, errors.New("enemy id is not exist")
 				}
-				// 將X轉為"無"序列
-				cost = X2Cost(len(cardIds))
 				sgs, stage, err = PerformCost(ctx, sgs, stage, user, cost, cardIds)
 				if err != nil {
 					return sgs, stage, err
 				}
-				payload, err := json.Marshal(action)
-				if err != nil {
-					return sgs, stage, err
-				}
-				// 再放入效果
-				g1, err := core.CreateGoal(ctx, sgs.ID, core.Goal{
-					User:        core.UserSys,
-					Description: "玩家{0}觸發{1}的能力{2}",
-					Parameters:  []string{user, card.ID, string(payload)},
-				})
-				if err != nil {
-					return sgs, stage, err
-				}
-				err = core.AddEffect(ctx, sgs.ID, core.Effect{UserID: user, GoalID: g1.ID})
+				err = AddEffectFromAction(ctx, sgs.ID, user, action, card.ID)
 				if err != nil {
 					return sgs, stage, err
 				}
 				return sgs, stage, nil
 			}
 			if abilityId == "火攻" {
+				cardIds := action.Parameters["cardIds"].([]string)
 				damage := len(cardIds)
 				// damage it
 				var _ = damage
@@ -213,30 +235,18 @@ func PerformCardAction(ctx appengine.Context, sgs Game, stage core.Game, user st
 		break
 	case "22":
 		if action.Description == "擇選{cardId}卡的相鄰空陣地{slotId}，觸發{cardId}的{abilityId}" {
+			abilityId := action.Parameters["abilityId"].(string)
+			cardId := action.Parameters["cardId"].(string)
+			slotId := action.Parameters["slotId"].(string)
 			if invoke {
-				payload, err := json.Marshal(action)
-				if err != nil {
-					return sgs, stage, err
-				}
-				// 再放入效果
-				g1, err := core.CreateGoal(ctx, sgs.ID, core.Goal{
-					User:        core.UserSys,
-					Description: "玩家{0}觸發{1}的能力{2}",
-					Parameters:  []string{user, card.ID, string(payload)},
-				})
-				if err != nil {
-					return sgs, stage, err
-				}
-				err = core.AddEffect(ctx, sgs.ID, core.Effect{UserID: user, GoalID: g1.ID})
+				err = AddEffectFromAction(ctx, sgs.ID, user, action, card.ID)
 				if err != nil {
 					return sgs, stage, err
 				}
 				return sgs, stage, nil
 			}
-			abilityId := action.Parameters["abilityId"].(string)
 			if abilityId == "轉移" {
-				cardId := action.Parameters["cardId"].(string)
-				slotId := action.Parameters["slotId"].(string)
+
 				// TODO 轉移效果
 				var _, _ = cardId, slotId
 			}
@@ -244,35 +254,23 @@ func PerformCardAction(ctx appengine.Context, sgs Game, stage core.Game, user st
 		break
 	case "179":
 		if action.Description == "使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}" {
+			cost := action.Parameters["cost"].(string)
+			abilityId := action.Parameters["abilityId"].(string)
 			// 啟動效果，放入堆疊
 			if invoke {
 				cardIds := action.Parameters["cardIds"].([]string)
-				cost := action.Parameters["cost"].(string)
 				// 先執行支付
 				sgs, stage, err = PerformCost(ctx, sgs, stage, user, cost, cardIds)
 				if err != nil {
 					return sgs, stage, err
 				}
-				payload, err := json.Marshal(action)
-				if err != nil {
-					return sgs, stage, err
-				}
-				// 再放入效果
-				g1, err := core.CreateGoal(ctx, sgs.ID, core.Goal{
-					User:        core.UserSys,
-					Description: "玩家{0}觸發{1}的能力{2}",
-					Parameters:  []string{user, card.ID, string(payload)},
-				})
-				if err != nil {
-					return sgs, stage, err
-				}
-				err = core.AddEffect(ctx, sgs.ID, core.Effect{UserID: user, GoalID: g1.ID})
+
+				err = AddEffectFromAction(ctx, sgs.ID, user, action, card.ID)
 				if err != nil {
 					return sgs, stage, err
 				}
 				return sgs, stage, nil
 			}
-			abilityId := action.Parameters["abilityId"].(string)
 			if abilityId == "翻面抓牌" {
 				// 將地翻面
 				stage, err = core.MapCard(ctx, stage, func(ctx appengine.Context, stage core.Game, currCard core.Card) (core.Card, error) {

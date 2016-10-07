@@ -178,6 +178,10 @@ func X2Cost(cnt int) string {
 // cost的格式是"無無魏"這樣的格式
 // cost的支付順序必須和cardIds給定的順序要一致
 func PerformCost(ctx appengine.Context, game Game, stage core.Game, user string, cost string, cardIds []string) (Game, core.Game, error) {
+	// 將X轉為"無"序列
+	if cost == "X" {
+		cost = X2Cost(len(cardIds))
+	}
 	runeCost := []rune(cost)
 	// 長度不一樣，無法支付
 	if len(runeCost) != len(cardIds) {
