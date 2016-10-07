@@ -25,6 +25,7 @@ const (
 	ColorRed   = "蜀"
 	ColorGreen = "吳"
 	ColorGray  = "群"
+	ColorWhite = "無"
 )
 
 func SgsKey(ctx appengine.Context) *datastore.Key {
@@ -77,10 +78,7 @@ func GetCard(ctx appengine.Context, id string) (Card, error) {
 // 由前台去補足Action中的Parameters
 // 補完後呼叫PerformCardAction
 func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card) ([]Action, error) {
-	info, err := GetCardInfo(ctx, sgs, card)
-	if err != nil {
-		return nil, err
-	}
+	info := GetCardInfo(sgs, card)
 	switch card.Ref {
 	case "90":
 		// target =
@@ -119,8 +117,11 @@ func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user stri
 			},
 		}}, nil
 	case "179":
-		// 在魔力池中才能這個能力
-		if core.HasCardInStack(ctx, stage, user+CardStackMana, card) != -1 {
+		if card.Owner != user {
+			return nil, nil
+		}
+		// 在魔力池中並且是打開狀態才能有這個能力
+		if core.HasCardInStack(ctx, stage, user+CardStackMana, card) != -1 && card.Face == core.FaceOpen {
 			return []Action{{
 				FromID:      card.ID,
 				User:        user,
@@ -156,11 +157,10 @@ func PerformCardAction(ctx appengine.Context, sgs Game, stage core.Game, user st
 		return sgs, stage, nil
 	}
 	// 取得狀態
-	info, err := GetCardInfo(ctx, sgs, card)
+	info := GetCardInfo(sgs, card)
 	var _ = info
-	if err != nil {
-		return sgs, stage, err
-	}
+	var err error
+
 	switch card.Ref {
 	case "22":
 		if action.Description == "擇選{cardId}卡的相鄰空陣地{slotId}，觸發{cardId}的{abilityId}" {
@@ -200,9 +200,7 @@ func PerformCardAction(ctx appengine.Context, sgs Game, stage core.Game, user st
 				cardIds := action.Parameters["cardIds"].([]string)
 				cost := action.Parameters["cost"].(string)
 				// 先執行支付
-				// TODO check cost is valid
-				var _ = cost
-				sgs, stage, err = PerformCost(ctx, sgs, stage, user, cardIds)
+				sgs, stage, err = PerformCost(ctx, sgs, stage, user, cost, cardIds)
 				if err != nil {
 					return sgs, stage, err
 				}
@@ -230,7 +228,7 @@ func PerformCardAction(ctx appengine.Context, sgs Game, stage core.Game, user st
 				// 將地翻面
 				stage, err = core.MapCard(ctx, stage, func(ctx appengine.Context, stage core.Game, currCard core.Card) (core.Card, error) {
 					if currCard.ID == card.ID {
-						currCard.Face = core.FaceOpen
+						currCard.Face = core.FaceClose
 					}
 					return currCard, nil
 				})

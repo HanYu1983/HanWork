@@ -51,14 +51,13 @@ var (
 // 取得卡牌的遊戲狀態
 // 遊戲狀態會在遊戲剛建立時叫用InstallCardInfo來將所有用到的卡牌的資訊存到Game中
 // GetCardInfo一定能取到自己的狀態
-// 若取不到，代表這場遊戲有問題。這場遊戲就必須放棄
-func GetCardInfo(ctx appengine.Context, sgs Game, card core.Card) (CardInfo, error) {
+func GetCardInfo(sgs Game, card core.Card) CardInfo {
 	for _, info := range sgs.CardInfo {
 		if info.CardID == card.ID {
-			return info, nil
+			return info
 		}
 	}
-	return CardInfo{}, ErrCardInfoNotExist
+	panic("取不到資料，這場遊戲有問題，必須放棄")
 }
 
 // 將台面上所有的卡牌的遊戲資料加入
@@ -67,17 +66,12 @@ func GetCardInfo(ctx appengine.Context, sgs Game, card core.Card) (CardInfo, err
 func InstallCardInfo(ctx appengine.Context, sgs Game, stage core.Game) (Game, error) {
 	var _, err = core.MapCard(ctx, stage, func(ctx appengine.Context, stage core.Game, card core.Card) (core.Card, error) {
 		var err error
-		_, err = GetCardInfo(ctx, sgs, card)
-		if err == ErrCardInfoNotExist {
-			info, err := GetCard(ctx, card.Ref)
-			if err != nil {
-				return card, err
-			}
-			cardInfo := CardInfo{card.ID, info, info}
-			sgs.CardInfo = append(sgs.CardInfo, cardInfo)
-		} else if err != nil {
+		info, err := GetCard(ctx, card.Ref)
+		if err != nil {
 			return card, err
 		}
+		cardInfo := CardInfo{card.ID, info, info}
+		sgs.CardInfo = append(sgs.CardInfo, cardInfo)
 		return card, nil
 	})
 	return sgs, err
@@ -173,13 +167,40 @@ func SaveGame(ctx appengine.Context, game Game) (Game, error) {
 
 // 支付費用
 // 由各個卡片實做中來呼叫
-func PerformCost(ctx appengine.Context, game Game, stage core.Game, user string, cardIds []string) (Game, core.Game, error) {
+// cost的格式是"無無魏"這樣的格式
+// cost的支付順序必須和cardIds給定的順序要一致
+func PerformCost(ctx appengine.Context, game Game, stage core.Game, user string, cost string, cardIds []string) (Game, core.Game, error) {
+	runeCost := []rune(cost)
+	// 長度不一樣，無法支付
+	if len(runeCost) != len(cardIds) {
+		return game, stage, ErrManaIsntEnougth
+	}
 	userManaStack := stage.CardStack[core.HasCardStack(ctx, stage, user+CardStackMana)]
-	for _, cardId := range cardIds {
+	// 依cost指定的順序處理
+	for idx, currCost := range runeCost {
+		// 取得當前的卡
+		cardId := cardIds[idx]
 		var succeed bool
 		for idx, cardInMana := range userManaStack.Card {
+			// 判斷mana中有沒有那張卡
 			if cardInMana.ID == cardId {
+				// 若cost非白色狀況
+				// 卡必須是要是開著的
+				// 並且那張卡的顏色是和cost一致
+				if ColorWhite != string(currCost) {
+					if cardInMana.Face == core.FaceClose {
+						break
+					}
+					// 取得狀態
+					info := GetCardInfo(game, cardInMana)
+					// 用Current代表允許Color在遊戲中被改變
+					if info.Current.Color != string(currCost) {
+						break
+					}
+				}
+				// 如果上述條件都有，就判斷卡牌是不是可以横置的狀態
 				if cardInMana.Direction == core.DirectionUntap {
+					// 横置卡牌
 					userManaStack.Card[idx].Direction = core.DirectionTap
 					succeed = true
 				}

@@ -42,8 +42,8 @@ type Game struct {
 
 // 卡牌面向
 const (
-	FaceOpen  = 0
-	FaceClose = 1
+	FaceClose = 0
+	FaceOpen  = 1
 )
 
 const (

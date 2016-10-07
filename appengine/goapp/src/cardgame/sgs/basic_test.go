@@ -39,6 +39,10 @@ func TestIndex(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// 將加入mana的卡翻成正面
+	for idx, _ := range stage.CardStack[manaStackId].Card {
+		stage.CardStack[manaStackId].Card[idx].Face = core.FaceOpen
+	}
 
 	t.Log("確認初始狀態")
 	for _, card := range cards {
@@ -62,6 +66,9 @@ func TestIndex(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if len(actions) == 0 {
+		t.Fatal("必須有動作方案")
+	}
 	if actions[0].Description != "使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}" {
 		t.Fatal("動作方案必須是-使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}")
 	}
@@ -69,10 +76,7 @@ func TestIndex(t *testing.T) {
 		t.Fatal("觸發的卡必須是cards[0]")
 	}
 
-	info, err := GetCardInfo(ctx, game, cards[0])
-	if err != nil {
-		t.Fatal(err)
-	}
+	info := GetCardInfo(game, cards[0])
 
 	t.Log("執行的卡是", info)
 	if info.Prototype.Name != "魏领土" {
@@ -124,6 +128,11 @@ func TestIndex(t *testing.T) {
 	for _, card := range stage.CardStack[manaStackId].Card {
 		if card.Direction != core.DirectionTap {
 			t.Fatal("執行完效果後必須是横置狀態")
+		}
+		if card.ID == cards[0].ID {
+			if card.Face != core.FaceClose {
+				t.Fatal("發動的卡必須變成反面")
+			}
 		}
 	}
 	if len(stage.CardStack[handStackId].Card) != 1 {
