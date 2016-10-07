@@ -52,6 +52,17 @@ const (
 	UserSys = "sys"
 )
 
+func Opponent(user string) string {
+	switch user {
+	case UserA:
+		return UserB
+	case UserB:
+		return UserA
+	default:
+		return user
+	}
+}
+
 const (
 	DirectionUntap = 0
 	DirectionTap   = 90

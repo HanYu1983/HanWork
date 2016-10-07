@@ -165,6 +165,14 @@ func SaveGame(ctx appengine.Context, game Game) (Game, error) {
 	return game, err
 }
 
+func X2Cost(cnt int) string {
+	str := ""
+	for i := 0; i < cnt; i++ {
+		str += "無"
+	}
+	return str
+}
+
 // 支付費用
 // 由各個卡片實做中來呼叫
 // cost的格式是"無無魏"這樣的格式

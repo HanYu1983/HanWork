@@ -5,6 +5,7 @@ import (
 	"appengine/datastore"
 	core "cardgame/core"
 	"encoding/json"
+	"errors"
 )
 
 type Card struct {
@@ -88,9 +89,9 @@ func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user stri
 			User:        user,
 			Description: "使用{cardIds}支付{cost}，擇選對手操控的{targetEnemyCardId}或{userId}，觸發{cardId}的{abilityId}",
 			Parameters: map[string]interface{}{
-				"cost":      info.Current.Cost,
+				"cost":      "X",
 				"cardId":    card.ID,
-				"abilityId": "決鬥",
+				"abilityId": "火攻",
 			},
 		}}, nil
 	case "51":
@@ -162,6 +163,54 @@ func PerformCardAction(ctx appengine.Context, sgs Game, stage core.Game, user st
 	var err error
 
 	switch card.Ref {
+	case "90":
+		if action.Description == "使用{cardIds}支付{cost}，擇選對手操控的{targetEnemyCardId}或{userId}，觸發{cardId}的{abilityId}" {
+			cardIds := action.Parameters["cardIds"].([]string)
+			cost := action.Parameters["cost"].(string)
+			targetEnemyCardId := action.Parameters["targetEnemyCardId"].(string)
+			userId := action.Parameters["userId"].(string)
+			abilityId := action.Parameters["abilityId"].(string)
+			if invoke {
+				if userId == user {
+					return sgs, stage, errors.New("user id is me")
+				}
+				opponent := core.Opponent(user)
+				hasEnemy := core.HasCardInStack(ctx, stage, opponent+CardStackSlot, core.Card{ID: targetEnemyCardId})
+				if hasEnemy == -1 {
+					return sgs, stage, errors.New("enemy id is not exist")
+				}
+				// 將X轉為"無"序列
+				cost = X2Cost(len(cardIds))
+				sgs, stage, err = PerformCost(ctx, sgs, stage, user, cost, cardIds)
+				if err != nil {
+					return sgs, stage, err
+				}
+				payload, err := json.Marshal(action)
+				if err != nil {
+					return sgs, stage, err
+				}
+				// 再放入效果
+				g1, err := core.CreateGoal(ctx, sgs.ID, core.Goal{
+					User:        core.UserSys,
+					Description: "玩家{0}觸發{1}的能力{2}",
+					Parameters:  []string{user, card.ID, string(payload)},
+				})
+				if err != nil {
+					return sgs, stage, err
+				}
+				err = core.AddEffect(ctx, sgs.ID, core.Effect{UserID: user, GoalID: g1.ID})
+				if err != nil {
+					return sgs, stage, err
+				}
+				return sgs, stage, nil
+			}
+			if abilityId == "火攻" {
+				damage := len(cardIds)
+				// damage it
+				var _ = damage
+			}
+		}
+		break
 	case "22":
 		if action.Description == "擇選{cardId}卡的相鄰空陣地{slotId}，觸發{cardId}的{abilityId}" {
 			if invoke {
