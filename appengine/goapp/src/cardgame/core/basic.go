@@ -34,10 +34,8 @@ type CardStack struct {
 // 牌局
 // 只需要記錄有哪些牌堆
 type Game struct {
-	ID           string
-	Phase        []string
-	CurrentPhase int
-	CardStack    []CardStack
+	ID        string
+	CardStack []CardStack
 }
 
 // 卡牌面向
@@ -69,7 +67,6 @@ const (
 )
 
 var (
-	ErrPhaseNotExist         = errors.New("phase not exist")
 	ErrCardStackAlreadyExist = errors.New("card stack already exist")
 	ErrCardStackNotExist     = errors.New("card stack not exist")
 	ErrCardNotExist          = errors.New("card not exist")
@@ -123,35 +120,6 @@ func DeleteGame(ctx appengine.Context, gameID string) error {
 	key := GameKey(ctx, gameID)
 	err := datastore.Delete(ctx, key)
 	return err
-}
-
-func DefPhase(ctx appengine.Context, game Game, phase []string) (Game, error) {
-	game.Phase = phase
-	return game, nil
-}
-
-func HasPhase(ctx appengine.Context, game Game, phase string) int {
-	for idx, p := range game.Phase {
-		if p == phase {
-			return idx
-		}
-	}
-	return -1
-}
-
-func JumpToPhase(ctx appengine.Context, game Game, phase string, phaseIdx int) (Game, error) {
-	if phaseIdx != -1 {
-		game.CurrentPhase = phaseIdx % len(game.Phase)
-		return game, nil
-	}
-
-	idx := HasPhase(ctx, game, phase)
-	if idx != -1 {
-		game.CurrentPhase = idx
-		return game, nil
-	}
-
-	return game, ErrPhaseNotExist
 }
 
 // 指定牌堆是否存在

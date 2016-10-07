@@ -22,9 +22,12 @@ type CardInfo struct {
 // core.Game記錄的是卡牌的位置、面向等資訊
 // 這個Game記錄的是陣面對決的遊戲狀態
 type Game struct {
-	ID        string
-	CurrPhase string
-	CardInfo  []CardInfo
+	ID           string
+	Phase        []string
+	CurrentPhase int
+	CardInfo     []CardInfo
+	SlotA        []string
+	SlotB        []string
 }
 
 // 行動方案
@@ -41,6 +44,7 @@ type Action struct {
 }
 
 var (
+	ErrPhaseNotExist         = errors.New("phase not exist")
 	ErrCardInfoNotExist      = errors.New("card info not exist")
 	ErrYouAreNotTheCardOwner = errors.New("you are not the card owner")
 	ErrTargetCardIsntMana    = errors.New("target card is not mana")
@@ -143,7 +147,7 @@ func CreateGame(ctx appengine.Context, gameId string) (Game, core.Game, error) {
 		return Game{}, game, err
 	}
 	// 建立陣面對決
-	sgs := Game{ID: gameId}
+	sgs := Game{ID: gameId, SlotA: make([]string, 5), SlotB: make([]string, 5)}
 	sgs, err = SaveGame(ctx, sgs)
 	return sgs, game, err
 }
@@ -163,6 +167,30 @@ func SaveGame(ctx appengine.Context, game Game) (Game, error) {
 	var err error
 	_, err = datastore.Put(ctx, key, &game)
 	return game, err
+}
+
+func HasPhase(ctx appengine.Context, game Game, phase string) int {
+	for idx, p := range game.Phase {
+		if p == phase {
+			return idx
+		}
+	}
+	return -1
+}
+
+func JumpToPhase(ctx appengine.Context, game Game, phase string, phaseIdx int) (Game, error) {
+	if phaseIdx != -1 {
+		game.CurrentPhase = phaseIdx % len(game.Phase)
+		return game, nil
+	}
+
+	idx := HasPhase(ctx, game, phase)
+	if idx != -1 {
+		game.CurrentPhase = idx
+		return game, nil
+	}
+
+	return game, ErrPhaseNotExist
 }
 
 func X2Cost(cnt int) string {

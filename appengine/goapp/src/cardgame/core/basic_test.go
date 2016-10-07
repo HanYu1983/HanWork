@@ -20,30 +20,31 @@ func TestBasic(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("定義階段")
-	game, err = DefPhase(ctx, game, []string{"draw", "set", "atk", "def", "end"})
-	if err != nil {
-		t.Fatal(err)
-	}
+	/*
+		t.Log("定義階段")
+		game, err = DefPhase(ctx, game, []string{"draw", "set", "atk", "def", "end"})
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	t.Log("跳到set階段")
-	game, err = JumpToPhase(ctx, game, "set", -1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if game.CurrentPhase != 1 {
-		t.Fatal("現在必須在set階段")
-	}
+		t.Log("跳到set階段")
+		game, err = JumpToPhase(ctx, game, "set", -1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if game.CurrentPhase != 1 {
+			t.Fatal("現在必須在set階段")
+		}
 
-	t.Log("跳到下一個階段")
-	game, err = JumpToPhase(ctx, game, "", game.CurrentPhase+1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if game.CurrentPhase != 2 {
-		t.Fatal("現在必須在atk階段")
-	}
-
+		t.Log("跳到下一個階段")
+		game, err = JumpToPhase(ctx, game, "", game.CurrentPhase+1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if game.CurrentPhase != 2 {
+			t.Fatal("現在必須在atk階段")
+		}
+	*/
 	t.Log("建立牌堆john-drawStack")
 	game, err = CreateCardStack(ctx, game, "john-drawStack", "drawStack")
 	if err != nil {

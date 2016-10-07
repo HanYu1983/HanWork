@@ -264,7 +264,6 @@ func PerformCardAction(ctx appengine.Context, sgs Game, stage core.Game, user st
 				if err != nil {
 					return sgs, stage, err
 				}
-
 				err = AddEffectFromAction(ctx, sgs.ID, user, action, card.ID)
 				if err != nil {
 					return sgs, stage, err
