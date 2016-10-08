@@ -1,8 +1,9 @@
-package sgs
+package script
 
 import (
 	"appengine/aetest"
 	core "cardgame/core"
+	. "cardgame/sgs/core"
 	"testing"
 )
 

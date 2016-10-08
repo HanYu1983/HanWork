@@ -1,44 +1,12 @@
-package sgs
+package script
 
 import (
 	"appengine"
 	"appengine/datastore"
 	core "cardgame/core"
+	. "cardgame/sgs/core"
 	"errors"
 )
-
-type Card struct {
-	CardID    string
-	Name      string
-	Cost      string
-	Color     string
-	ColorCost string
-	Class     string
-	Package   string
-	Attack    string
-	Defence   string
-	Text      string
-}
-
-const (
-	ColorBlue  = "魏"
-	ColorRed   = "蜀"
-	ColorGreen = "吳"
-	ColorGray  = "群"
-	ColorWhite = "無"
-)
-
-func SgsKey(ctx appengine.Context) *datastore.Key {
-	return datastore.NewKey(ctx, "Sgs", "SgsCard", 0, nil)
-}
-
-func CardKey(ctx appengine.Context, id string) *datastore.Key {
-	return datastore.NewKey(ctx, "SgsCard", id, 0, SgsKey(ctx))
-}
-
-func GameKey(ctx appengine.Context, gameId string) *datastore.Key {
-	return datastore.NewKey(ctx, "SgsGame", gameId, 0, SgsKey(ctx))
-}
 
 var (
 	Packages = []func([]Card) []Card{
@@ -72,6 +40,35 @@ func GetCard(ctx appengine.Context, id string) (Card, error) {
 		return Card{}, err
 	}
 	return card, nil
+}
+
+// 取得卡牌的遊戲狀態
+// 遊戲狀態會在遊戲剛建立時叫用InstallCardInfo來將所有用到的卡牌的資訊存到Game中
+// GetCardInfo一定能取到自己的狀態
+func GetCardInfo(sgs Game, card core.Card) CardInfo {
+	for _, info := range sgs.CardInfo {
+		if info.CardID == card.ID {
+			return info
+		}
+	}
+	panic("取不到資料，這場遊戲有問題，必須放棄")
+}
+
+// 將台面上所有的卡牌的遊戲資料加入
+// 在將玩家的牌組加入遊戲時呼叫
+// 這個方法一定要呼叫，不然遊戲不能玩
+func InstallCardInfo(ctx appengine.Context, sgs Game, stage core.Game) (Game, error) {
+	var _, err = core.MapCard(ctx, stage, func(ctx appengine.Context, stage core.Game, card core.Card) (core.Card, error) {
+		var err error
+		info, err := GetCard(ctx, card.Ref)
+		if err != nil {
+			return card, err
+		}
+		cardInfo := CardInfo{CardID: card.ID, Prototype: info, Current: info}
+		sgs.CardInfo = append(sgs.CardInfo, cardInfo)
+		return card, nil
+	})
+	return sgs, err
 }
 
 // 支付消費

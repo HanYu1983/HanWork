@@ -1,7 +1,7 @@
-package sgs
+package script
 
 import (
-	_ "errors"
+	. "cardgame/sgs/core"
 )
 
 func 初陣(total []Card) []Card {

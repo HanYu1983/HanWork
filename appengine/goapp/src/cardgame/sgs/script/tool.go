@@ -1,8 +1,9 @@
-package sgs
+package script
 
 import (
 	"appengine"
 	core "cardgame/core"
+	. "cardgame/sgs/core"
 	"encoding/json"
 )
 
