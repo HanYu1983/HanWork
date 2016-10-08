@@ -133,18 +133,20 @@ func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user stri
 
 	switch card.Ref {
 	case "90":
+		// 火攻
 		if core.HasCardInStack(ctx, stage, user+CardStackHand, card) != -1 {
 			canConsumeCards, err = CheckCanConsumeCost(ctx, sgs, stage, user, card)
 			if err != nil {
 				return nil, err
 			}
 			canConsumeCardIds := MapCardsToCardIDs(ctx, canConsumeCards)
+			info := GetCardInfo(sgs, card)
 			actions = append(actions, Action{
 				FromID:      card.ID,
 				User:        user,
 				Description: "使用{cardIds}支付{cost}。擇選對手操控的{targetEnemyCardId}或{userId}，觸發{cardId}的{abilityId}",
 				Parameters: map[string]interface{}{
-					"cost":      "X",
+					"cost":      FormatCost(ctx, info),
 					"cardId":    card.ID,
 					"abilityId": "火攻",
 					"meta":      canConsumeCardIds,
@@ -154,6 +156,7 @@ func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user stri
 		}
 		return nil, nil
 	case "51":
+		// 决斗
 		var err error
 		var units []string
 		my, err := CheckHasXUnitInSlot(ctx, sgs, stage, 1, user)
@@ -184,9 +187,9 @@ func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user stri
 				"meta":      units,
 			},
 		})
-
 		return actions, nil
 	case "22":
+		// 青州探马
 		if IsPhase(ctx, sgs, PhaseMain) == false {
 			return nil, nil
 		}
@@ -210,6 +213,7 @@ func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user stri
 		})
 		return actions, nil
 	case "179":
+		// 魏领土
 		if card.Owner != user {
 			return nil, nil
 		}
