@@ -4,7 +4,6 @@ import (
 	"appengine"
 	"appengine/datastore"
 	core "cardgame/core"
-	"encoding/json"
 	"errors"
 )
 
@@ -75,58 +74,151 @@ func GetCard(ctx appengine.Context, id string) (Card, error) {
 	return card, nil
 }
 
+// 支付消費
+// 如何支付全部由卡牌自定
+func ConsumeCostInCard(ctx appengine.Context, game Game, stage core.Game, user string, cost string, costSlot []string, card core.Card) (Game, core.Game, error) {
+	var err error
+	switch card.Ref {
+	case "179":
+		// 持有者不是自己不能支付
+		if card.Owner != user {
+			return game, stage, nil
+		}
+		// 魏領土沒有在mana裡不能支付
+		if core.HasCardInStack(ctx, stage, user+CardStackMana, card) == -1 {
+			return game, stage, nil
+		}
+		// 已經横置的不能支付
+		if card.Direction == core.DirectionTap {
+			return game, stage, nil
+		}
+		// 需要用到info時才取，並且如果有改變的話，要立刻存回去
+		info := GetCardInfo(game, card)
+		for idx, c := range []rune(cost) {
+			// 尋找還沒填充的slot
+			if costSlot[idx] != "" {
+				continue
+			}
+			if string(c) != ColorWhite {
+				// 有顏色的支付必須是開牌狀態才能支付
+				if card.Face == core.FaceClose {
+					continue
+				}
+				// 開著的牌必須顏色符合
+				if string(c) != info.Current.Color {
+					continue
+				}
+			}
+			// Ok，可支付
+			stage, err = core.MapCard(ctx, stage, ChangeCardDirection(ctx, card.ID, core.DirectionTap))
+			if err != nil {
+				return game, stage, err
+			}
+			// 填充slot
+			costSlot[idx] = card.ID
+			// 因為魏領土只能支付一個mana，所以支付完直接回傳
+			return game, stage, nil
+		}
+		break
+	}
+	return game, stage, nil
+}
+
 // 取得指定卡牌的行動方案
 // 由前台去補足Action中的Parameters
 // 補完後呼叫PerformCardAction
-func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card) ([]Action, error) {
-	info := GetCardInfo(sgs, card)
+func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card, actions []Action) ([]Action, error) {
+	var err error
+	var canConsumeCards []core.Card
+
 	switch card.Ref {
 	case "90":
-		// TODO 判斷cost夠不夠支付
 		if core.HasCardInStack(ctx, stage, user+CardStackHand, card) != -1 {
-			return []Action{{
+			canConsumeCards, err = CheckCanConsumeCost(ctx, sgs, stage, user, card)
+			if err != nil {
+				return nil, err
+			}
+			canConsumeCardIds := MapCardsToCardIDs(ctx, canConsumeCards)
+			actions = append(actions, Action{
 				FromID:      card.ID,
 				User:        user,
-				Description: "使用{cardIds}支付{cost}，擇選對手操控的{targetEnemyCardId}或{userId}，觸發{cardId}的{abilityId}",
+				Description: "使用{cardIds}支付{cost}。擇選對手操控的{targetEnemyCardId}或{userId}，觸發{cardId}的{abilityId}",
 				Parameters: map[string]interface{}{
 					"cost":      "X",
 					"cardId":    card.ID,
 					"abilityId": "火攻",
+					"meta":      canConsumeCardIds,
 				},
-			}}, nil
+			})
+			return actions, nil
 		}
 		return nil, nil
 	case "51":
-		// TODO check if you has 1 unit and enemy has 1 unit
-		return []Action{{
+		var err error
+		var units []string
+		my, err := CheckHasXUnitInSlot(ctx, sgs, stage, 1, user)
+		if err != nil {
+			return nil, err
+		}
+		enemy, err := CheckHasXUnitInSlot(ctx, sgs, stage, 1, core.Opponent(user))
+		if err != nil {
+			return nil, err
+		}
+		if len(my) == 0 {
+			return nil, nil
+		}
+		if len(enemy) == 0 {
+			return nil, nil
+		}
+		units = append(units, MapCardsToCardIDs(ctx, my)...)
+		units = append(units, MapCardsToCardIDs(ctx, enemy)...)
+		info := GetCardInfo(sgs, card)
+		actions = append(actions, Action{
 			FromID:      card.ID,
 			User:        user,
 			Description: "使用{cardIds}支付{cost}，擇選你操控的{targetCardId}和對手操控的{targetEnemyCardId}，觸發{cardId}的{abilityId}",
 			Parameters: map[string]interface{}{
-				"cost":      info.Current.Cost,
+				"cost":      FormatCost(ctx, info),
 				"cardId":    card.ID,
 				"abilityId": "決鬥",
+				"meta":      units,
 			},
-		}}, nil
+		})
+
+		return actions, nil
 	case "22":
-		// TODO 看看現在是不是通常時機
-		return []Action{{
+		if IsPhase(ctx, sgs, PhaseMain) == false {
+			return nil, nil
+		}
+		atSlot := GetCardSlot(ctx, sgs, stage, user, card)
+		if atSlot == -1 {
+			return nil, nil
+		}
+		neighborSlotIds := GetEmptySlotNeighbor(ctx, sgs, stage, user, atSlot)
+		if len(neighborSlotIds) == 0 {
+			return nil, nil
+		}
+		actions = append(actions, Action{
 			FromID:      card.ID,
 			User:        user,
 			Description: "擇選{cardId}卡的相鄰空陣地{slotId}，觸發{cardId}的{abilityId}",
 			Parameters: map[string]interface{}{
 				"cardId":    card.ID,
 				"abilityID": "轉移",
+				"meta":      neighborSlotIds,
 			},
-		}}, nil
+		})
+		return actions, nil
 	case "179":
 		if card.Owner != user {
 			return nil, nil
 		}
 		// 如果在手上，就可以打出來
-		if core.HasCardInStack(ctx, stage, user+CardStackHand, card) != -1 {
-			// TODO 判斷這回合有沒有打過mana
-			return []Action{{
+		if IsCardInCardStack(ctx, stage, user+CardStackHand, card) {
+			if CheckHasPutManaInThisTurn(ctx, sgs, stage) {
+				return nil, nil
+			}
+			actions = append(actions, Action{
 				FromID:      card.ID,
 				User:        user,
 				Description: "打出{cardId}到{stackId}",
@@ -134,11 +226,17 @@ func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user stri
 					"cardId":  card.ID,
 					"stackId": user + CardStackMana,
 				},
-			}}, nil
+			})
+			return actions, nil
 		}
 		// 在魔力池中並且是打開狀態才能有這個能力
-		if core.HasCardInStack(ctx, stage, user+CardStackMana, card) != -1 && card.Face == core.FaceOpen {
-			return []Action{{
+		if IsCardInCardStack(ctx, stage, user+CardStackMana, card) && card.Face == core.FaceOpen {
+			canConsumeCards, err = CheckCanConsumeCost(ctx, sgs, stage, user, card)
+			if err != nil {
+				return nil, err
+			}
+			canConsumeCardIds := MapCardsToCardIDs(ctx, canConsumeCards)
+			actions = append(actions, Action{
 				FromID:      card.ID,
 				User:        user,
 				Description: "使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}",
@@ -146,39 +244,14 @@ func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user stri
 					"cost":      "無無無",
 					"cardId":    card.ID,
 					"abilityId": "翻面抓牌",
+					"meta":      canConsumeCardIds,
 				},
-			}}, nil
+			})
+			return actions, nil
 		}
-		return nil, nil
+		return actions, nil
 	}
-	return nil, nil
-}
-
-type SgsError string
-
-func (err SgsError) Error() string {
-	return string(err)
-}
-
-func AddEffectFromAction(ctx appengine.Context, gameId string, user string, action Action, cardId string) error {
-	payload, err := json.Marshal(action)
-	if err != nil {
-		return err
-	}
-	// 再放入效果
-	g1, err := core.CreateGoal(ctx, gameId, core.Goal{
-		User:        core.UserSys,
-		Description: "玩家{0}觸發{1}的能力{2}",
-		Parameters:  []string{user, cardId, string(payload)},
-	})
-	if err != nil {
-		return err
-	}
-	err = core.AddEffect(ctx, gameId, core.Effect{UserID: user, GoalID: g1.ID})
-	if err != nil {
-		return err
-	}
-	return nil
+	return actions, nil
 }
 
 // 執行指定卡牌的行動方案
@@ -193,11 +266,7 @@ func PerformCardAction(ctx appengine.Context, sgs Game, stage core.Game, user st
 	if action.FromID != card.ID {
 		return sgs, stage, nil
 	}
-	// 取得狀態
-	info := GetCardInfo(sgs, card)
-	var _ = info
 	var err error
-
 	switch card.Ref {
 	case "90":
 		if action.Description == "使用{cardIds}支付{cost}，擇選對手操控的{targetEnemyCardId}或{userId}，觸發{cardId}的{abilityId}" {
@@ -215,7 +284,7 @@ func PerformCardAction(ctx appengine.Context, sgs Game, stage core.Game, user st
 				if hasEnemy == -1 {
 					return sgs, stage, errors.New("enemy id is not exist")
 				}
-				sgs, stage, err = PerformCost(ctx, sgs, stage, user, cost, cardIds)
+				sgs, stage, err = ConsumeCost(ctx, sgs, stage, user, cost, cardIds)
 				if err != nil {
 					return sgs, stage, err
 				}
@@ -260,7 +329,7 @@ func PerformCardAction(ctx appengine.Context, sgs Game, stage core.Game, user st
 			if invoke {
 				cardIds := action.Parameters["cardIds"].([]string)
 				// 先執行支付
-				sgs, stage, err = PerformCost(ctx, sgs, stage, user, cost, cardIds)
+				sgs, stage, err = ConsumeCost(ctx, sgs, stage, user, cost, cardIds)
 				if err != nil {
 					return sgs, stage, err
 				}

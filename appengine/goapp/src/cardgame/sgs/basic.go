@@ -14,6 +14,7 @@ type CardInfo struct {
 	CardID    string
 	Prototype Card
 	Current   Card
+	Turn      int
 }
 
 // 遊戲
@@ -28,6 +29,7 @@ type Game struct {
 	CardInfo     []CardInfo
 	SlotA        []string
 	SlotB        []string
+	Turn         int
 }
 
 // 行動方案
@@ -52,6 +54,19 @@ var (
 	ErrManaIsntEnougth       = errors.New("mana is not enought ")
 )
 
+const (
+	CardStackBase      = "base"
+	CardStackHand      = "hand"
+	CardStackMana      = "mana"
+	CardStackGraveyard = "graveyard"
+	CardStackSlot      = "slot"
+)
+
+const (
+	PhaseDraw = "draw"
+	PhaseMain = "main"
+)
+
 // 取得卡牌的遊戲狀態
 // 遊戲狀態會在遊戲剛建立時叫用InstallCardInfo來將所有用到的卡牌的資訊存到Game中
 // GetCardInfo一定能取到自己的狀態
@@ -74,20 +89,12 @@ func InstallCardInfo(ctx appengine.Context, sgs Game, stage core.Game) (Game, er
 		if err != nil {
 			return card, err
 		}
-		cardInfo := CardInfo{card.ID, info, info}
+		cardInfo := CardInfo{CardID: card.ID, Prototype: info, Current: info}
 		sgs.CardInfo = append(sgs.CardInfo, cardInfo)
 		return card, nil
 	})
 	return sgs, err
 }
-
-const (
-	CardStackBase      = "base"
-	CardStackHand      = "hand"
-	CardStackMana      = "mana"
-	CardStackGraveyard = "graveyard"
-	CardStackSlot      = "slot"
-)
 
 // 建立陣面對決的牌局
 // 這個方法會一并建立core.Game的台面狀態
@@ -205,48 +212,38 @@ func X2Cost(cnt int) string {
 // 由各個卡片實做中來呼叫
 // cost的格式是"無無魏"這樣的格式
 // cost的支付順序必須和cardIds給定的順序要一致
-func PerformCost(ctx appengine.Context, game Game, stage core.Game, user string, cost string, cardIds []string) (Game, core.Game, error) {
+func ConsumeCost(ctx appengine.Context, game Game, stage core.Game, user string, cost string, cardIds []string) (Game, core.Game, error) {
 	// 將X轉為"無"序列
 	if cost == "X" {
 		cost = X2Cost(len(cardIds))
 	}
-	runeCost := []rune(cost)
-	// 長度不一樣，無法支付
-	if len(runeCost) != len(cardIds) {
-		return game, stage, ErrManaIsntEnougth
-	}
-	userManaStack := stage.CardStack[core.HasCardStack(ctx, stage, user+CardStackMana)]
-	// 依cost指定的順序處理
-	for idx, currCost := range runeCost {
-		// 取得當前的卡
-		cardId := cardIds[idx]
-		var succeed bool
-		for idx, cardInMana := range userManaStack.Card {
-			// 判斷mana中有沒有那張卡
-			if cardInMana.ID == cardId {
-				// 若cost非白色狀況
-				// 卡必須是要是開著的
-				// 並且那張卡的顏色是和cost一致
-				if ColorWhite != string(currCost) {
-					if cardInMana.Face == core.FaceClose {
-						break
-					}
-					// 取得狀態
-					info := GetCardInfo(game, cardInMana)
-					// 用Current代表允許Color在遊戲中被改變
-					if info.Current.Color != string(currCost) {
-						break
-					}
+	var err error
+	// 建立空的slot
+	// 這個slot必須被填滿
+	costSlot := make([]string, len([]rune(cost)))
+	// 先將stage考貝一份
+	updatedStage := stage
+	for _, cardId := range cardIds {
+		for _, stk := range stage.CardStack {
+			for _, card := range stk.Card {
+				// 略過沒使用到的卡
+				if card.ID != cardId {
+					continue
 				}
-				// 如果上述條件都有，就判斷卡牌是不是可以横置的狀態
-				if cardInMana.Direction == core.DirectionUntap {
-					// 横置卡牌
-					userManaStack.Card[idx].Direction = core.DirectionTap
-					succeed = true
+				// 支付消費
+				// 填充slot
+				game, updatedStage, err = ConsumeCostInCard(ctx, game, updatedStage, user, cost, costSlot, card)
+				if err != nil {
+					return game, stage, err
 				}
 			}
 		}
-		if succeed == false {
+	}
+	// 切換成最新的stage
+	stage = updatedStage
+	// 檢查slot是不是都被填滿了
+	for _, slot := range costSlot {
+		if slot == "" {
 			return game, stage, ErrManaIsntEnougth
 		}
 	}
@@ -264,13 +261,14 @@ func PerformCost(ctx appengine.Context, game Game, stage core.Game, user string,
 // 2. 若要切入或發起新的切入，呼叫CheckAction來取得動作方案
 // 3. 呼叫PerformAction
 func CheckAction(ctx appengine.Context, sgs Game, game core.Game, user string) ([]Action, error) {
+	var err error
 	actions := []Action{}
-	var _, err = core.MapCard(ctx, game, func(ctx appengine.Context, game core.Game, card core.Card) (core.Card, error) {
-		cardAction, err := CheckCardAction(ctx, sgs, game, user, card)
+	_, err = core.MapCard(ctx, game, func(ctx appengine.Context, game core.Game, card core.Card) (core.Card, error) {
+		var err error
+		actions, err = CheckCardAction(ctx, sgs, game, user, card, actions)
 		if err != nil {
 			return card, err
 		}
-		actions = append(actions, cardAction...)
 		return card, nil
 	})
 	return actions, err
@@ -285,15 +283,16 @@ func CheckAction(ctx appengine.Context, sgs Game, game core.Game, user string) (
 // 若沒有，新增切入堆疊
 func PerformAction(ctx appengine.Context, sgs Game, stage core.Game, user string, action Action) (Game, core.Game, error) {
 	var err error
+	updatedStage := stage
 	for _, stk := range stage.CardStack {
 		for _, card := range stk.Card {
-			sgs, stage, err = PerformCardAction(ctx, sgs, stage, user, action, true, card)
+			sgs, updatedStage, err = PerformCardAction(ctx, sgs, updatedStage, user, action, true, card)
 			if err != nil {
 				return sgs, stage, err
 			}
 		}
 	}
-	return sgs, stage, nil
+	return sgs, updatedStage, nil
 }
 
 func StepSystem(ctx appengine.Context, sgs Game, stage core.Game) (Game, core.Game, error) {

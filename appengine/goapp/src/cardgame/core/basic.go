@@ -179,7 +179,9 @@ func AddCardsTo(ctx appengine.Context, game Game, cardRefs []string, stackName s
 	return game, cards, nil
 }
 
-func MapCard(ctx appengine.Context, game Game, fn func(appengine.Context, Game, Card) (Card, error)) (Game, error) {
+type FuncMapCard func(appengine.Context, Game, Card) (Card, error)
+
+func MapCard(ctx appengine.Context, game Game, fn FuncMapCard) (Game, error) {
 	for _, stk := range game.CardStack {
 		for idx, card := range stk.Card {
 			updatedCard, err := fn(ctx, game, card)
