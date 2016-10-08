@@ -58,7 +58,7 @@ func ConsumeCostInCard179(ctx appengine.Context, game Game, stage core.Game, use
 	return game, stage, nil
 }
 
-func PerformCardAction179(ctx appengine.Context, sgs Game, stage core.Game, user string, action Action, invoke bool, card core.Card) (Game, core.Game, error) {
+func PerformActionInCard179(ctx appengine.Context, sgs Game, stage core.Game, user string, action Action, invoke bool, card core.Card) (Game, core.Game, error) {
 	var err error
 	if action.Description == "使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}" {
 		cost := action.Parameters["cost"].(string)
@@ -106,7 +106,7 @@ func PerformCardAction179(ctx appengine.Context, sgs Game, stage core.Game, user
 	return sgs, stage, nil
 }
 
-func CheckCardAction179(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card, actions []Action) ([]Action, error) {
+func CheckActionInCard179(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card, actions []Action) ([]Action, error) {
 	var err error
 	var canConsumeCards []core.Card
 	// 魏领土

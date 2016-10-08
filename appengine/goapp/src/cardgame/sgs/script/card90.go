@@ -11,7 +11,7 @@ func ConsumeCostInCard90(ctx appengine.Context, game Game, stage core.Game, user
 	return game, stage, nil
 }
 
-func PerformCardAction90(ctx appengine.Context, game Game, stage core.Game, user string, action Action, invoke bool, card core.Card) (Game, core.Game, error) {
+func PerformActionInCard90(ctx appengine.Context, game Game, stage core.Game, user string, action Action, invoke bool, card core.Card) (Game, core.Game, error) {
 	var err error
 	if action.Description == "使用{cardIds}支付{cost}，擇選對手操控的{targetEnemyCardId}或{userId}，觸發{cardId}的{abilityId}" {
 		cost := action.Parameters["cost"].(string)
@@ -48,7 +48,7 @@ func PerformCardAction90(ctx appengine.Context, game Game, stage core.Game, user
 	return game, stage, nil
 }
 
-func CheckCardAction90(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card, actions []Action) ([]Action, error) {
+func CheckActionInCard90(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card, actions []Action) ([]Action, error) {
 	var err error
 	var canConsumeCards []core.Card
 	// 火攻

@@ -10,7 +10,7 @@ func ConsumeCostInCard22(ctx appengine.Context, game Game, stage core.Game, user
 	return game, stage, nil
 }
 
-func PerformCardAction22(ctx appengine.Context, game Game, stage core.Game, user string, action Action, invoke bool, card core.Card) (Game, core.Game, error) {
+func PerformActionInCard22(ctx appengine.Context, game Game, stage core.Game, user string, action Action, invoke bool, card core.Card) (Game, core.Game, error) {
 	var err error
 	if action.Description == "擇選{cardId}卡的相鄰空陣地{slotId}，觸發{cardId}的{abilityId}" {
 		abilityId := action.Parameters["abilityId"].(string)
@@ -32,7 +32,7 @@ func PerformCardAction22(ctx appengine.Context, game Game, stage core.Game, user
 	return game, stage, nil
 }
 
-func CheckCardAction22(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card, actions []Action) ([]Action, error) {
+func CheckActionInCard22(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card, actions []Action) ([]Action, error) {
 	// 青州探马
 	if IsPhase(ctx, sgs, PhaseMain) == false {
 		return nil, nil

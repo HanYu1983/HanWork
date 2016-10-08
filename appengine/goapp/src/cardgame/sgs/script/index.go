@@ -59,18 +59,18 @@ func ConsumeCost(ctx appengine.Context, game Game, stage core.Game, user string,
 // 1. 玩家呼叫GetCut，判斷切入狀態
 // 2. 若要切入或發起新的切入，呼叫CheckAction來取得動作方案
 // 3. 呼叫PerformAction
-func CheckAction(ctx appengine.Context, sgs Game, game core.Game, user string) ([]Action, error) {
+func CheckAction(ctx appengine.Context, game Game, stage core.Game, user string) ([]Action, error) {
 	var err error
 	actions := []Action{}
-	_, err = core.MapCard(ctx, game, func(ctx appengine.Context, game core.Game, card core.Card) (core.Card, error) {
-		var err error
-		actions, err = CheckCardAction(ctx, sgs, game, user, card, actions)
-		if err != nil {
-			return card, err
+	for _, stk := range stage.CardStack {
+		for _, card := range stk.Card {
+			actions, err = CheckActionInCard(ctx, game, stage, user, card, actions)
+			if err != nil {
+				return nil, err
+			}
 		}
-		return card, nil
-	})
-	return actions, err
+	}
+	return actions, nil
 }
 
 // 玩家將所選的Target上傳
@@ -80,18 +80,18 @@ func CheckAction(ctx appengine.Context, sgs Game, game core.Game, user string) (
 // 會自動判斷有沒有在切入中
 // 若有，發生切入
 // 若沒有，新增切入堆疊
-func PerformAction(ctx appengine.Context, sgs Game, stage core.Game, user string, action Action) (Game, core.Game, error) {
+func PerformAction(ctx appengine.Context, game Game, stage core.Game, user string, action Action) (Game, core.Game, error) {
 	var err error
 	updatedStage := stage
 	for _, stk := range stage.CardStack {
 		for _, card := range stk.Card {
-			sgs, updatedStage, err = PerformCardAction(ctx, sgs, updatedStage, user, action, true, card)
+			game, updatedStage, err = PerformActionInCard(ctx, game, updatedStage, user, action, true, card)
 			if err != nil {
-				return sgs, stage, err
+				return game, stage, err
 			}
 		}
 	}
-	return sgs, updatedStage, nil
+	return game, updatedStage, nil
 }
 
 func StepSystem(ctx appengine.Context, sgs Game, stage core.Game) (Game, core.Game, error) {
@@ -141,7 +141,7 @@ func StepSystem(ctx appengine.Context, sgs Game, stage core.Game) (Game, core.Ga
 				if card.ID != cardId {
 					continue
 				}
-				sgs, stage, err = PerformCardAction(ctx, sgs, stage, user, action, false, card)
+				sgs, stage, err = PerformActionInCard(ctx, sgs, stage, user, action, false, card)
 
 				switch err.(type) {
 				case SgsError:

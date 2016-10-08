@@ -137,17 +137,17 @@ func ConsumeCostInCard(ctx appengine.Context, game Game, stage core.Game, user s
 
 // 取得指定卡牌的行動方案
 // 由前台去補足Action中的Parameters
-// 補完後呼叫PerformCardAction
-func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card, actions []Action) ([]Action, error) {
+// 補完後呼叫PerformActionInCard
+func CheckActionInCard(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card, actions []Action) ([]Action, error) {
 	switch card.Ref {
 	case "90":
-		return CheckCardAction90(ctx, sgs, stage, user, card, actions)
+		return CheckActionInCard90(ctx, sgs, stage, user, card, actions)
 	case "51":
-		return CheckCardAction51(ctx, sgs, stage, user, card, actions)
+		return CheckActionInCard51(ctx, sgs, stage, user, card, actions)
 	case "22":
-		return CheckCardAction22(ctx, sgs, stage, user, card, actions)
+		return CheckActionInCard22(ctx, sgs, stage, user, card, actions)
 	case "179":
-		return CheckCardAction179(ctx, sgs, stage, user, card, actions)
+		return CheckActionInCard179(ctx, sgs, stage, user, card, actions)
 	}
 	return actions, nil
 }
@@ -159,20 +159,20 @@ func CheckCardAction(ctx appengine.Context, sgs Game, stage core.Game, user stri
 // 啟動能力就會先將動作方案中的支付解決
 // 若invoke為false代表要解決行動方案的效果
 // 也是實做效果的地方
-func PerformCardAction(ctx appengine.Context, sgs Game, stage core.Game, user string, action Action, invoke bool, card core.Card) (Game, core.Game, error) {
+func PerformActionInCard(ctx appengine.Context, sgs Game, stage core.Game, user string, action Action, invoke bool, card core.Card) (Game, core.Game, error) {
 	// 不是發動的卡就略過
 	if action.FromID != card.ID {
 		return sgs, stage, nil
 	}
 	switch card.Ref {
 	case "90":
-		return PerformCardAction90(ctx, sgs, stage, user, action, invoke, card)
+		return PerformActionInCard90(ctx, sgs, stage, user, action, invoke, card)
 	case "22":
-		return PerformCardAction22(ctx, sgs, stage, user, action, invoke, card)
+		return PerformActionInCard22(ctx, sgs, stage, user, action, invoke, card)
 	case "51":
-		return PerformCardAction51(ctx, sgs, stage, user, action, invoke, card)
+		return PerformActionInCard51(ctx, sgs, stage, user, action, invoke, card)
 	case "179":
-		return PerformCardAction179(ctx, sgs, stage, user, action, invoke, card)
+		return PerformActionInCard179(ctx, sgs, stage, user, action, invoke, card)
 	}
 	return sgs, stage, nil
 }

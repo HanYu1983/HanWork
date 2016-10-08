@@ -10,11 +10,11 @@ func ConsumeCostInCard51(ctx appengine.Context, game Game, stage core.Game, user
 	return game, stage, nil
 }
 
-func PerformCardAction51(ctx appengine.Context, game Game, stage core.Game, user string, action Action, invoke bool, card core.Card) (Game, core.Game, error) {
+func PerformActionInCard51(ctx appengine.Context, game Game, stage core.Game, user string, action Action, invoke bool, card core.Card) (Game, core.Game, error) {
 	return game, stage, nil
 }
 
-func CheckCardAction51(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card, actions []Action) ([]Action, error) {
+func CheckActionInCard51(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card, actions []Action) ([]Action, error) {
 	// 决斗
 	var err error
 	var units []string
