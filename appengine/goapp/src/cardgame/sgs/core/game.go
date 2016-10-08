@@ -7,7 +7,7 @@ import (
 	"errors"
 )
 
-type Card struct {
+type CardPrototype struct {
 	CardID    string
 	Name      string
 	Cost      string
@@ -44,8 +44,8 @@ func GameKey(ctx appengine.Context, gameId string) *datastore.Key {
 // 陣面對決的數值
 type CardInfo struct {
 	CardID    string
-	Prototype Card
-	Current   Card
+	Prototype CardPrototype
+	Current   CardPrototype
 	Turn      int
 }
 
