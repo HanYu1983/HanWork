@@ -66,7 +66,7 @@ func CheckActionInCard90(ctx appengine.Context, sgs Game, stage core.Desktop, us
 		return nil, err
 	}
 	canConsumeCardIds := MapCardsToCardIDs(ctx, canConsumeCards)
-	info := GetCardInfo(sgs, card.ID)
+	info := sgs.CardInfo[card.ID]
 	actions = append(actions, Action{
 		FromID:      card.ID,
 		User:        user,

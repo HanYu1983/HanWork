@@ -34,7 +34,7 @@ func CheckActionInCard51(ctx appengine.Context, sgs Game, stage core.Desktop, us
 	}
 	units = append(units, MapCardsToCardIDs(ctx, my)...)
 	units = append(units, MapCardsToCardIDs(ctx, enemy)...)
-	info := GetCardInfo(sgs, card.ID)
+	info := sgs.CardInfo[card.ID]
 	actions = append(actions, Action{
 		FromID:      card.ID,
 		User:        user,
