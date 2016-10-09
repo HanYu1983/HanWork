@@ -21,18 +21,14 @@ func ConsumeCost(ctx appengine.Context, game Game, stage core.Desktop, user stri
 	// 建立空的slot
 	// 這個slot必須被填滿
 	costSlot := make([]string, len([]rune(cost)))
-	// 先將stage考貝一份
-	updatedStage := stage
 	for _, cardId := range cardIds {
 		// 支付消費
 		// 填充slot
-		game, updatedStage, err = ConsumeCostInCard(ctx, game, updatedStage, user, cost, costSlot, stage.Card[cardId])
+		game, stage, err = ConsumeCostInCard(ctx, game, stage, user, cost, costSlot, stage.Card[cardId])
 		if err != nil {
 			return game, stage, err
 		}
 	}
-	// 切換成最新的stage
-	stage = updatedStage
 	// 檢查slot是不是都被填滿了
 	for _, slot := range costSlot {
 		if slot == "" {
@@ -47,8 +43,7 @@ func ConsumeCost(ctx appengine.Context, game Game, stage core.Desktop, user stri
 // 這個方法會巡訪指定玩家的所有卡，將所有動作方案收集起來
 // 每個動作方案會起錄它的需求Cost和執行目標，兩項都是審核過可以支付的
 // 之後玩家再呼叫PerformAction
-//
-// 基本流程是
+// === 基本流程 ====
 // 1. 玩家呼叫GetCut，判斷切入狀態
 // 2. 若要切入或發起新的切入，呼叫CheckAction來取得動作方案
 // 3. 呼叫PerformAction

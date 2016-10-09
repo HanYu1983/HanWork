@@ -56,7 +56,8 @@ type CardInfo struct {
 }
 
 type Player struct {
-	HP int
+	HP       int
+	LoseTurn int
 }
 
 // 遊戲
@@ -193,6 +194,7 @@ func UnitAttack(ctx appengine.Context, game Game, stage core.Desktop, user strin
 	if slotUser != user {
 		return game, stage, errors.New("this unit is not yours")
 	}
+	var err error
 	// 取得對方陣地ID
 	opponent := core.Opponent(slotUser)
 	opponentSlotId := CardStackSlotID(opponent, slotNum)
@@ -202,13 +204,19 @@ func UnitAttack(ctx appengine.Context, game Game, stage core.Desktop, user strin
 		// 如果對手單地上沒有單位
 		// 攻擊對方玩家
 		game.Player[PlayerID(opponent)].HP -= damage
-		return listener(ctx, game, stage, "{userId}的{cardId}攻擊{userId}，造成傷害{damage}", []string{user, strconv.Itoa(cardId), opponent, strconv.Itoa(damage)})
+		game, stage, err = listener(ctx, game, stage, "{userId}的{cardId}攻擊{userId}，造成傷害{damage}", []string{user, strconv.Itoa(cardId), opponent, strconv.Itoa(damage)})
+		if err != nil {
+			return game, stage, err
+		}
 	} else {
 		// 如果對手陣地上有單位
 		// 攻擊那個單位
 		opponentCardId := stage.CardStack[opponentSlotId].Card[0]
 		game.CardInfo[opponentCardId].Defence -= damage
-		return listener(ctx, game, stage, "{userId}的{cardId}攻擊{userId}的{cardId}，造成傷害{damage", []string{user, strconv.Itoa(cardId), opponent, strconv.Itoa(opponentCardId), strconv.Itoa(damage)})
+		game, stage, err = listener(ctx, game, stage, "{userId}的{cardId}攻擊{userId}的{cardId}，造成傷害{damage", []string{user, strconv.Itoa(cardId), opponent, strconv.Itoa(opponentCardId), strconv.Itoa(damage)})
+		if err != nil {
+			return game, stage, err
+		}
 	}
 	return game, stage, nil
 }
