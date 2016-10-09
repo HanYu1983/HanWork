@@ -27,7 +27,7 @@ func ConsumeCostInCard179(ctx appengine.Context, game Game, stage core.Desktop, 
 		if card.Direction == core.DirectionTap {
 			return game, stage, nil
 		}
-		// 需要用到info時才取，並且如果有改變的話，要立刻存回去
+		// 需要用到info時才取
 		info := game.CardInfo[card.ID]
 		for idx, c := range []rune(cost) {
 			// 尋找還沒填充的slot
