@@ -56,6 +56,7 @@ type CardInfo struct {
 }
 
 type Player struct {
+	User     string
 	HP       int
 	LoseTurn int
 }
@@ -70,6 +71,7 @@ type Game struct {
 	CardInfo []CardInfo
 	Turn     int
 	Player   []Player
+	Winner   int
 }
 
 // 行動方案
@@ -213,7 +215,42 @@ func UnitAttack(ctx appengine.Context, game Game, stage core.Desktop, user strin
 		// 攻擊那個單位
 		opponentCardId := stage.CardStack[opponentSlotId].Card[0]
 		game.CardInfo[opponentCardId].Defence -= damage
-		game, stage, err = listener(ctx, game, stage, "{userId}的{cardId}攻擊{userId}的{cardId}，造成傷害{damage", []string{user, strconv.Itoa(cardId), opponent, strconv.Itoa(opponentCardId), strconv.Itoa(damage)})
+		game, stage, err = listener(ctx, game, stage, "{userId}的{cardId}攻擊{userId}的{cardId}，造成傷害{damage}", []string{user, strconv.Itoa(cardId), opponent, strconv.Itoa(opponentCardId), strconv.Itoa(damage)})
+		if err != nil {
+			return game, stage, err
+		}
+	}
+	return game, stage, nil
+}
+
+// 執行死亡判定
+// 任何可能造成單位或玩家傷害的方法呼叫之後都要呼叫這個方法
+// 死亡的單位會移到墓地
+// 玩家若死亡也會立刻結束遊戲
+func PerformDead(ctx appengine.Context, game Game, stage core.Desktop, listener Listener) (Game, core.Desktop, error) {
+	var err error
+	for _, card := range stage.Card {
+		info := game.CardInfo[card.ID]
+		if info.Defence > 0 {
+			continue
+		}
+		fromStack := card.CardStack
+		toStack := card.Owner + CardStackGraveyard
+		stage, err = core.MoveCard(ctx, stage, fromStack, toStack, 0, card.ID)
+		if err != nil {
+			return game, stage, err
+		}
+		game, stage, err = listener(ctx, game, stage, "{userId}的{cardId}死亡，從{stackId}移到{stackId}", []string{card.Owner, strconv.Itoa(card.ID), fromStack, toStack})
+		if err != nil {
+			return game, stage, err
+		}
+	}
+	for idx, player := range game.Player {
+		if player.HP > 0 {
+			continue
+		}
+		game.Winner = idx
+		game, stage, err = listener(ctx, game, stage, "{userId}勝利", []string{player.User})
 		if err != nil {
 			return game, stage, err
 		}
