@@ -99,28 +99,22 @@ func GetCardPrototype(ctx appengine.Context, id string) (CardPrototype, error) {
 // 取得卡牌的遊戲狀態
 // 遊戲狀態會在遊戲剛建立時叫用InstallCardInfo來將所有用到的卡牌的資訊存到Game中
 // GetCardInfo一定能取到自己的狀態
-func GetCardInfo(sgs Game, card core.Card) CardInfo {
-	for _, info := range sgs.CardInfo {
-		if info.CardID == card.ID {
-			return info
-		}
-	}
-	panic("取不到資料，這場遊戲有問題，必須放棄")
+func GetCardInfo(sgs Game, cardId int) CardInfo {
+	return sgs.CardInfo[cardId]
 }
 
 // 將台面上所有的卡牌的遊戲資料加入
 // 在將玩家的牌組加入遊戲時呼叫
 // 這個方法一定要呼叫，不然遊戲不能玩
-func InstallCardInfo(ctx appengine.Context, sgs Game, stage core.Game) (Game, error) {
-	var _, err = core.MapCard(ctx, stage, func(ctx appengine.Context, stage core.Game, card core.Card) (core.Card, error) {
+func InstallCardInfo(ctx appengine.Context, sgs Game, stage core.Desktop) (Game, error) {
+	for _, card := range stage.Card {
 		var err error
 		info, err := GetCardPrototype(ctx, card.Ref)
 		if err != nil {
-			return card, err
+			return sgs, err
 		}
 		cardInfo := CardInfo{CardID: card.ID, Prototype: info, Current: info}
 		sgs.CardInfo = append(sgs.CardInfo, cardInfo)
-		return card, nil
-	})
-	return sgs, err
+	}
+	return sgs, nil
 }

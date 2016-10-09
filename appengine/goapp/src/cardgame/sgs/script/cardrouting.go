@@ -10,7 +10,7 @@ import (
 
 // 支付消費
 // 如何支付全部由卡牌自定
-func ConsumeCostInCard(ctx appengine.Context, game Game, stage core.Game, user string, cost string, costSlot []string, card core.Card) (Game, core.Game, error) {
+func ConsumeCostInCard(ctx appengine.Context, game Game, stage core.Desktop, user string, cost string, costSlot []string, card core.Card) (Game, core.Desktop, error) {
 	switch card.Ref {
 	case "179":
 		return ConsumeCostInCard179(ctx, game, stage, user, cost, costSlot, card)
@@ -21,7 +21,7 @@ func ConsumeCostInCard(ctx appengine.Context, game Game, stage core.Game, user s
 // 取得指定卡牌的行動方案
 // 由前台去補足Action中的Parameters
 // 補完後呼叫PerformActionInCard
-func CheckActionInCard(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card, actions []Action) ([]Action, error) {
+func CheckActionInCard(ctx appengine.Context, sgs Game, stage core.Desktop, user string, card core.Card, actions []Action) ([]Action, error) {
 	switch card.Ref {
 	case "90":
 		return CheckActionInCard90(ctx, sgs, stage, user, card, actions)
@@ -42,7 +42,7 @@ func CheckActionInCard(ctx appengine.Context, sgs Game, stage core.Game, user st
 // 啟動能力就會先將動作方案中的支付解決
 // 若invoke為false代表要解決行動方案的效果
 // 也是實做效果的地方
-func PerformActionInCard(ctx appengine.Context, sgs Game, stage core.Game, user string, action Action, invoke bool, card core.Card) (Game, core.Game, error) {
+func PerformActionInCard(ctx appengine.Context, sgs Game, stage core.Desktop, user string, action Action, invoke bool, card core.Card) (Game, core.Desktop, error) {
 	// 不是發動的卡就略過
 	if action.FromID != card.ID {
 		return sgs, stage, nil

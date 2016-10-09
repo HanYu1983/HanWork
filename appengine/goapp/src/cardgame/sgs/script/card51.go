@@ -6,15 +6,15 @@ import (
 	. "cardgame/sgs/core"
 )
 
-func ConsumeCostInCard51(ctx appengine.Context, game Game, stage core.Game, user string, cost string, costSlot []string, card core.Card) (Game, core.Game, error) {
+func ConsumeCostInCard51(ctx appengine.Context, game Game, stage core.Desktop, user string, cost string, costSlot []string, card core.Card) (Game, core.Desktop, error) {
 	return game, stage, nil
 }
 
-func PerformActionInCard51(ctx appengine.Context, game Game, stage core.Game, user string, action Action, invoke bool, card core.Card) (Game, core.Game, error) {
+func PerformActionInCard51(ctx appengine.Context, game Game, stage core.Desktop, user string, action Action, invoke bool, card core.Card) (Game, core.Desktop, error) {
 	return game, stage, nil
 }
 
-func CheckActionInCard51(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card, actions []Action) ([]Action, error) {
+func CheckActionInCard51(ctx appengine.Context, sgs Game, stage core.Desktop, user string, card core.Card, actions []Action) ([]Action, error) {
 	// 决斗
 	var err error
 	var units []string
@@ -34,7 +34,7 @@ func CheckActionInCard51(ctx appengine.Context, sgs Game, stage core.Game, user 
 	}
 	units = append(units, MapCardsToCardIDs(ctx, my)...)
 	units = append(units, MapCardsToCardIDs(ctx, enemy)...)
-	info := GetCardInfo(sgs, card)
+	info := GetCardInfo(sgs, card.ID)
 	actions = append(actions, Action{
 		FromID:      card.ID,
 		User:        user,

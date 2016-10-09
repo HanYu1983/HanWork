@@ -5,6 +5,7 @@ import (
 	"appengine/datastore"
 	core "cardgame/core"
 	"errors"
+	"strconv"
 )
 
 type CardPrototype struct {
@@ -43,16 +44,16 @@ func GameKey(ctx appengine.Context, gameId string) *datastore.Key {
 // 卡牌狀態
 // 陣面對決的數值
 type CardInfo struct {
-	CardID    string
+	CardID    int
 	Prototype CardPrototype
 	Current   CardPrototype
 	Turn      int
 }
 
 // 遊戲
-// ID會和core.Game的ID一致
-// 用這個ID來取得core.Game
-// core.Game記錄的是卡牌的位置、面向等資訊
+// ID會和core.Desktop的ID一致
+// 用這個ID來取得core.Desktop
+// core.Desktop記錄的是卡牌的位置、面向等資訊
 // 這個Game記錄的是陣面對決的遊戲狀態
 type Game struct {
 	ID           string
@@ -71,7 +72,7 @@ type Game struct {
 // 之後再將補足完的方案回傳服務器
 // 服務器有完整的參數資訊就能執行方案
 type Action struct {
-	FromID      string
+	FromID      int
 	User        string
 	Description string
 	Parameters  map[string]interface{}
@@ -92,75 +93,17 @@ const (
 	CardStackMana      = "mana"
 	CardStackGraveyard = "graveyard"
 	CardStackSlot      = "slot"
+	CardStackSlot1     = "slot1"
+	CardStackSlot2     = "slot2"
+	CardStackSlot3     = "slot3"
+	CardStackSlot4     = "slot4"
+	CardStackSlot5     = "slot5"
 )
 
 const (
 	PhaseDraw = "draw"
 	PhaseMain = "main"
 )
-
-// 建立陣面對決的牌局
-// 這個方法會一并建立core.Game的台面狀態
-// 建立場上所有牌堆（手牌、本國、地、墓地、陣地）
-func CreateGame(ctx appengine.Context, gameId string) (Game, core.Game, error) {
-	var game core.Game
-	var err error
-	// 建立台面
-	game, err = core.CreateGame(ctx, gameId)
-	if err != nil {
-		return Game{}, game, err
-	}
-	// 建立A玩家牌堆
-	game, err = core.CreateCardStack(ctx, game, core.UserA+CardStackBase, CardStackBase)
-	if err != nil {
-		return Game{}, game, err
-	}
-	game, err = core.CreateCardStack(ctx, game, core.UserA+CardStackHand, CardStackHand)
-	if err != nil {
-		return Game{}, game, err
-	}
-	game, err = core.CreateCardStack(ctx, game, core.UserA+CardStackMana, CardStackMana)
-	if err != nil {
-		return Game{}, game, err
-	}
-	game, err = core.CreateCardStack(ctx, game, core.UserA+CardStackGraveyard, CardStackGraveyard)
-	if err != nil {
-		return Game{}, game, err
-	}
-	game, err = core.CreateCardStack(ctx, game, core.UserA+CardStackSlot, CardStackSlot)
-	if err != nil {
-		return Game{}, game, err
-	}
-	// 建立B玩家牌堆
-	game, err = core.CreateCardStack(ctx, game, core.UserB+CardStackBase, CardStackBase)
-	if err != nil {
-		return Game{}, game, err
-	}
-	game, err = core.CreateCardStack(ctx, game, core.UserB+CardStackHand, CardStackHand)
-	if err != nil {
-		return Game{}, game, err
-	}
-	game, err = core.CreateCardStack(ctx, game, core.UserB+CardStackMana, CardStackMana)
-	if err != nil {
-		return Game{}, game, err
-	}
-	game, err = core.CreateCardStack(ctx, game, core.UserB+CardStackGraveyard, CardStackGraveyard)
-	if err != nil {
-		return Game{}, game, err
-	}
-	game, err = core.CreateCardStack(ctx, game, core.UserB+CardStackSlot, CardStackSlot)
-	if err != nil {
-		return Game{}, game, err
-	}
-	_, err = core.SaveGame(ctx, game)
-	if err != nil {
-		return Game{}, game, err
-	}
-	// 建立陣面對決
-	sgs := Game{ID: gameId, SlotA: make([]string, 5), SlotB: make([]string, 5)}
-	sgs, err = SaveGame(ctx, sgs)
-	return sgs, game, err
-}
 
 // 讀取陣面對決
 func LoadGame(ctx appengine.Context, gameID string) (Game, error) {
@@ -177,6 +120,120 @@ func SaveGame(ctx appengine.Context, game Game) (Game, error) {
 	var err error
 	_, err = datastore.Put(ctx, key, &game)
 	return game, err
+}
+
+// 建立陣面對決的牌局
+// 這個方法會一并建立core.Desktop的台面狀態
+// 建立場上所有牌堆（手牌、本國、地、墓地、陣地）
+func CreateGame(ctx appengine.Context, gameId string) (Game, core.Desktop, error) {
+	var game core.Desktop
+	var err error
+	// 建立台面
+	game, err = core.CreateDesktop(ctx, gameId)
+	if err != nil {
+		return Game{}, game, err
+	}
+	// 建立A玩家牌堆
+	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackBase, CardStackBase)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackHand, CardStackHand)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackMana, CardStackMana)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackGraveyard, CardStackGraveyard)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackSlot1, CardStackSlot)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackSlot2, CardStackSlot)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackSlot3, CardStackSlot)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackSlot4, CardStackSlot)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackSlot5, CardStackSlot)
+	if err != nil {
+		return Game{}, game, err
+	}
+	// 建立B玩家牌堆
+	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackBase, CardStackBase)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackHand, CardStackHand)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackMana, CardStackMana)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackGraveyard, CardStackGraveyard)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackSlot1, CardStackSlot)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackSlot2, CardStackSlot)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackSlot3, CardStackSlot)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackSlot4, CardStackSlot)
+	if err != nil {
+		return Game{}, game, err
+	}
+	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackSlot5, CardStackSlot)
+	if err != nil {
+		return Game{}, game, err
+	}
+	_, err = core.SaveDesktop(ctx, game)
+	if err != nil {
+		return Game{}, game, err
+	}
+	// 建立陣面對決
+	sgs := Game{ID: gameId, SlotA: make([]string, 5), SlotB: make([]string, 5)}
+	sgs, err = SaveGame(ctx, sgs)
+	return sgs, game, err
+}
+
+func PlayCardToSlot(ctx appengine.Context, game Game, stage core.Desktop, user string, slotId int, fromStack string, cardID int) (Game, core.Desktop, error) {
+	slotIsEmpty := len(stage.CardStack[user+CardStackSlot+strconv.Itoa(slotId)].Card) == 0
+	if slotIsEmpty == false {
+		return game, stage, errors.New("slot is not empty")
+	}
+	var err error
+	hasCardInStack, err := core.CardIndexOfStack(ctx, stage, fromStack, cardID)
+	if err != nil {
+		return game, stage, err
+	}
+
+	cardId := stage.CardStack[fromStack].Card[hasCardInStack]
+	stage, err = core.MoveCard(ctx, stage, fromStack, user+CardStackSlot+strconv.Itoa(slotId), 0, cardId)
+	if err != nil {
+		return game, stage, err
+	}
+	return game, stage, nil
 }
 
 func HasPhase(ctx appengine.Context, game Game, phase string) int {

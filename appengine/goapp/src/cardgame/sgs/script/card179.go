@@ -2,15 +2,14 @@ package script
 
 import (
 	"appengine"
-	_ "appengine/datastore"
 	core "cardgame/core"
 	. "cardgame/sgs/core"
-	_ "errors"
+	"strconv"
 )
 
 // 支付消費
 // 如何支付全部由卡牌自定
-func ConsumeCostInCard179(ctx appengine.Context, game Game, stage core.Game, user string, cost string, costSlot []string, card core.Card) (Game, core.Game, error) {
+func ConsumeCostInCard179(ctx appengine.Context, game Game, stage core.Desktop, user string, cost string, costSlot []string, card core.Card) (Game, core.Desktop, error) {
 	var err error
 	switch card.Ref {
 	case "179":
@@ -19,7 +18,8 @@ func ConsumeCostInCard179(ctx appengine.Context, game Game, stage core.Game, use
 			return game, stage, nil
 		}
 		// 魏領土沒有在mana裡不能支付
-		if core.HasCardInStack(ctx, stage, user+CardStackMana, card) == -1 {
+		_, err = core.CardIndexOfStack(ctx, stage, user+CardStackMana, card.ID)
+		if err == core.ErrCardNotExist {
 			return game, stage, nil
 		}
 		// 已經横置的不能支付
@@ -27,7 +27,7 @@ func ConsumeCostInCard179(ctx appengine.Context, game Game, stage core.Game, use
 			return game, stage, nil
 		}
 		// 需要用到info時才取，並且如果有改變的話，要立刻存回去
-		info := GetCardInfo(game, card)
+		info := GetCardInfo(game, card.ID)
 		for idx, c := range []rune(cost) {
 			// 尋找還沒填充的slot
 			if costSlot[idx] != "" {
@@ -44,12 +44,9 @@ func ConsumeCostInCard179(ctx appengine.Context, game Game, stage core.Game, use
 				}
 			}
 			// Ok，可支付
-			stage, err = core.MapCard(ctx, stage, ChangeCardDirection(ctx, card.ID, core.DirectionTap))
-			if err != nil {
-				return game, stage, err
-			}
+			stage.Card[card.ID].Direction = core.DirectionTap
 			// 填充slot
-			costSlot[idx] = card.ID
+			costSlot[idx] = strconv.Itoa(card.ID)
 			// 因為魏領土只能支付一個mana，所以支付完直接回傳
 			return game, stage, nil
 		}
@@ -58,14 +55,14 @@ func ConsumeCostInCard179(ctx appengine.Context, game Game, stage core.Game, use
 	return game, stage, nil
 }
 
-func PerformActionInCard179(ctx appengine.Context, sgs Game, stage core.Game, user string, action Action, invoke bool, card core.Card) (Game, core.Game, error) {
+func PerformActionInCard179(ctx appengine.Context, sgs Game, stage core.Desktop, user string, action Action, invoke bool, card core.Card) (Game, core.Desktop, error) {
 	var err error
 	if action.Description == "使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}" {
 		cost := action.Parameters["cost"].(string)
 		abilityId := action.Parameters["abilityId"].(string)
 		// 啟動效果，放入堆疊
 		if invoke {
-			cardIds := action.Parameters["cardIds"].([]string)
+			cardIds := action.Parameters["cardIds"].([]int)
 			// 先執行支付
 			sgs, stage, err = ConsumeCost(ctx, sgs, stage, user, cost, cardIds)
 			if err != nil {
@@ -79,25 +76,16 @@ func PerformActionInCard179(ctx appengine.Context, sgs Game, stage core.Game, us
 		}
 		if abilityId == "翻面抓牌" {
 			// 將地翻面
-			stage, err = core.MapCard(ctx, stage, func(ctx appengine.Context, stage core.Game, currCard core.Card) (core.Card, error) {
-				if currCard.ID == card.ID {
-					currCard.Face = core.FaceClose
-				}
-				return currCard, nil
-			})
+			stage.Card[card.ID].Face = core.FaceClose
 			// 取得本國最上方的卡
-			userCardBaseId := core.HasCardStack(ctx, stage, user+CardStackBase)
-			if userCardBaseId == -1 {
-				return sgs, stage, core.ErrCardStackNotExist
-			}
-			cardCnt := len(stage.CardStack[userCardBaseId].Card)
+			cardCnt := len(stage.CardStack[user+CardStackBase].Card)
 			// 無牌可抽，先暫時略過
 			if cardCnt == 0 {
 				return sgs, stage, SgsError("no card can draw")
 			}
-			topCardInCardBase := stage.CardStack[userCardBaseId].Card[cardCnt-1]
+			topCardInCardBase := stage.CardStack[user+CardStackBase].Card[cardCnt-1]
 			// 移到手上
-			stage, err = core.MoveCardTo(ctx, stage, topCardInCardBase, user+CardStackBase, user+CardStackHand, 0)
+			stage, err = core.MoveCard(ctx, stage, user+CardStackBase, user+CardStackHand, 0, topCardInCardBase)
 			if err != nil {
 				return sgs, stage, err
 			}
@@ -106,7 +94,7 @@ func PerformActionInCard179(ctx appengine.Context, sgs Game, stage core.Game, us
 	return sgs, stage, nil
 }
 
-func CheckActionInCard179(ctx appengine.Context, sgs Game, stage core.Game, user string, card core.Card, actions []Action) ([]Action, error) {
+func CheckActionInCard179(ctx appengine.Context, sgs Game, stage core.Desktop, user string, card core.Card, actions []Action) ([]Action, error) {
 	var err error
 	var canConsumeCards []core.Card
 	// 魏领土

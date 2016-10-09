@@ -5,13 +5,14 @@ import (
 	core "cardgame/core"
 	. "cardgame/sgs/core"
 	"encoding/json"
+	"strconv"
 )
 
 // 支付費用
 // 由各個卡片實做中來呼叫
 // cost的格式是"無無魏"這樣的格式
 // cost的支付順序必須和cardIds給定的順序要一致
-func ConsumeCost(ctx appengine.Context, game Game, stage core.Game, user string, cost string, cardIds []string) (Game, core.Game, error) {
+func ConsumeCost(ctx appengine.Context, game Game, stage core.Desktop, user string, cost string, cardIds []int) (Game, core.Desktop, error) {
 	// 將X轉為"無"序列
 	if cost == "X" {
 		cost = X2Cost(len(cardIds))
@@ -23,19 +24,11 @@ func ConsumeCost(ctx appengine.Context, game Game, stage core.Game, user string,
 	// 先將stage考貝一份
 	updatedStage := stage
 	for _, cardId := range cardIds {
-		for _, stk := range stage.CardStack {
-			for _, card := range stk.Card {
-				// 略過沒使用到的卡
-				if card.ID != cardId {
-					continue
-				}
-				// 支付消費
-				// 填充slot
-				game, updatedStage, err = ConsumeCostInCard(ctx, game, updatedStage, user, cost, costSlot, card)
-				if err != nil {
-					return game, stage, err
-				}
-			}
+		// 支付消費
+		// 填充slot
+		game, updatedStage, err = ConsumeCostInCard(ctx, game, updatedStage, user, cost, costSlot, stage.Card[cardId])
+		if err != nil {
+			return game, stage, err
 		}
 	}
 	// 切換成最新的stage
@@ -59,15 +52,13 @@ func ConsumeCost(ctx appengine.Context, game Game, stage core.Game, user string,
 // 1. 玩家呼叫GetCut，判斷切入狀態
 // 2. 若要切入或發起新的切入，呼叫CheckAction來取得動作方案
 // 3. 呼叫PerformAction
-func CheckAction(ctx appengine.Context, game Game, stage core.Game, user string) ([]Action, error) {
+func CheckAction(ctx appengine.Context, game Game, stage core.Desktop, user string) ([]Action, error) {
 	var err error
 	actions := []Action{}
-	for _, stk := range stage.CardStack {
-		for _, card := range stk.Card {
-			actions, err = CheckActionInCard(ctx, game, stage, user, card, actions)
-			if err != nil {
-				return nil, err
-			}
+	for _, card := range stage.Card {
+		actions, err = CheckActionInCard(ctx, game, stage, user, card, actions)
+		if err != nil {
+			return nil, err
 		}
 	}
 	return actions, nil
@@ -80,21 +71,19 @@ func CheckAction(ctx appengine.Context, game Game, stage core.Game, user string)
 // 會自動判斷有沒有在切入中
 // 若有，發生切入
 // 若沒有，新增切入堆疊
-func PerformAction(ctx appengine.Context, game Game, stage core.Game, user string, action Action) (Game, core.Game, error) {
+func PerformAction(ctx appengine.Context, game Game, stage core.Desktop, user string, action Action) (Game, core.Desktop, error) {
 	var err error
 	updatedStage := stage
-	for _, stk := range stage.CardStack {
-		for _, card := range stk.Card {
-			game, updatedStage, err = PerformActionInCard(ctx, game, updatedStage, user, action, true, card)
-			if err != nil {
-				return game, stage, err
-			}
+	for _, card := range stage.Card {
+		game, updatedStage, err = PerformActionInCard(ctx, game, updatedStage, user, action, true, card)
+		if err != nil {
+			return game, stage, err
 		}
 	}
 	return game, updatedStage, nil
 }
 
-func StepSystem(ctx appengine.Context, sgs Game, stage core.Game) (Game, core.Game, error) {
+func StepSystem(ctx appengine.Context, sgs Game, stage core.Desktop) (Game, core.Desktop, error) {
 	var err error
 	var goal core.Goal
 	var has bool
@@ -136,37 +125,35 @@ func StepSystem(ctx appengine.Context, sgs Game, stage core.Game) (Game, core.Ga
 		if err != nil {
 			return sgs, stage, err
 		}
-		for _, stk := range stage.CardStack {
-			for _, card := range stk.Card {
-				if card.ID != cardId {
-					continue
-				}
-				sgs, stage, err = PerformActionInCard(ctx, sgs, stage, user, action, false, card)
-
-				switch err.(type) {
-				case SgsError:
-					var sgsErr = err
-					// 卡牌內容錯誤
-					// 代表目標遺失
-					// 一樣將問題完成並回傳錯誤
-					// 讓前台有機會處理對玩家的回應
-					err = core.CompleteGoal(ctx, sgs.ID, goal.ID, nil)
-					if err != nil {
-						return sgs, stage, err
-					}
-					return sgs, stage, sgsErr
-				default:
-					// 系統錯誤
-					// 中斷執行
-					if err != nil {
-						return sgs, stage, err
-					}
-					break
-				}
-				// 執行到目標卡就立刻退出
-				break
-			}
+		// 直接執行目標卡
+		cardIdInt, err := strconv.Atoi(cardId)
+		if err != nil {
+			return sgs, stage, err
 		}
+		card := stage.Card[cardIdInt]
+		sgs, stage, err = PerformActionInCard(ctx, sgs, stage, user, action, false, card)
+
+		switch err.(type) {
+		case SgsError:
+			var sgsErr = err
+			// 卡牌內容錯誤
+			// 代表目標遺失
+			// 一樣將問題完成並回傳錯誤
+			// 讓前台有機會處理對玩家的回應
+			err = core.CompleteGoal(ctx, sgs.ID, goal.ID, nil)
+			if err != nil {
+				return sgs, stage, err
+			}
+			return sgs, stage, sgsErr
+		default:
+			// 系統錯誤
+			// 中斷執行
+			if err != nil {
+				return sgs, stage, err
+			}
+			break
+		}
+
 		err = core.CompleteGoal(ctx, sgs.ID, goal.ID, nil)
 		if err != nil {
 			return sgs, stage, err
