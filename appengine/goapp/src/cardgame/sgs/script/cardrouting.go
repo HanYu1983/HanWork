@@ -2,11 +2,13 @@ package script
 
 import (
 	"appengine"
-	_ "appengine/datastore"
 	core "cardgame/core"
 	. "cardgame/sgs/core"
-	_ "errors"
 )
+
+func OnEvent(ctx appengine.Context, game Game, stage core.Desktop, evt string, parameters []string) (Game, core.Desktop, error) {
+	return game, stage, nil
+}
 
 // 支付消費
 // 如何支付全部由卡牌自定

@@ -75,7 +75,7 @@ func TestIndex(t *testing.T) {
 		t.Fatal("觸發的卡必須是cards[0]")
 	}
 
-	info := GetCardInfo(game, cards[0])
+	info := game.CardInfo[cards[0]]
 
 	t.Log("執行的卡是", info)
 	if info.Prototype.Name != "魏领土" {

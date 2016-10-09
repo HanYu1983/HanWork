@@ -6,6 +6,7 @@ import (
 	. "cardgame/sgs/core"
 	"errors"
 	"strconv"
+	"strings"
 )
 
 func ConsumeCostInCard90(ctx appengine.Context, game Game, stage core.Desktop, user string, cost string, costSlot []string, card core.Card) (Game, core.Desktop, error) {
@@ -21,6 +22,10 @@ func PerformActionInCard90(ctx appengine.Context, game Game, stage core.Desktop,
 		abilityId := action.Parameters["abilityId"].(string)
 		if invoke {
 			cardIds := action.Parameters["cardIds"].([]int)
+			// 火攻必須將支付的X轉成"無"的序列
+			if cost == "X" {
+				cost = strings.Repeat("無", len(cardIds))
+			}
 			if userId == user {
 				return game, stage, errors.New("user id is me")
 			}
@@ -46,8 +51,7 @@ func PerformActionInCard90(ctx appengine.Context, game Game, stage core.Desktop,
 		if abilityId == "火攻" {
 			cardIds := action.Parameters["cardIds"].([]string)
 			damage := len(cardIds)
-			// damage it
-			var _ = damage
+			return DamagePlayer(ctx, game, stage, damage, OnEvent, core.Opponent(user))
 		}
 	}
 	return game, stage, nil
@@ -55,17 +59,15 @@ func PerformActionInCard90(ctx appengine.Context, game Game, stage core.Desktop,
 
 func CheckActionInCard90(ctx appengine.Context, sgs Game, stage core.Desktop, user string, card core.Card, actions []Action) ([]Action, error) {
 	var err error
-	var canConsumeCards []core.Card
+	var _ = err
 	// 火攻
 	_, err = core.CardIndexOfStack(ctx, stage, user+CardStackHand, card.ID)
 	if err != nil {
-		return nil, nil
+		return actions, nil
 	}
-	canConsumeCards, err = CheckCanConsumeCost(ctx, sgs, stage, user, card)
-	if err != nil {
-		return nil, err
+	if CheckCanConsumeCost(ctx, sgs, stage, user, card.ID) == false {
+		return actions, nil
 	}
-	canConsumeCardIds := MapCardsToCardIDs(ctx, canConsumeCards)
 	info := sgs.CardInfo[card.ID]
 	actions = append(actions, Action{
 		FromID:      card.ID,
@@ -75,7 +77,6 @@ func CheckActionInCard90(ctx appengine.Context, sgs Game, stage core.Desktop, us
 			"cost":      FormatCost(ctx, info),
 			"cardId":    card.ID,
 			"abilityId": "火攻",
-			"meta":      canConsumeCardIds,
 		},
 	})
 	return actions, nil

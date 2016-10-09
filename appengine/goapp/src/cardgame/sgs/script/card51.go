@@ -17,12 +17,12 @@ func PerformActionInCard51(ctx appengine.Context, game Game, stage core.Desktop,
 func CheckActionInCard51(ctx appengine.Context, sgs Game, stage core.Desktop, user string, card core.Card, actions []Action) ([]Action, error) {
 	// 决斗
 	var err error
-	var units []string
-	my, err := CheckHasXUnitInSlot(ctx, sgs, stage, 1, user)
+	var units []int
+	my, err := GetUnitsInUserSlot(ctx, sgs, stage, user)
 	if err != nil {
 		return nil, err
 	}
-	enemy, err := CheckHasXUnitInSlot(ctx, sgs, stage, 1, core.Opponent(user))
+	enemy, err := GetUnitsInUserSlot(ctx, sgs, stage, core.Opponent(user))
 	if err != nil {
 		return nil, err
 	}
@@ -32,8 +32,8 @@ func CheckActionInCard51(ctx appengine.Context, sgs Game, stage core.Desktop, us
 	if len(enemy) == 0 {
 		return nil, nil
 	}
-	units = append(units, MapCardsToCardIDs(ctx, my)...)
-	units = append(units, MapCardsToCardIDs(ctx, enemy)...)
+	units = append(units, my...)
+	units = append(units, enemy...)
 	info := sgs.CardInfo[card.ID]
 	actions = append(actions, Action{
 		FromID:      card.ID,

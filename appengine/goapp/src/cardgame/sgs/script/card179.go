@@ -96,15 +96,13 @@ func PerformActionInCard179(ctx appengine.Context, sgs Game, stage core.Desktop,
 }
 
 func CheckActionInCard179(ctx appengine.Context, sgs Game, stage core.Desktop, user string, card core.Card, actions []Action) ([]Action, error) {
-	var err error
-	var canConsumeCards []core.Card
 	// 魏领土
 	if card.Owner != user {
 		return nil, nil
 	}
 	// 如果在手上，就可以打出來
-	if IsCardInCardStack(ctx, stage, user+CardStackHand, card) {
-		if CheckHasPutManaInThisTurn(ctx, sgs, stage) {
+	if IsCardInCardStack(ctx, stage, user+CardStackHand, card.ID) {
+		if CheckHasPutManaInThisTurn(ctx, sgs, stage, user) {
 			return nil, nil
 		}
 		actions = append(actions, Action{
@@ -119,12 +117,10 @@ func CheckActionInCard179(ctx appengine.Context, sgs Game, stage core.Desktop, u
 		return actions, nil
 	}
 	// 在魔力池中並且是打開狀態才能有這個能力
-	if IsCardInCardStack(ctx, stage, user+CardStackMana, card) && card.Face == core.FaceOpen {
-		canConsumeCards, err = CheckCanConsumeCost(ctx, sgs, stage, user, card)
-		if err != nil {
-			return nil, err
+	if IsCardInCardStack(ctx, stage, user+CardStackMana, card.ID) && card.Face == core.FaceOpen {
+		if CheckCanConsumeCost(ctx, sgs, stage, user, card.ID) == false {
+			return actions, nil
 		}
-		canConsumeCardIds := MapCardsToCardIDs(ctx, canConsumeCards)
 		actions = append(actions, Action{
 			FromID:      card.ID,
 			User:        user,
@@ -133,7 +129,6 @@ func CheckActionInCard179(ctx appengine.Context, sgs Game, stage core.Desktop, u
 				"cost":      "無無無",
 				"cardId":    card.ID,
 				"abilityId": "翻面抓牌",
-				"meta":      canConsumeCardIds,
 			},
 		})
 		return actions, nil

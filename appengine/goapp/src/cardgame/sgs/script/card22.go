@@ -24,7 +24,6 @@ func PerformActionInCard22(ctx appengine.Context, game Game, stage core.Desktop,
 			return game, stage, nil
 		}
 		if abilityId == "轉移" {
-
 			// TODO 轉移效果
 			var _, _ = cardId, slotId
 		}
@@ -37,11 +36,11 @@ func CheckActionInCard22(ctx appengine.Context, sgs Game, stage core.Desktop, us
 	if IsPhase(ctx, sgs, PhaseMain) == false {
 		return nil, nil
 	}
-	atSlot := GetCardSlot(ctx, sgs, stage, user, card)
+	atSlot := GetCardSlot(ctx, sgs, stage, user, card.ID)
 	if atSlot == -1 {
 		return nil, nil
 	}
-	neighborSlotIds := GetEmptySlotNeighbor(ctx, sgs, stage, user, atSlot)
+	neighborSlotIds := GetEmptyNeighborSlot(ctx, sgs, stage, user, atSlot)
 	if len(neighborSlotIds) == 0 {
 		return nil, nil
 	}

@@ -8,6 +8,26 @@ import (
 	"strconv"
 )
 
+func CheckCanConsumeCost(ctx appengine.Context, game Game, stage core.Desktop, user string, cardId int) bool {
+	info := game.CardInfo[cardId]
+	cost := FormatCost(ctx, info)
+	if cost == "X" {
+		cost = "無"
+	}
+	cards := []int{}
+	cards = append(cards, stage.CardStack[user+CardStackMana].Card...)
+	cards = append(cards, stage.CardStack[user+CardStackSlot1].Card...)
+	cards = append(cards, stage.CardStack[user+CardStackSlot2].Card...)
+	cards = append(cards, stage.CardStack[user+CardStackSlot3].Card...)
+	cards = append(cards, stage.CardStack[user+CardStackSlot4].Card...)
+	cards = append(cards, stage.CardStack[user+CardStackSlot5].Card...)
+	_, _, err := ConsumeCost(ctx, game, stage, user, cost, cards)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 // 支付費用
 // 由各個卡片實做中來呼叫
 // cost的格式是"無無魏"這樣的格式
@@ -15,7 +35,7 @@ import (
 func ConsumeCost(ctx appengine.Context, game Game, stage core.Desktop, user string, cost string, cardIds []int) (Game, core.Desktop, error) {
 	// 將X轉為"無"序列
 	if cost == "X" {
-		cost = X2Cost(len(cardIds))
+		panic("不在這裡處理X")
 	}
 	var err error
 	// 建立空的slot
