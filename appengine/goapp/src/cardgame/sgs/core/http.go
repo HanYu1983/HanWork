@@ -1,4 +1,4 @@
-package script
+package sgs
 
 import (
 	"appengine"

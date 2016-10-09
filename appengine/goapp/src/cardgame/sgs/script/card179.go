@@ -7,6 +7,7 @@ import (
 	"strconv"
 )
 
+// =============== 魏領土 =============== //
 // 支付消費
 // 如何支付全部由卡牌自定
 func ConsumeCostInCard179(ctx appengine.Context, game Game, stage core.Desktop, user string, cost string, costSlot []string, card core.Card) (Game, core.Desktop, error) {

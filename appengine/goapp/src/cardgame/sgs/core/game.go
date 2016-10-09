@@ -259,11 +259,7 @@ func PerformDead(ctx appengine.Context, game Game, stage core.Desktop, listener 
 }
 
 func X2Cost(cnt int) string {
-	str := ""
-	for i := 0; i < cnt; i++ {
-		str += "無"
-	}
-	return str
+	return strings.Repeat("無", cnt)
 }
 
 // 讀取陣面對決

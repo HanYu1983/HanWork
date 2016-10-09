@@ -1,10 +1,9 @@
-package script
+package sgs
 
 import (
 	"appengine"
 	"appengine/datastore"
 	core "cardgame/core"
-	. "cardgame/sgs/core"
 	_ "errors"
 )
 
