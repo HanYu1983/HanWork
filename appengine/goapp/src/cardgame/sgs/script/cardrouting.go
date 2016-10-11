@@ -6,7 +6,10 @@ import (
 	. "cardgame/sgs/core"
 )
 
-func OnEvent(ctx appengine.Context, game Game, stage core.Desktop, evt string, parameters []string) (Game, core.Desktop, error) {
+func OnEventInCard(ctx appengine.Context, game Game, stage core.Desktop, evt string, parameters []string, card core.Card) (Game, core.Desktop, error) {
+	if evt == "{userId}的{cardId}從{stackId}移動到{stackId}" {
+		// 可以用來觸發迎擊
+	}
 	return game, stage, nil
 }
 

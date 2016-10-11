@@ -42,6 +42,29 @@ func AddEffectFromAction(ctx appengine.Context, gameId string, user string, acti
 	return nil
 }
 
+// 方便方法，將卡牌能力轉移到切入堆疊中
+// 系統處理這個Goal時，會再丟回卡牌的能力處理方法
+func AddEffect(ctx appengine.Context, gameId string, user string, discuss interface{}, cardId int) error {
+	payload, err := json.Marshal(discuss)
+	if err != nil {
+		return err
+	}
+	// 再放入效果
+	g1, err := core.CreateGoal(ctx, gameId, core.Goal{
+		User:        core.UserSys,
+		Description: "玩家{0}觸發{1}的能力{2}",
+		Parameters:  []string{user, strconv.Itoa(cardId), string(payload)},
+	})
+	if err != nil {
+		return err
+	}
+	err = core.AddEffect(ctx, gameId, core.Effect{UserID: user, GoalID: g1.ID})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // 取得Player的ID
 func PlayerID(user string) int {
 	if user == core.UserA {
@@ -119,6 +142,35 @@ func DamagePlayer(ctx appengine.Context, game Game, stage core.Desktop, damage i
 	// 攻擊對方玩家
 	game.Player[PlayerID(user)].HP -= damage
 	game, stage, err := listener(ctx, game, stage, "{user}受到傷害{damage}", []string{user, strconv.Itoa(damage)})
+	if err != nil {
+		return game, stage, err
+	}
+	return game, stage, nil
+}
+
+func UnitMove(ctx appengine.Context, game Game, stage core.Desktop, user string, slotStackId string, listener Listener, cardId int) (Game, core.Desktop, error) {
+	card := stage.Card[cardId]
+	if stage.CardStack[card.CardStack].Type != "slot" {
+		return game, stage, errors.New("unit not in slot")
+	}
+	slotUser, _ := ParseCardStackSlotID(card.CardStack)
+	if user != slotUser {
+		return game, stage, errors.New("unit not in your slot")
+	}
+	if stage.CardStack[slotStackId].Type != "slot" {
+		return game, stage, errors.New("move target is not slot")
+	}
+	if len(stage.CardStack[slotStackId].Card) > 0 {
+		return game, stage, errors.New("target slot is not empty")
+	}
+	var err error
+	toStack := slotStackId
+	fromStack := card.CardStack
+	stage, err = core.MoveCard(ctx, stage, fromStack, toStack, 0, cardId)
+	if err != nil {
+		return game, stage, err
+	}
+	game, stage, err = listener(ctx, game, stage, "{userId}的{cardId}從{stackId}移動到{stackId}", []string{user, strconv.Itoa(cardId), fromStack, toStack})
 	if err != nil {
 		return game, stage, err
 	}

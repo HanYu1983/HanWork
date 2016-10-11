@@ -24,8 +24,10 @@ func PerformActionInCard22(ctx appengine.Context, game Game, stage core.Desktop,
 			return game, stage, nil
 		}
 		if abilityId == "轉移" {
-			// TODO 轉移效果
-			var _, _ = cardId, slotId
+			game, stage, err = UnitMove(ctx, game, stage, user, slotId, OnEvent, cardId)
+			if err != nil {
+				return game, stage, err
+			}
 		}
 	}
 	return game, stage, nil
