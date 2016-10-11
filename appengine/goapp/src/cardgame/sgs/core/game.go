@@ -52,12 +52,20 @@ type CardInfo struct {
 	Attack    int
 	Defence   int
 	TurnPlay  int
+	// 用來判斷比如進場效果發動過了沒
+	// 或任一效果發動過了沒
+	// 有沒有宣告過攻擊等
+	Trigger []string
 }
 
 type Player struct {
 	User     string
 	HP       int
 	LoseTurn int
+	// 手牌數量上限
+	HandLimit int
+	// 這回合第一個攻擊的卡牌ID
+	FirstAttackCardID int
 }
 
 // 遊戲
@@ -113,8 +121,12 @@ const (
 )
 
 const (
-	PhaseDraw = "draw"
-	PhaseMain = "main"
+	PhaseDrawStart = "darwStart"
+	PhaseDraw      = "draw"
+	PhaseDrawEnd   = "drawEnd"
+	PhaseMainStart = "mainStart"
+	PhaseMain      = "main"
+	PhaseMainEnd   = "mainEnd"
 )
 
 // 讀取陣面對決

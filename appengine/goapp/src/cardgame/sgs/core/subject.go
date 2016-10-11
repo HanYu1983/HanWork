@@ -51,6 +51,24 @@ func NewDiscuss(cardId int, body string, parameters map[string]interface{}) Disc
 // 1. 玩家呼叫GetCut，判斷切入狀態
 // 2. 若要切入或發起新的切入，呼叫"有人可以行動嗎"來取得動作方案
 // 3. 呼叫各自的Subject
+
+// 有步驟開始時的階段
+// 所以有步驟開始時的能力也會在這裡收集
+
+// 每打出一張卡後，那張卡會標示這回合下的
+// 所以也可以在這裡收集那些能力
+// ID148：在每个准备步骤开始时，若糜芳的武力小于其相对单位，将糜芳移回其拥有者手上
+// ID63：当孙乾进战场时，展示每位玩家的牌库顶牌
+// ID116：当吴夫人进战场时，从你的牌库和墓地中搜寻一张吴势力主公牌
+// ID49 ：每当简雍或另一个单位在你的操控下进战场时，你可以进行一次判定，若判定牌的打出费用大于或等于2，则横置目标单位
+// 簡雍的牌會給出建議說這回合下的都可以觸發這個能力
+// 所以會由ResultSugguestion來處理－取得這回合打出的卡並還沒發過進場能力的卡，並一一將這個能力放入堆疊
+
+// 每死亡一張卡時，那張卡也會標示這回合死亡的
+// 所以也可以在這裡收集那些能力
+// ID131：当后宫内侍死去时，每位玩家失去3点体力
+// ID134：当黄巾传道者死去时，将一个1/1群雄黄巾单位指示物放置在原先的阵地上。
+// 發動完要記得標示已發動過
 func HandleDiscuss(ctx appengine.Context, game Game, desk core.Desktop, user string, fn DiscussInCard, discuss Discuss) (Game, core.Desktop, Discuss, error) {
 	var err error
 	var userIdStr string
@@ -66,6 +84,13 @@ func HandleDiscuss(ctx appengine.Context, game Game, desk core.Desktop, user str
 	var _ = abilityId
 
 	switch discuss.Subject.Body {
+	case "進戰場時":
+		// 收集卡牌狀態trigger中包含"進戰場"的卡，一一處理
+		// 當處理完後將trigger中的"進戰場"移除
+		// ID106：当乌桓勇士进战场时，将一个由你操控的明置领土翻面
+	case "{cardId}宣告攻擊":
+		// ID76：每当大贤侍女宣告攻击时，每位玩家失去1点体力。
+		break
 	case "有人可以行動嗎":
 		discuss, err = DiscussAllCard(ctx, game, desk, user, fn, discuss)
 		if err != nil {
@@ -224,13 +249,15 @@ func HandleDiscuss(ctx appengine.Context, game Game, desk core.Desktop, user str
 			// 其它能力
 		}
 		return game, desk, discuss, nil
-	case "執行{cardId}的能力{ability}":
+		break
+	case "執行{cardId}的{abilityId}":
 		cardId = discuss.Subject.Parameters["cardId"].(int)
 		card = desk.Card[cardId]
 		game, desk, discuss, err = fn(ctx, game, desk, user, discuss, card)
 		if err != nil {
 			return game, desk, discuss, err
 		}
+		break
 	default:
 		// 所有支付都check過了，可以不用管
 		if strings.Contains(discuss.Subject.Body, "使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}") {

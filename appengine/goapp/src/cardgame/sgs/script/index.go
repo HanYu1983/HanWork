@@ -263,30 +263,6 @@ func DiscussInCardImpl(ctx appengine.Context, game Game, desk core.Desktop, user
 			}
 		}
 		return game, desk, discuss, nil
-	case "執行{cardId}的能力{ability}":
-		cardId = discuss.Subject.Parameters["cardId"].(int)
-		abilityId = discuss.Subject.Parameters["abilityId"].(string)
-
-		if cardId != card.ID {
-			break
-		}
-		if abilityId == "翻面抓牌" {
-			// 將地翻面
-			desk.Card[card.ID].Face = core.FaceClose
-			// 取得本國最上方的卡
-			cardCnt := len(desk.CardStack[user+CardStackBase].Card)
-			// 無牌可抽，先暫時略過
-			if cardCnt == 0 {
-				return game, desk, discuss, SgsError("no card can draw")
-			}
-			topCardInCardBase := desk.CardStack[user+CardStackBase].Card[cardCnt-1]
-			// 移到手上
-			desk, err = core.MoveCard(ctx, desk, user+CardStackBase, user+CardStackHand, 0, topCardInCardBase)
-			if err != nil {
-				return game, desk, discuss, nil
-			}
-		}
-		break
 
 	case "{cardId}可以轉移嗎?可以轉移到哪{slotIds}?":
 		// 如果有卡可以讓場上的卡不能轉移
@@ -328,13 +304,44 @@ func DiscussInCardImpl(ctx appengine.Context, game Game, desk core.Desktop, user
 		// 如果有可以增加迎擊力的
 		discuss.Suggestion = append(discuss.Suggestion, Sentence{0, "突擊力加增加{damage}", map[string]interface{}{"damage": 0}})
 		return game, desk, discuss, nil
+
+	case "執行{cardId}的{abilityId}":
+		// 執行能力
+		cardId = discuss.Subject.Parameters["cardId"].(int)
+		abilityId = discuss.Subject.Parameters["abilityId"].(string)
+
+		if cardId != card.ID {
+			break
+		}
+		if abilityId == "翻面抓牌" {
+			// 將地翻面
+			desk.Card[card.ID].Face = core.FaceClose
+			// 取得本國最上方的卡
+			cardCnt := len(desk.CardStack[user+CardStackBase].Card)
+			// 無牌可抽，先暫時略過
+			if cardCnt == 0 {
+				return game, desk, discuss, SgsError("no card can draw")
+			}
+			topCardInCardBase := desk.CardStack[user+CardStackBase].Card[cardCnt-1]
+			// 移到手上
+			desk, err = core.MoveCard(ctx, desk, user+CardStackBase, user+CardStackHand, 0, topCardInCardBase)
+			if err != nil {
+				return game, desk, discuss, nil
+			}
+		}
+		break
+
 	default:
+		// 有卡牌要觸發能力，尋問能不能觸發
 		if strings.Contains(discuss.Subject.Body, "使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}?") {
 			// 有沒有能阻止這次技能的能力或是增加消費的能力
 			discuss.Suggestion = append(discuss.Suggestion, Sentence{card.ID, "不能使用", nil})
+			// 若有洞察，在這裡建議目標修正
+			discuss.Suggestion = append(discuss.Suggestion, Sentence{card.ID, "我有洞察，不能以我為目標", nil})
 			break
 		}
 
+		// 前台觸發能力
 		if strings.Contains(discuss.Subject.Body, "使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}") {
 			cardIds = discuss.Subject.Parameters["cardIds"].([]int)
 			cost = discuss.Subject.Parameters["cost"].(string)
@@ -343,6 +350,8 @@ func DiscussInCardImpl(ctx appengine.Context, game Game, desk core.Desktop, user
 			if err != nil {
 				return game, desk, discuss, err
 			}
+			// 將效果加入切入堆疊
+			discuss = NewDiscuss(card.ID, "執行{cardId}的{abilityId}", discuss.Subject.Parameters)
 			err = AddEffect(ctx, game.ID, user, discuss, card.ID)
 			if err != nil {
 				return game, desk, discuss, nil
