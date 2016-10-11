@@ -35,7 +35,7 @@ func AddEffectFromAction(ctx appengine.Context, gameId string, user string, acti
 	if err != nil {
 		return err
 	}
-	err = core.AddEffect(ctx, gameId, core.Effect{UserID: user, GoalID: g1.ID})
+	err = core.AddEffect(ctx, gameId, false, core.Effect{UserID: user, GoalID: g1.ID})
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func AddEffect(ctx appengine.Context, gameId string, user string, discuss interf
 	if err != nil {
 		return err
 	}
-	err = core.AddEffect(ctx, gameId, core.Effect{UserID: user, GoalID: g1.ID})
+	err = core.AddEffect(ctx, gameId, false, core.Effect{UserID: user, GoalID: g1.ID})
 	if err != nil {
 		return err
 	}

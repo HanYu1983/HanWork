@@ -115,7 +115,7 @@ func StepSystem(ctx appengine.Context, sgs Game, desk core.Desktop) (Game, core.
 	var goal core.Goal
 	var has bool
 	// 取得切入的最後一個問題
-	goal, has, err = core.GetLastGoal(ctx, sgs.ID)
+	goal, has, err = core.GetCutLastGoal(ctx, sgs.ID)
 	if err != nil {
 		return sgs, desk, err
 	}
@@ -143,7 +143,25 @@ func StepSystem(ctx appengine.Context, sgs Game, desk core.Desktop) (Game, core.
 	}
 	// 處理系統問題
 	switch goal.Description {
-	default:
+	case "卡堆{0}最上方的卡移到卡堆{1}":
+		// TODO 觸發迎擊或突擊事件
+		// 在切入堆疊中加入"你要不要使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}?"的Goal
+		//
+		break
+	case "將{1}翻面":
+		cardIdStr := goal.Parameters[0]
+		cardId, err := strconv.Atoi(cardIdStr)
+		if err != nil {
+			return sgs, desk, err
+		}
+		desk.Card[cardId].Face = core.FaceClose
+		// TODO 觸發翻面事件
+		// 在切入堆疊中加入"你要不要使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}?"的Goal
+		//
+		err = core.CompleteGoal(ctx, sgs.ID, goal.ID, nil)
+		if err != nil {
+			return sgs, desk, err
+		}
 		break
 	case "玩家{0}觸發{1}的能力{2}":
 		user := goal.Parameters[0]
@@ -201,6 +219,8 @@ func StepSystem(ctx appengine.Context, sgs Game, desk core.Desktop) (Game, core.
 		if err != nil {
 			return sgs, desk, err
 		}
+		break
+	default:
 		break
 	}
 	return sgs, desk, nil
@@ -314,20 +334,38 @@ func DiscussInCardImpl(ctx appengine.Context, game Game, desk core.Desktop, user
 			break
 		}
 		if abilityId == "翻面抓牌" {
-			// 將地翻面
-			desk.Card[card.ID].Face = core.FaceClose
-			// 取得本國最上方的卡
-			cardCnt := len(desk.CardStack[user+CardStackBase].Card)
-			// 無牌可抽，先暫時略過
-			if cardCnt == 0 {
-				return game, desk, discuss, SgsError("no card can draw")
-			}
-			topCardInCardBase := desk.CardStack[user+CardStackBase].Card[cardCnt-1]
-			// 移到手上
-			desk, err = core.MoveCard(ctx, desk, user+CardStackBase, user+CardStackHand, 0, topCardInCardBase)
+			g1, err := core.CreateGoal(ctx, game.ID, core.Goal{
+				User:        core.UserSys,
+				Description: "將{1}翻面",
+				Parameters:  []string{strconv.Itoa(cardId)},
+			})
+			g2, err := core.CreateGoal(ctx, game.ID, core.Goal{
+				User:        core.UserSys,
+				Description: "卡堆{0}最上方的卡移到卡堆{1}",
+				Parameters:  []string{user + CardStackBase, user + CardStackHand},
+				Depends:     []int64{g1.ID},
+			})
+
+			err = core.AddEffect(ctx, game.ID, false, core.Effect{UserID: user, GoalID: g2.ID})
 			if err != nil {
-				return game, desk, discuss, nil
+				return game, desk, discuss, err
 			}
+			/*
+				// 將地翻面
+				desk.Card[card.ID].Face = core.FaceClose
+				// 取得本國最上方的卡
+				cardCnt := len(desk.CardStack[user+CardStackBase].Card)
+				// 無牌可抽，先暫時略過
+				if cardCnt == 0 {
+					return game, desk, discuss, SgsError("no card can draw")
+				}
+				topCardInCardBase := desk.CardStack[user+CardStackBase].Card[cardCnt-1]
+				// 移到手上
+				desk, err = core.MoveCard(ctx, desk, user+CardStackBase, user+CardStackHand, 0, topCardInCardBase)
+				if err != nil {
+					return game, desk, discuss, nil
+				}
+			*/
 		}
 		break
 
