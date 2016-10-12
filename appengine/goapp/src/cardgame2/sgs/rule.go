@@ -56,6 +56,23 @@ func OnEvent(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedu
 	return game, desk, p, nil
 }
 
+// 以下處理主動行為
+// 也就是使用者呼叫CollectCommand得到的指令
+func HandleUserCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, c core.Command) (Game, core.Desktop, core.Procedure, error) {
+	if len(p.Block) == 0 && game.PriorityPlayer != PlayerID(user) {
+		return game, desk, p, errors.New("優先權在對方身上")
+	}
+	switch c.Description {
+	case "轉移":
+		// 轉移不進入堆疊，在這裡的意思是指對方不能響應
+		// 一啟動轉移後就要直接解決效果
+		// 還是使用InvokeUnitMove，但對方不能切入
+		// TODO InvokeUnitMove
+	}
+	return game, desk, p, nil
+}
+
+// 以下處理的自動行為或是主動行為所誘發的能力
 func HandleCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, c core.Command) (Game, core.Desktop, core.Procedure, error) {
 	var err error
 	switch c.Description {
@@ -395,7 +412,7 @@ func PerformDead(ctx appengine.Context, game Game, stage core.Desktop, p core.Pr
 	return game, stage, p, nil
 }
 
-func GetCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cmd []core.Command) ([]core.Command, error) {
+func CollectCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cmd []core.Command) ([]core.Command, error) {
 	isStackEmpty := len(p.Block) == 0
 	if isStackEmpty {
 		// 堆疊為空的狀況必須有優先權的玩家才能行動
@@ -425,6 +442,10 @@ func GetCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.Proc
 			}
 		}
 	}
+	// 讓出優先權
+	if game.PriorityPlayer == PlayerID(user) {
+		cmd = append(cmd, core.Command{User: user, Description: "Pass", Parameters: nil})
+	}
 	return cmd, nil
 }
 
@@ -452,7 +473,7 @@ func Pass(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure,
 }
 
 func NextPhase(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure) (Game, core.Desktop, core.Procedure, error) {
-	game.CurrentPhase = (game.CurrentPhase % PhaseCount)
+	game.CurrentPhase = (game.CurrentPhase + 1) % PhaseCount
 	return game, desk, p, nil
 }
 
