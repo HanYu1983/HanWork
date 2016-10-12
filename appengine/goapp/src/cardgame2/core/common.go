@@ -16,5 +16,5 @@ func CardGameKey(ctx appengine.Context) *datastore.Key {
 // 每次建立一個牌局都會建立一個Game主鍵
 // 所有Goal或是Cut鍵都會依附在對應的Game主鍵之下
 func GameKey(ctx appengine.Context, gameID string) *datastore.Key {
-	return datastore.NewKey(ctx, "Game", gameID, 0, CardGameKey(ctx))
+	return datastore.NewKey(ctx, "Desktop", gameID, 0, CardGameKey(ctx))
 }

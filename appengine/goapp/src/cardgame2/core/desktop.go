@@ -52,8 +52,8 @@ type Desktop struct {
 }
 
 var (
-	ErrCardStackAlreadyExist = errors.New("stack already exist")
-	ErrCardStackNotExist     = errors.New("stack not exist")
+	ErrCardStackAlreadyExist = errors.New("card stack already exist")
+	ErrCardStackNotExist     = errors.New("card stack not exist")
 	ErrCardNotExist          = errors.New("card not exist")
 )
 

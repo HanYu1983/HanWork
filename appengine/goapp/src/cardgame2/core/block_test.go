@@ -37,18 +37,20 @@ func TestBlock(t *testing.T) {
 	p = CompleteCommand(ctx, p, c)
 
 	c, _ = GetCommand(ctx, p)
+	// 前台處理
 	if c.User != UserA {
 		t.Fatal("3")
 	}
 	if c.Description != "選2張{cardIds}，啟動{cardId}的{abilityId}" {
 		t.Fatal("4")
 	}
+
 	// 前台上傳完消費的卡Id
 	// map裡面不用整數，因為轉成JSON後再轉回來，數字類全部變成float64
 	c.Parameters["cardIds"] = []float64{1.0, 2.0}
+	cardIds := c.Parameters["cardIds"].([]float64)
 	cardId := c.Parameters["cardId"].(float64)
 	abilityId := c.Parameters["abilityId"].(string)
-	cardIds := c.Parameters["cardIds"].([]float64)
 
 	if int(cardId) != 3 {
 		t.Fatal("4")
