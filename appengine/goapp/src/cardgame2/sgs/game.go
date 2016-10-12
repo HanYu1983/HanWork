@@ -5,6 +5,68 @@ import (
 	"appengine/datastore"
 	core "cardgame2/core"
 	"errors"
+	"strings"
+)
+
+var (
+	ErrPhaseNotExist         = errors.New("phase not exist")
+	ErrCardInfoNotExist      = errors.New("card info not exist")
+	ErrYouAreNotTheCardOwner = errors.New("you are not the card owner")
+	ErrTargetCardIsntMana    = errors.New("target card is not mana")
+	ErrTargetManaAlreadyUsed = errors.New("target mana already used")
+	ErrManaIsntEnougth       = errors.New("mana is not enought")
+	ErrSlotIsntEmpty         = errors.New("slot is not empty")
+	ErrUnitIsntAtSlot        = errors.New("unit isnt at alot")
+)
+
+const (
+	// 牌庫
+	Library = "Library"
+	// 手牌
+	Hand = "Hand"
+	// 領土
+	TerritoryZone = "TerritoryZone"
+	// 墓地
+	Graveyard = "Graveyard"
+	// 陣地
+	Position  = "Position"
+	Position1 = "Position1"
+	Position2 = "Position2"
+	Position3 = "Position3"
+	Position4 = "Position4"
+	Position5 = "Position5"
+	// 放逐區
+	ExileZone = "ExileZone"
+)
+
+const (
+	// 重置步驟
+	UntapStep = iota
+	// 準備步驟
+	PreparedStep
+	// 抓牌步驟
+	DrawStep
+	// 行動階段
+	ActionPhase
+	// 結束步驟
+	EndStep
+	// 棄牌步驟
+	DiscardStep
+	//
+	PhaseCount
+)
+
+const (
+	// 戰器
+	Weapon = iota
+	// 單位
+	Unit
+	// 陣略
+	Strategy
+	// 錦囊
+	Tactics
+	// 領土
+	Territory
 )
 
 type CardPrototype struct {
@@ -28,37 +90,26 @@ const (
 	ColorWhite = "無"
 )
 
-func SgsKey(ctx appengine.Context) *datastore.Key {
-	return datastore.NewKey(ctx, "Sgs", "SgsCard", 0, nil)
-}
-
-func CardKey(ctx appengine.Context, id string) *datastore.Key {
-	return datastore.NewKey(ctx, "SgsCard", id, 0, SgsKey(ctx))
-}
-
-func GameKey(ctx appengine.Context, gameId string) *datastore.Key {
-	return datastore.NewKey(ctx, "SgsGame", gameId, 0, SgsKey(ctx))
-}
-
 // 卡牌狀態
 // 陣面對決的數值
 type CardInfo struct {
-	CardID    int
-	Prototype CardPrototype
-	Cost      string
-	Color     string
-	ColorCost string
-	Class     string
-	Attack    int
-	Defence   int
-	TurnPlay  int
+	CardID        int
+	Prototype     CardPrototype
+	Cost          string
+	Color         string
+	ColorCost     string
+	Class         string
+	Attack        int
+	Defence       int
+	TurnPlay      int
+	ControlPlayer int
 }
 
 type Player struct {
 	User     string
 	HP       int
 	LoseTurn int
-	// 手牌數量上限
+	// Hand數量上限
 	HandLimit int
 	// 這回合第一個攻擊的卡牌ID
 	FirstAttackCardID int
@@ -77,59 +128,35 @@ type Buf struct {
 type Game struct {
 	ID           string
 	CardInfo     []CardInfo
-	CardBuf      [][]Buf
 	Turn         int
 	Player       []Player
 	Winner       int
-	Phase        []string
 	CurrentPhase int
+	// 進攻玩家
+	OffensivePlayer int
+	// 權先權玩家
+	PriorityPlayer int
+	// 權先權玩家的行動次數
+	ActionCount []int
 }
 
-// 行動方案
-// 用來和玩家互動的，沒有存入datastore
-// 系統提出行動方案後，有些參數沒有填滿
-// 那些參數就由玩家來補足
-// 之後再將補足完的方案回傳服務器
-// 服務器有完整的參數資訊就能執行方案
-type Action struct {
-	FromID      int
-	User        string
-	Description string
-	Parameters  map[string]interface{}
+// 取得Player的ID
+func PlayerID(user string) int {
+	if user == core.UserA {
+		return 0
+	}
+	if user == core.UserB {
+		return 1
+	}
+	panic("xxx")
 }
 
-var (
-	ErrPhaseNotExist         = errors.New("phase not exist")
-	ErrCardInfoNotExist      = errors.New("card info not exist")
-	ErrYouAreNotTheCardOwner = errors.New("you are not the card owner")
-	ErrTargetCardIsntMana    = errors.New("target card is not mana")
-	ErrTargetManaAlreadyUsed = errors.New("target mana already used")
-	ErrManaIsntEnougth       = errors.New("mana is not enought")
-	ErrSlotIsntEmpty         = errors.New("slot is not empty")
-	ErrUnitIsntAtSlot        = errors.New("unit isnt at alot")
-)
-
-const (
-	CardStackBase      = "base"
-	CardStackHand      = "hand"
-	CardStackMana      = "mana"
-	CardStackGraveyard = "graveyard"
-	CardStackSlot      = "slot"
-	CardStackSlot1     = "slot1"
-	CardStackSlot2     = "slot2"
-	CardStackSlot3     = "slot3"
-	CardStackSlot4     = "slot4"
-	CardStackSlot5     = "slot5"
-)
-
-const (
-	PhaseDrawStart = "darwStart"
-	PhaseDraw      = "draw"
-	PhaseDrawEnd   = "drawEnd"
-	PhaseMainStart = "mainStart"
-	PhaseMain      = "main"
-	PhaseMainEnd   = "mainEnd"
-)
+func CardType(info CardInfo) int {
+	if strings.Contains(info.Class, "锦囊") {
+		return Tactics
+	}
+	return Weapon
+}
 
 // 讀取陣面對決
 func LoadGame(ctx appengine.Context, gameID string) (Game, error) {
@@ -150,7 +177,6 @@ func SaveGame(ctx appengine.Context, game Game) (Game, error) {
 
 // 建立陣面對決的牌局
 // 這個方法會一并建立core.Desktop的台面狀態
-// 建立場上所有牌堆（手牌、本國、地、墓地、陣地）
 func CreateGame(ctx appengine.Context, gameId string) (Game, core.Desktop, error) {
 	var game core.Desktop
 	var err error
@@ -160,76 +186,76 @@ func CreateGame(ctx appengine.Context, gameId string) (Game, core.Desktop, error
 		return Game{}, game, err
 	}
 	// 建立A玩家牌堆
-	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackBase, CardStackBase)
+	game, err = core.AddCardStack(ctx, game, core.UserA+Library, Library)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackHand, CardStackHand)
+	game, err = core.AddCardStack(ctx, game, core.UserA+Hand, Hand)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackMana, CardStackMana)
+	game, err = core.AddCardStack(ctx, game, core.UserA+TerritoryZone, TerritoryZone)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackGraveyard, CardStackGraveyard)
+	game, err = core.AddCardStack(ctx, game, core.UserA+Graveyard, Graveyard)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackSlot1, CardStackSlot)
+	game, err = core.AddCardStack(ctx, game, core.UserA+Position1, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackSlot2, CardStackSlot)
+	game, err = core.AddCardStack(ctx, game, core.UserA+Position2, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackSlot3, CardStackSlot)
+	game, err = core.AddCardStack(ctx, game, core.UserA+Position3, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackSlot4, CardStackSlot)
+	game, err = core.AddCardStack(ctx, game, core.UserA+Position4, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+CardStackSlot5, CardStackSlot)
+	game, err = core.AddCardStack(ctx, game, core.UserA+Position5, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
 	// 建立B玩家牌堆
-	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackBase, CardStackBase)
+	game, err = core.AddCardStack(ctx, game, core.UserB+Library, Library)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackHand, CardStackHand)
+	game, err = core.AddCardStack(ctx, game, core.UserB+Hand, Hand)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackMana, CardStackMana)
+	game, err = core.AddCardStack(ctx, game, core.UserB+TerritoryZone, TerritoryZone)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackGraveyard, CardStackGraveyard)
+	game, err = core.AddCardStack(ctx, game, core.UserB+Graveyard, Graveyard)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackSlot1, CardStackSlot)
+	game, err = core.AddCardStack(ctx, game, core.UserB+Position1, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackSlot2, CardStackSlot)
+	game, err = core.AddCardStack(ctx, game, core.UserB+Position2, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackSlot3, CardStackSlot)
+	game, err = core.AddCardStack(ctx, game, core.UserB+Position3, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackSlot4, CardStackSlot)
+	game, err = core.AddCardStack(ctx, game, core.UserB+Position4, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+CardStackSlot5, CardStackSlot)
+	game, err = core.AddCardStack(ctx, game, core.UserB+Position5, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
@@ -238,7 +264,27 @@ func CreateGame(ctx appengine.Context, gameId string) (Game, core.Desktop, error
 		return Game{}, game, err
 	}
 	// 建立陣面對決
-	sgs := Game{ID: gameId, Player: make([]Player, 2)}
+	sgs := Game{
+		ID:              gameId,
+		Player:          make([]Player, 2),
+		OffensivePlayer: PlayerID(core.UserA),
+		ActionCount:     make([]int, 2),
+	}
 	sgs, err = SaveGame(ctx, sgs)
-	return sgs, game, err
+	if err != nil {
+		return sgs, game, err
+	}
+	return sgs, game, nil
+}
+
+func SgsKey(ctx appengine.Context) *datastore.Key {
+	return datastore.NewKey(ctx, "Sgs", "SgsCard", 0, nil)
+}
+
+func CardKey(ctx appengine.Context, id string) *datastore.Key {
+	return datastore.NewKey(ctx, "SgsCard", id, 0, SgsKey(ctx))
+}
+
+func GameKey(ctx appengine.Context, gameId string) *datastore.Key {
+	return datastore.NewKey(ctx, "SgsGame", gameId, 0, SgsKey(ctx))
 }

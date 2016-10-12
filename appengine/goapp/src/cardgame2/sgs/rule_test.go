@@ -38,18 +38,18 @@ func TestBasic(t *testing.T) {
 	}
 
 	t.Log("初始配置")
-	desk, cardIds, err = core.AddCards(ctx, desk, core.UserA+CardStackHand, core.UserA, []string{"116"})
+	desk, cardIds, err = core.AddCards(ctx, desk, core.UserA+Hand, core.UserA, []string{"116"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	card116 := cardIds[0]
 
-	desk, _, err = core.AddCards(ctx, desk, core.UserA+CardStackMana, core.UserA, []string{"179", "179", "179"})
+	desk, _, err = core.AddCards(ctx, desk, core.UserA+TerritoryZone, core.UserA, []string{"179", "179", "179"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	desk, _, err = core.AddCards(ctx, desk, core.UserA+CardStackGraveyard, core.UserA, []string{"105"})
+	desk, _, err = core.AddCards(ctx, desk, core.UserA+Graveyard, core.UserA, []string{"105"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,7 +61,7 @@ func TestBasic(t *testing.T) {
 	}
 
 	t.Log("使用者打出吴夫人")
-	game, desk, p, err = InvokePlayCardFrom(ctx, game, desk, p, core.UserA, core.UserA+CardStackHand, 1, card116)
+	game, desk, p, err = InvokePlayCardFrom(ctx, game, desk, p, core.UserA, core.UserA+Hand, 1, card116)
 
 	err = core.SaveProcedure(ctx, "first game", p)
 	if err != nil {
@@ -143,7 +143,7 @@ func TestBasic(t *testing.T) {
 	}
 
 	t.Log("檢查有沒有抽到主公")
-	for _, cardId := range desk.CardStack[core.UserA+CardStackHand].Card {
+	for _, cardId := range desk.CardStack[core.UserA+Hand].Card {
 		card = desk.Card[cardId]
 		if card.Ref == "105" {
 			break
@@ -151,5 +151,10 @@ func TestBasic(t *testing.T) {
 	}
 	if card.Ref != "105" {
 		t.Fatal("必須有抽到主公")
+	}
+
+	_, err = SaveGame(ctx, game)
+	if err != nil {
+		t.Fatal(err)
 	}
 }

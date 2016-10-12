@@ -67,7 +67,7 @@ func 初陣(total []CardPrototype) []CardPrototype {
 			Package:   "初阵",
 			Attack:    "1",
 			Defence:   "1",
-			Text:      "当吴夫人进战场时，从你的牌库和墓地中搜寻一张吴势力主公牌，展示并洗牌后将该牌置于你的牌库顶。",
+			Text:      "当吴夫人进战场时，从你的牌库和Graveyard中搜寻一张吴势力主公牌，展示并洗牌后将该牌置于你的牌库顶。",
 		},
 		{
 			CardID:    "105",
@@ -146,7 +146,6 @@ func InstallCardInfo(ctx appengine.Context, sgs Game, stage core.Desktop) (Game,
 			Prototype: info,
 		}
 		sgs.CardInfo = append(sgs.CardInfo, cardInfo)
-		sgs.CardBuf = append(sgs.CardBuf, []Buf{})
 	}
 	return sgs, nil
 }
