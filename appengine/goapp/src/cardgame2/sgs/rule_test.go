@@ -72,6 +72,9 @@ func TestBasic(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	var HandleCommand CommandHandler
+	HandleCommand = ReduceCommandHandler([]CommandHandler{CardCommandHandler, BasicCommandHandler})
+
 	t.Log("觸發出牌前事件")
 	c, _ = core.GetCommand(ctx, p)
 	if c.Description != "OnPlayCardFromBF" {
@@ -173,7 +176,6 @@ func TestPhase(t *testing.T) {
 	var c core.Command
 	var cardIds []int
 	var card core.Card
-	var has bool
 
 	t.Log("安裝卡包")
 	err = InstallPackage(ctx)
@@ -208,26 +210,17 @@ func TestPhase(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	var HandleCommand CommandHandler
+	HandleCommand = ReduceCommandHandler([]CommandHandler{BasicCommandHandler})
+
 	handleLoop := func() {
-		for {
-			c, has = core.GetCommand(ctx, p)
-			t.Log(c)
-			if has == false {
-				p = core.NewProcedure(ctx)
-				break
-			}
-			if c.User != core.UserSys {
-				break
-			}
-			game, desk, p, err = HandleCommand(ctx, game, desk, p, c)
-			if err != nil {
-				switch err.(type) {
-				case TargetMissingError:
-					t.Log(err.Error())
-					p = core.CompleteCommand(ctx, p, c)
-				default:
-					t.Fatal(err)
-				}
+		game, desk, p, err = PerformCommandHandler(HandleCommand, ctx, game, desk, p)
+		if err != nil {
+			switch err.(type) {
+			case TargetMissingError:
+				t.Log(err.Error())
+			default:
+				t.Fatal(err)
 			}
 		}
 	}

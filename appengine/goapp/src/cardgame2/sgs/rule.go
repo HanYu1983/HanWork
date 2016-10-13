@@ -8,24 +8,69 @@ import (
 	"strings"
 )
 
+// 遺失目標錯誤
+// 卡牌效果在解決時目標不滿足的話，一定要丟出這個錯誤
 type TargetMissingError string
 
 func (err TargetMissingError) Error() string {
 	return string(err)
 }
 
-func OnEvent(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, c core.Command) (Game, core.Desktop, core.Procedure, error) {
+// 基本處理介面
+type CommandHandler func(appengine.Context, Game, core.Desktop, core.Procedure, core.Command) (Game, core.Desktop, core.Procedure, error)
+
+// 執行處理
+func PerformCommandHandler(handler CommandHandler, ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure) (Game, core.Desktop, core.Procedure, error) {
+	var c core.Command
+	var has bool
+	var err error
+	for {
+		c, has = core.GetCommand(ctx, p)
+		if has == false {
+			p = core.NewProcedure(ctx)
+			break
+		}
+		if c.User != core.UserSys {
+			break
+		}
+		game, desk, p, err = handler(ctx, game, desk, p, c)
+		if err != nil {
+			switch err.(type) {
+			case TargetMissingError:
+				p = core.CompleteCommand(ctx, p, c)
+			}
+			return game, desk, p, err
+		}
+	}
+	return game, desk, p, nil
+}
+
+// 結合指定的處理者
+func ReduceCommandHandler(handlers []CommandHandler) CommandHandler {
+	return func(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, c core.Command) (Game, core.Desktop, core.Procedure, error) {
+		var err error
+		for _, handler := range handlers {
+			game, desk, p, err = handler(ctx, game, desk, p, c)
+			if err != nil {
+				return game, desk, p, err
+			}
+		}
+		return game, desk, p, nil
+	}
+}
+
+// 卡牌能力實做
+func CardCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, c core.Command) (Game, core.Desktop, core.Procedure, error) {
 	var cardId int
 	var card core.Card
 	var info CardInfo
 	switch c.Description {
 	case "OnPlayCardFromAF":
+		user := c.Parameters["user"].(string)
 		cardId = int(c.Parameters["cardId"].(float64))
 		slotNum := int(c.Parameters["slotNum"].(float64))
 		var _ = slotNum
 		card = desk.Card[cardId]
-		// TODO 迎擊
-		//slotInUser, slotNum = ParsePositionID(card.CardStack)
 
 		switch card.Ref {
 		case "116":
@@ -56,25 +101,8 @@ func OnEvent(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedu
 	return game, desk, p, nil
 }
 
-// 以下處理主動行為
-// 也就是使用者呼叫CollectCommand得到的指令
-func HandleUserCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, c core.Command) (Game, core.Desktop, core.Procedure, error) {
-	if len(p.Block) == 0 && game.PriorityPlayer != PlayerID(user) {
-		return game, desk, p, errors.New("優先權在對方身上")
-	}
-	switch c.Description {
-	case "轉移":
-		// 轉移不進入堆疊，在這裡的意思是指對方不能響應
-		// 堆疊不為空時也不能用
-		// 一啟動轉移後就要直接解決效果
-		// 還是使用InvokeUnitMove，但對方不能切入
-		// TODO InvokeUnitMove
-	}
-	return game, desk, p, nil
-}
-
-// 以下處理的自動行為或是主動行為所誘發的能力
-func HandleCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, c core.Command) (Game, core.Desktop, core.Procedure, error) {
+// 基本規則實作
+func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, c core.Command) (Game, core.Desktop, core.Procedure, error) {
 	var err error
 	switch c.Description {
 	case "使用{cardId}啟動{abilityId}，目標是{targetId}":
@@ -112,14 +140,6 @@ func HandleCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.P
 		"OnPlayCardFromAF",
 		"OnTakeCardFromBF",
 		"OnTakeCardFromAF":
-		// 先誘發事件
-		// ========
-		// user 指的是由哪個玩家呼叫方法所誘發的，也可能是UserSys
-		user := c.Parameters["user"].(string)
-		game, desk, p, err = OnEvent(ctx, game, desk, p, user, c)
-		if err != nil {
-			return game, desk, p, err
-		}
 		// 再處理重置階段規定效果
 		// ==================
 		if c.Description == "OnNextPhaseAF" {
@@ -220,6 +240,7 @@ func HandleCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.P
 	return game, desk, p, nil
 }
 
+// 棄牌規定效果
 func InvokeDiscardCardInDiscardStep(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string) (Game, core.Desktop, core.Procedure, error) {
 	offset := len(desk.CardStack[user+Hand].Card) - game.Player[PlayerID(user)].HandLimit
 	if offset <= 0 {
@@ -232,14 +253,18 @@ func InvokeDiscardCardInDiscardStep(ctx appengine.Context, game Game, desk core.
 	return game, desk, p, nil
 }
 
+// 重置規定效果
 func UntapCardInUntapStep(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string) (Game, core.Desktop, core.Procedure, error) {
 	return game, desk, p, nil
 }
 
+// 計算迎擊力
+// 回傳-1代表沒有迎擊能力
 func ComputeCounter(ctx appengine.Context, game Game, desk core.Desktop, user string, cardId int) (int, error) {
 	return -1, nil
 }
 
+// 計算基本攻擊力
 func ComputeNormalAttack(ctx appengine.Context, game Game, desk core.Desktop, user string, cardId int) (int, error) {
 	info := game.CardInfo[cardId]
 	value, err := strconv.Atoi(info.Prototype.Attack)
@@ -249,6 +274,7 @@ func ComputeNormalAttack(ctx appengine.Context, game Game, desk core.Desktop, us
 	return value, nil
 }
 
+// 計算基本防禦力
 func ComputeNormalDefence(ctx appengine.Context, game Game, desk core.Desktop, user string, cardId int) (int, error) {
 	info := game.CardInfo[cardId]
 	value, err := strconv.Atoi(info.Prototype.Defence)
@@ -258,6 +284,8 @@ func ComputeNormalDefence(ctx appengine.Context, game Game, desk core.Desktop, u
 	return value, nil
 }
 
+// 啟動傷害流程
+// 過程中會呼叫ComputeNormalDefence來計算減傷
 func InvokeDamageUnit(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, damage int, cardId int) (Game, core.Desktop, core.Procedure, error) {
 	parameters := map[string]interface{}{
 		"user":   user,
@@ -272,6 +300,7 @@ func InvokeDamageUnit(ctx appengine.Context, game Game, desk core.Desktop, p cor
 	return game, desk, p, nil
 }
 
+// 啟動單位移動
 func InvokeUnitMove(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, slotStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
 	parameters := map[string]interface{}{
 		"user":        user,
@@ -286,6 +315,7 @@ func InvokeUnitMove(ctx appengine.Context, game Game, desk core.Desktop, p core.
 	return game, desk, p, nil
 }
 
+// 啟動單位攻擊
 func InvokeUnitAttack(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cardId int) (Game, core.Desktop, core.Procedure, error) {
 	parameters := map[string]interface{}{
 		"user":   user,
@@ -299,6 +329,8 @@ func InvokeUnitAttack(ctx appengine.Context, game Game, desk core.Desktop, p cor
 	return game, desk, p, nil
 }
 
+// 啟動抽卡
+// 可以指定從哪裡抽到手上
 func InvokeTakeCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, fromStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
 	parameters := map[string]interface{}{
 		"user":        user,
@@ -313,6 +345,8 @@ func InvokeTakeCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p c
 	return game, desk, p, nil
 }
 
+// 啟動打卡
+// 可以指定從哪裡打到陣地
 func InvokePlayCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, fromStackId string, slotNum int, cardId int) (Game, core.Desktop, core.Procedure, error) {
 	parameters := map[string]interface{}{
 		"user":        user,
@@ -529,6 +563,9 @@ func CollectCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.
 	return cmd, nil
 }
 
+// 讓過
+// 非常重要的基本流程
+// 透過讓過來前進到下一個階段
 func Pass(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string) (Game, core.Desktop, core.Procedure, error) {
 	// 堆疊不為空不能讓出優先權
 	if len(p.Block) != 0 {
@@ -566,6 +603,7 @@ func NextPhase(ctx appengine.Context, game Game, desk core.Desktop, p core.Proce
 	return game, desk, p, nil
 }
 
+// 啟動往下一階段
 func InvokeNextPhase(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure) (Game, core.Desktop, core.Procedure, error) {
 	// 加入user是為了給事件有統一的參數介面
 	parameters := map[string]interface{}{
