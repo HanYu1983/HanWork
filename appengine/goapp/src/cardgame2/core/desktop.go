@@ -144,6 +144,19 @@ func MoveCard(ctx appengine.Context, desk Desktop, fromStack string, toStack str
 	return desk, nil
 }
 
+func TopCardInCardStack(ctx appengine.Context, desk Desktop, stackID string) (int, error) {
+	var has bool
+	_, has = desk.CardStack[stackID]
+	if has == false {
+		return 0, ErrCardStackNotExist
+	}
+	length := len(desk.CardStack[stackID].Card)
+	if length == 0 {
+		return 0, ErrCardNotExist
+	}
+	return desk.CardStack[stackID].Card[length-1], nil
+}
+
 func Opponent(user string) string {
 	switch user {
 	case UserA:

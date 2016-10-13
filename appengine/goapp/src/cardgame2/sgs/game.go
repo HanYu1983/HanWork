@@ -41,16 +41,32 @@ const (
 
 const (
 	// 重置步驟
+	// 重置步骤是整个回合流程中的第一步
+	// 在这个步骤中你需要重置你所有已横置的牌（将它们转正）
+	// 这个步骤中进攻玩家没有优先权，所以不能打出任何牌也不能启动任何能力。
 	UntapStep = iota
 	// 準備步驟
-	PreparedStep
+	// 有的卡牌会要求玩家在准备步骤时执行某种动作，如果没有的话，这个步骤通常会直接跳过。
+	StandbyStep
 	// 抓牌步驟
+	// 你从牌库抓一张牌，如果是先手玩家，则跳过第一回合的抓牌步骤
 	DrawStep
 	// 行動階段
+	// == 打出手牌 ==
+	// 打出领土牌：每回合至多执行一次，可以打出一个明置领土，或一个暗置领土。
+	// 打出非领土牌：没有次数限制，只要你满足势力需求，支付相应的费用就可以打出。
+	// == 发起战斗 ==
+	// 战斗准备：选择一个单位即将宣告攻击。
+	// 宣告攻击：横置并选择一个合法攻击对象。
+	// 结算伤害：结算本次战斗造成的伤害。如果是单位间的战斗，双方会同时造成伤害。
+	// 战斗结束：有的卡牌会在战斗结束时要求玩家执行某些动作。
 	ActionPhase
 	// 結束步驟
+	// 有的卡牌会在结束步骤时要求玩家执行某些动作。
 	EndStep
 	// 棄牌步驟
+	// 若你的手牌多于七张，则需要把多余的手牌弃掉。
+	// 然后，写着“直到回合结束”的效果会在这个步骤被清除。
 	DiscardStep
 	//
 	PhaseCount
@@ -263,12 +279,24 @@ func CreateGame(ctx appengine.Context, gameId string) (Game, core.Desktop, error
 	if err != nil {
 		return Game{}, game, err
 	}
+	playerA := Player{
+		User:      core.UserA,
+		HandLimit: 7,
+	}
+	playerB := Player{
+		User:      core.UserB,
+		HandLimit: 7,
+	}
+	players := make([]Player, 2)
+	players[PlayerID(playerA.User)] = playerA
+	players[PlayerID(playerB.User)] = playerB
 	// 建立陣面對決
 	sgs := Game{
 		ID:              gameId,
-		Player:          make([]Player, 2),
+		Player:          players,
 		OffensivePlayer: PlayerID(core.UserA),
-		ActionCount:     make([]int, 2),
+		// 次數一開始是-1，方便演算法計算
+		ActionCount: []int{0, -1},
 	}
 	sgs, err = SaveGame(ctx, sgs)
 	if err != nil {

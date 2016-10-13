@@ -47,10 +47,10 @@ func GetCommand(ctx appengine.Context, p Procedure) (Command, bool) {
 	var topBlock Block
 	topBlock = p.Block[blockLen-1]
 	for topBlock.Cursor >= len(topBlock.Command) {
-		topBlock = p.Block[topBlock.ID-1]
 		if topBlock.ID == 0 {
 			break
 		}
+		topBlock = p.Block[topBlock.ID-1]
 	}
 	if topBlock.Cursor >= len(topBlock.Command) {
 		return Command{}, false

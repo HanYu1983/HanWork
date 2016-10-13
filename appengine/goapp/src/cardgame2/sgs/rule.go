@@ -65,6 +65,7 @@ func HandleUserCommand(ctx appengine.Context, game Game, desk core.Desktop, p co
 	switch c.Description {
 	case "轉移":
 		// 轉移不進入堆疊，在這裡的意思是指對方不能響應
+		// 堆疊不為空時也不能用
 		// 一啟動轉移後就要直接解決效果
 		// 還是使用InvokeUnitMove，但對方不能切入
 		// TODO InvokeUnitMove
@@ -84,6 +85,20 @@ func HandleCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.P
 			var _ = targetId
 			//game.CardBuf[targetId] = append(game.CardBuf[targetId], Buf{FromCardID: cardId})
 		}
+	case "{user}廢棄掉上一個指令的{cardIds}":
+		pre := p.Command[c.ID-1]
+		if pre.Block != c.Block {
+			return game, desk, p, errors.New("不是同一個區塊的指令")
+		}
+		user := c.Parameters["user"].(string)
+		selectedCardIds := pre.Parameters["cardIds"].([]float64)
+		for _, cardId := range selectedCardIds {
+			desk, err = core.MoveCard(ctx, desk, user+Hand, user+Graveyard, 0, int(cardId))
+			if err != nil {
+				return game, desk, p, err
+			}
+		}
+		p = core.CompleteCommand(ctx, p, c)
 	case
 		"OnNextPhaseBF",
 		"OnNextPhaseAF",
@@ -97,10 +112,57 @@ func HandleCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.P
 		"OnPlayCardFromAF",
 		"OnTakeCardFromBF",
 		"OnTakeCardFromAF":
+		// 先誘發事件
+		// ========
+		// user 指的是由哪個玩家呼叫方法所誘發的，也可能是UserSys
 		user := c.Parameters["user"].(string)
 		game, desk, p, err = OnEvent(ctx, game, desk, p, user, c)
 		if err != nil {
 			return game, desk, p, err
+		}
+		// 再處理重置階段規定效果
+		// ==================
+		if c.Description == "OnNextPhaseAF" {
+			// 切換階段後等於重置階段的話，代表剛進入重置階段
+			// 立刻重置卡牌
+			offensiveUser := game.Player[game.OffensivePlayer].User
+			if game.CurrentPhase == UntapStep {
+				game, desk, p, err = UntapCardInUntapStep(ctx, game, desk, p, offensiveUser)
+				if err != nil {
+					return game, desk, p, err
+				}
+			}
+			// 抽牌階段，第一回合不能抽牌
+			if game.CurrentPhase == DrawStep {
+				canDraw := game.Turn != 0
+				if canDraw {
+					topCardId, err := core.TopCardInCardStack(ctx, desk, offensiveUser+Library)
+					if err == core.ErrCardNotExist {
+						return game, desk, p, TargetMissingError("無卡可抽")
+					}
+					game, desk, p, err = InvokeTakeCardFrom(ctx, game, desk, p, offensiveUser, offensiveUser+Library, topCardId)
+					if err != nil {
+						return game, desk, p, err
+					}
+				}
+			}
+			// 剛進入棄牌階段，立刻棄牌
+			if game.CurrentPhase == DiscardStep {
+				game, desk, p, err = InvokeDiscardCardInDiscardStep(ctx, game, desk, p, offensiveUser)
+				if err != nil {
+					return game, desk, p, err
+				}
+			}
+		}
+		if c.Description == "OnNextPhaseBF" {
+			// 剛結束棄牌階段，切換回合
+			if game.CurrentPhase == DiscardStep {
+				game.Turn += 1
+				currOffensiveUser := game.Player[game.OffensivePlayer].User
+				nextUser := core.Opponent(currOffensiveUser)
+				game.OffensivePlayer = PlayerID(nextUser)
+				// 優先權會在NextPhase時設定
+			}
 		}
 		p = core.CompleteCommand(ctx, p, c)
 	case "NextPhase":
@@ -155,6 +217,22 @@ func HandleCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.P
 		}
 		p = core.CompleteCommand(ctx, p, c)
 	}
+	return game, desk, p, nil
+}
+
+func InvokeDiscardCardInDiscardStep(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string) (Game, core.Desktop, core.Procedure, error) {
+	offset := len(desk.CardStack[user+Hand].Card) - game.Player[PlayerID(user)].HandLimit
+	if offset <= 0 {
+		return game, desk, p, nil
+	}
+	p = core.AddBlock(ctx, p, []core.Command{
+		{User: user, Description: "選擇{num}張手牌{cardIds}", Parameters: map[string]interface{}{"num": float64(offset)}},
+		{User: core.UserSys, Description: "{user}廢棄掉上一個指令的{cardIds}", Parameters: map[string]interface{}{"user": user}},
+	})
+	return game, desk, p, nil
+}
+
+func UntapCardInUntapStep(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string) (Game, core.Desktop, core.Procedure, error) {
 	return game, desk, p, nil
 }
 
@@ -308,7 +386,16 @@ func PlayCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p core.Pr
 	return game, desk, p, nil
 }
 
-func DamageUnit(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, damage int, cardId int) (Game, core.Desktop, core.Procedure, error) {
+func DamageUnit(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, attack int, cardId int) (Game, core.Desktop, core.Procedure, error) {
+	// 取得對手防禦力
+	defence, err := ComputeNormalDefence(ctx, game, desk, user, cardId)
+	if err != nil {
+		return game, desk, p, err
+	}
+	damage := attack - defence
+	if damage < 0 {
+		damage = 0
+	}
 	game.CardInfo[cardId].Defence -= damage
 	return game, desk, p, nil
 }
@@ -342,17 +429,7 @@ func UnitAttack(ctx appengine.Context, game Game, stage core.Desktop, p core.Pro
 		// 如果對手Position上有單位
 		// 攻擊那個單位
 		opponentCardId := stage.CardStack[opponentSlotId].Card[0]
-		// 取得對手防禦力
-		defence, err := ComputeNormalDefence(ctx, game, stage, user, opponentCardId)
-		if err != nil {
-			return game, stage, p, err
-		}
-		damage := attack - defence
-		if damage < 0 {
-			damage = 0
-		}
-		game.CardInfo[opponentCardId].Defence -= damage
-		game, stage, p, err = InvokeDamageUnit(ctx, game, stage, p, user, damage, opponentCardId)
+		game, stage, p, err = InvokeDamageUnit(ctx, game, stage, p, user, attack, opponentCardId)
 		if err != nil {
 			return game, stage, p, err
 		}
@@ -442,9 +519,12 @@ func CollectCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.
 			}
 		}
 	}
-	// 讓出優先權
-	if game.PriorityPlayer == PlayerID(user) {
-		cmd = append(cmd, core.Command{User: user, Description: "Pass", Parameters: nil})
+	if isStackEmpty {
+		// 堆疊為空時才能讓出優先權
+		if game.PriorityPlayer == PlayerID(user) {
+			cmd = append(cmd, core.Command{User: user, Description: "Pass", Parameters: nil})
+		}
+		// 堆疊為空時才能使用轉移
 	}
 	return cmd, nil
 }
@@ -453,6 +533,12 @@ func Pass(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure,
 	// 堆疊不為空不能讓出優先權
 	if len(p.Block) != 0 {
 		return game, desk, p, errors.New("堆疊不為空不能讓出優先權")
+	}
+	// 如果是重置或棄牌步驟，主動玩家呼叫讓過就是直接跳過
+	if game.CurrentPhase == UntapStep || game.CurrentPhase == DiscardStep {
+		if PlayerID(user) == game.OffensivePlayer {
+			return InvokeNextPhase(ctx, game, desk, p)
+		}
 	}
 	// 沒有優先權的不能讓出優先權
 	if game.PriorityPlayer != PlayerID(user) {
@@ -474,6 +560,9 @@ func Pass(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure,
 
 func NextPhase(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure) (Game, core.Desktop, core.Procedure, error) {
 	game.CurrentPhase = (game.CurrentPhase + 1) % PhaseCount
+	game.PriorityPlayer = game.OffensivePlayer
+	game.ActionCount = []int{-1, -1}
+	game.ActionCount[game.OffensivePlayer] = 0
 	return game, desk, p, nil
 }
 
