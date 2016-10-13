@@ -105,14 +105,6 @@ func CardCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p c
 func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, c core.Command) (Game, core.Desktop, core.Procedure, error) {
 	var err error
 	switch c.Description {
-	case "使用{cardId}啟動{abilityId}，目標是{targetId}":
-		cardId := int(c.Parameters["cardId"].(float64))
-		targetId := int(c.Parameters["targetId"].(float64))
-		card := desk.Card[cardId]
-		if card.Ref == "49" {
-			var _ = targetId
-			//game.CardBuf[targetId] = append(game.CardBuf[targetId], Buf{FromCardID: cardId})
-		}
 	case "{user}廢棄掉上一個指令的{cardIds}":
 		pre := p.Command[c.ID-1]
 		if pre.Block != c.Block {
@@ -127,61 +119,45 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 			}
 		}
 		p = core.CompleteCommand(ctx, p, c)
-	case
-		"OnNextPhaseBF",
-		"OnNextPhaseAF",
-		"OnDamageUnitBF",
-		"OnDamageUnitAF",
-		"OnUnitAttackBF",
-		"OnUnitAttackAF",
-		"OnUnitMoveBF",
-		"OnUnitMoveAF",
-		"OnPlayCardFromBF",
-		"OnPlayCardFromAF",
-		"OnTakeCardFromBF",
-		"OnTakeCardFromAF":
-		// 再處理重置階段規定效果
-		// ==================
-		if c.Description == "OnNextPhaseAF" {
-			// 切換階段後等於重置階段的話，代表剛進入重置階段
-			// 立刻重置卡牌
-			offensiveUser := game.Player[game.OffensivePlayer].User
-			if game.CurrentPhase == UntapStep {
-				game, desk, p, err = UntapCardInUntapStep(ctx, game, desk, p, offensiveUser)
-				if err != nil {
-					return game, desk, p, err
-				}
+	case "OnNextPhaseBF":
+		// 剛結束棄牌階段，切換回合
+		if game.CurrentPhase == DiscardStep {
+			game.Turn += 1
+			currOffensiveUser := game.Player[game.OffensivePlayer].User
+			nextUser := core.Opponent(currOffensiveUser)
+			game.OffensivePlayer = PlayerID(nextUser)
+			// 優先權會在NextPhase時設定
+		}
+		p = core.CompleteCommand(ctx, p, c)
+	case "OnNextPhaseAF":
+		// 切換階段後等於重置階段的話，代表剛進入重置階段
+		// 立刻重置卡牌
+		offensiveUser := game.Player[game.OffensivePlayer].User
+		if game.CurrentPhase == UntapStep {
+			game, desk, p, err = UntapCardInUntapStep(ctx, game, desk, p, offensiveUser)
+			if err != nil {
+				return game, desk, p, err
 			}
-			// 抽牌階段，第一回合不能抽牌
-			if game.CurrentPhase == DrawStep {
-				canDraw := game.Turn != 0
-				if canDraw {
-					topCardId, err := core.TopCardInCardStack(ctx, desk, offensiveUser+Library)
-					if err == core.ErrCardNotExist {
-						return game, desk, p, TargetMissingError("無卡可抽")
-					}
-					game, desk, p, err = InvokeTakeCardFrom(ctx, game, desk, p, offensiveUser, offensiveUser+Library, topCardId)
-					if err != nil {
-						return game, desk, p, err
-					}
+		}
+		// 抽牌階段，第一回合不能抽牌
+		if game.CurrentPhase == DrawStep {
+			canDraw := game.Turn != 0
+			if canDraw {
+				topCardId, err := core.TopCardInCardStack(ctx, desk, offensiveUser+Library)
+				if err == core.ErrCardNotExist {
+					return game, desk, p, TargetMissingError("無卡可抽")
 				}
-			}
-			// 剛進入棄牌階段，立刻棄牌
-			if game.CurrentPhase == DiscardStep {
-				game, desk, p, err = InvokeDiscardCardInDiscardStep(ctx, game, desk, p, offensiveUser)
+				game, desk, p, err = InvokeTakeCardFrom(ctx, game, desk, p, offensiveUser, offensiveUser+Library, topCardId)
 				if err != nil {
 					return game, desk, p, err
 				}
 			}
 		}
-		if c.Description == "OnNextPhaseBF" {
-			// 剛結束棄牌階段，切換回合
-			if game.CurrentPhase == DiscardStep {
-				game.Turn += 1
-				currOffensiveUser := game.Player[game.OffensivePlayer].User
-				nextUser := core.Opponent(currOffensiveUser)
-				game.OffensivePlayer = PlayerID(nextUser)
-				// 優先權會在NextPhase時設定
+		// 剛進入棄牌階段，立刻棄牌
+		if game.CurrentPhase == DiscardStep {
+			game, desk, p, err = InvokeDiscardCardInDiscardStep(ctx, game, desk, p, offensiveUser)
+			if err != nil {
+				return game, desk, p, err
 			}
 		}
 		p = core.CompleteCommand(ctx, p, c)
@@ -235,6 +211,8 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		if err != nil {
 			return game, desk, p, err
 		}
+		p = core.CompleteCommand(ctx, p, c)
+	default:
 		p = core.CompleteCommand(ctx, p, c)
 	}
 	return game, desk, p, nil
