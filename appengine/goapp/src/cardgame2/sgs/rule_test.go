@@ -174,8 +174,6 @@ func TestPhase(t *testing.T) {
 	var desk core.Desktop
 	var p core.Procedure
 	var c core.Command
-	var cardIds []int
-	var card core.Card
 
 	t.Log("安裝卡包")
 	err = InstallPackage(ctx)
@@ -345,6 +343,15 @@ func TestPhase(t *testing.T) {
 		t.Fatal("優先權必須在UserB")
 	}
 
+	err = core.SaveProcedure(ctx, "first game", p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err = core.LoadProcedure(ctx, "first game")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	t.Log("=========換玩家B==========")
 	t.Log("重置階段，主動玩家直接呼叫讓過")
 	game, desk, p, err = Pass(ctx, game, desk, p, core.UserB)
@@ -470,6 +477,4 @@ func TestPhase(t *testing.T) {
 	if game.PriorityPlayer != PlayerID(core.UserA) {
 		t.Fatal("優先權必須在UserB")
 	}
-
-	var _, _, _, _ = p, c, card, cardIds
 }
