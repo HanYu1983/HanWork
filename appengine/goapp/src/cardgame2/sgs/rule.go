@@ -65,15 +65,54 @@ func CardCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p c
 	var card core.Card
 	var info CardInfo
 	switch c.Description {
-	case "OnPlayCardFromAF":
+	case "若任一来源将对一个单位或玩家造成伤害，则改为使该单位或玩家失去等量的体力":
+		// TODO 實做冷血皇后
+		p = core.CompleteCommand(ctx, p, c)
+	case "OnUnitAttackBF":
+		// 119.4. 处理伤害需要依次经历三部分
+		// 119.4a 首先，伤害将要造成，并且与伤害有关的防止性效应和替代性效应会影响该伤害。（在
+		// 这里，防止性效应先生效，之后替代性效应生效；若某个替代性效应生效后又有新的防止性效应
+		// 产生，那么该防止性效应依然会生效。）
+		// 119.4b 然后，造成的伤害变换为其结果，并且与结果有关的防止性效应和替代性效应会影响该
+		// 结果。
+
+		// TODO 矫情之花·小乔
+		// 防止将对小乔造成的所有伤害。
+
+		// 冷血皇后·张春华在場時，會發生替代能力
+		// 若任一来源将对一个单位或玩家造成伤害，则改为使该单位或玩家失去等量的体力。
+		var hasRef13 bool
+		for _, card := range desk.Card {
+			if desk.CardStack[card.CardStack].Type == Position {
+				if card.Ref == "13" {
+					hasRef13 = true
+				}
+			}
+		}
+		if hasRef13 {
+			// 冷血皇后不會在堆疊解決中被打出來，所以不必替代換所有的UnitAttack
+			nextCmd := p.Command[c.ID+1]
+			if nextCmd.Description != "UnitAttack" {
+				return game, desk, p, errors.New("程式有錯")
+			}
+			nextCmd.Description = "若任一来源将对一个单位或玩家造成伤害，则改为使该单位或玩家失去等量的体力"
+			p.Command[nextCmd.ID] = nextCmd
+			return game, desk, p, nil
+		}
+	case "OnMoveCardAF":
 		user := c.Parameters["user"].(string)
 		cardId = int(c.Parameters["cardId"].(float64))
-		slotNum := int(c.Parameters["slotNum"].(float64))
-		var _ = slotNum
+		fromStackId := c.Parameters["fromStackId"].(string)
+		toStackId := c.Parameters["toStackId"].(string)
 		card = desk.Card[cardId]
+
+		isEnterPosition := desk.CardStack[fromStackId].Type != Position && desk.CardStack[toStackId].Type == Position
 
 		switch card.Ref {
 		case "116":
+			if isEnterPosition == false {
+				break
+			}
 			// ID116：当吴夫人进战场时，从你的牌库和Graveyard中搜寻一张吴势力主公牌
 			if card.Owner != user {
 				break
@@ -105,7 +144,7 @@ func CardCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p c
 func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, c core.Command) (Game, core.Desktop, core.Procedure, error) {
 	var err error
 	switch c.Description {
-	case "{user}廢棄掉上一個指令的{cardIds}":
+	case "結束棄牌-{user}廢棄掉上一個指令的{cardIds}":
 		pre := p.Command[c.ID-1]
 		if pre.Block != c.Block {
 			return game, desk, p, errors.New("不是同一個區塊的指令")
@@ -118,6 +157,10 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 				return game, desk, p, err
 			}
 		}
+		p = core.CompleteCommand(ctx, p, c)
+	case "OnMoveCardBF":
+		// TODO 迎擊
+		// TODO 突擊
 		p = core.CompleteCommand(ctx, p, c)
 	case "OnNextPhaseBF":
 		// 剛結束棄牌階段，切換回合
@@ -162,7 +205,8 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		}
 		p = core.CompleteCommand(ctx, p, c)
 	case "NextPhase":
-		game, desk, p, err = NextPhase(ctx, game, desk, p)
+		step := c.Parameters["step"].(float64)
+		game, desk, p, err = NextPhase(ctx, game, desk, p, int(step))
 		if err != nil {
 			return game, desk, p, err
 		}
@@ -182,6 +226,16 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		slotNum := int(c.Parameters["slotNum"].(float64))
 		fromStackId := c.Parameters["fromStackId"].(string)
 		game, desk, p, err = PlayCardFrom(ctx, game, desk, p, user, fromStackId, slotNum, cardId)
+		if err != nil {
+			return game, desk, p, err
+		}
+		p = core.CompleteCommand(ctx, p, c)
+	case "MoveCard":
+		user := c.Parameters["user"].(string)
+		cardId := int(c.Parameters["cardId"].(float64))
+		fromStackId := c.Parameters["fromStackId"].(string)
+		toStackId := c.Parameters["toStackId"].(string)
+		game, desk, p, err = MoveCard(ctx, game, desk, p, user, fromStackId, toStackId, cardId)
 		if err != nil {
 			return game, desk, p, err
 		}
@@ -225,8 +279,8 @@ func InvokeDiscardCardInDiscardStep(ctx appengine.Context, game Game, desk core.
 		return game, desk, p, nil
 	}
 	p = core.AddBlock(ctx, p, []core.Command{
-		{User: user, Description: "選擇{num}張手牌{cardIds}", Parameters: map[string]interface{}{"num": float64(offset)}},
-		{User: core.UserSys, Description: "{user}廢棄掉上一個指令的{cardIds}", Parameters: map[string]interface{}{"user": user}},
+		{User: user, Description: "結束棄牌-選擇{num}張手牌{cardIds}", Parameters: map[string]interface{}{"num": float64(offset)}},
+		{User: core.UserSys, Description: "結束棄牌-{user}廢棄掉上一個指令的{cardIds}", Parameters: map[string]interface{}{"user": user}},
 	})
 	return game, desk, p, nil
 }
@@ -384,6 +438,10 @@ func TakeCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p core.Pr
 	return game, desk, p, nil
 }
 
+// 115.1. 若一个单位将进入的阵地上有其他单位，那么原先的单位会被放逐（移出游戏），这个
+// 过程叫做替任。
+// 115.2. 替任为一种特殊动作，不会进入堆叠，但由于替任从而触发的单位离场能力会置入堆叠。
+// 115.3. 相互替任的两个单位不会同时在场。
 func PlayCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, fromStackId string, slotNum int, cardId int) (Game, core.Desktop, core.Procedure, error) {
 	targetStackId := PositionID(user, slotNum)
 	hasUnit := len(desk.CardStack[targetStackId].Card) > 0
@@ -391,7 +449,7 @@ func PlayCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p core.Pr
 		return game, desk, p, TargetMissingError(ErrSlotIsntEmpty.Error())
 	}
 	var err error
-	desk, err = core.MoveCard(ctx, desk, fromStackId, targetStackId, 0, cardId)
+	game, desk, p, err = InvokeMoveCard(ctx, game, desk, p, user, fromStackId, targetStackId, cardId)
 	if err != nil {
 		return game, desk, p, TargetMissingError(err.Error())
 	}
@@ -408,19 +466,37 @@ func DamageUnit(ctx appengine.Context, game Game, desk core.Desktop, p core.Proc
 	if damage < 0 {
 		damage = 0
 	}
-	game.CardInfo[cardId].Defence -= damage
+	game, desk, p, err = PutDamageToken(ctx, game, desk, p, damage, cardId)
+	if err != nil {
+		return game, desk, p, err
+	}
+	return game, desk, p, nil
+}
+
+func PutDamageToken(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, cnt int, cardId int) (Game, core.Desktop, core.Procedure, error) {
+	// TODO 要改為放置傷害指示物
+	game.CardInfo[cardId].Defence -= cnt
+	// 觸發死亡流程
+	// ID71 汉志传承者·蒋琬：若任一单位将死去，改为将该单位洗入其拥有者的牌库，而非置入其拥有者的墓地。
+	// 将至多两张目标单位牌从墓地放进战场。他们具有神速能力。在下一个结束步骤开始时，将他们放逐。如果他们将离开战场，则改为将他们放逐，而非置入其他区域。
+	// == 以上兩個能力有重疊的部分 ==
+	// 將死去 -> 移到牌庫
+	// 将离开战场 -> 放逐
+	// 若兩個技能的對象剛好同一單位
+	// 要讓玩家可以選
+	// command = "從{ids}選擇{idx}發動", ids=[]string{"",""}, user = 操控玩家
 	return game, desk, p, nil
 }
 
 // 指定一個單位攻擊
 func UnitAttack(ctx appengine.Context, game Game, stage core.Desktop, p core.Procedure, user string, cardId int) (Game, core.Desktop, core.Procedure, error) {
 	// 判斷單位有沒有在Position上
-	inputCard := stage.Card[cardId]
-	if stage.CardStack[inputCard.CardStack].Type != "slot" {
+	card := stage.Card[cardId]
+	if stage.CardStack[card.CardStack].Type != "slot" {
 		return game, stage, p, ErrUnitIsntAtSlot
 	}
 	// 判斷是不是玩家的Position
-	slotUser, slotNum := ParsePositionID(inputCard.CardStack)
+	slotUser, slotNum := ParsePositionID(card.CardStack)
 	if slotUser != user {
 		return game, stage, p, errors.New("this unit is not yours")
 	}
@@ -449,6 +525,32 @@ func UnitAttack(ctx appengine.Context, game Game, stage core.Desktop, p core.Pro
 	return game, stage, p, nil
 }
 
+func InvokeMoveCard(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, fromStackId string, toStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
+	// 加入user是為了給事件有統一的參數介面
+	parameters := map[string]interface{}{
+		"user":        user,
+		"fromStackId": fromStackId,
+		"toStackId":   toStackId,
+		"cardId":      cardId,
+	}
+	p = core.AddBlock(ctx, p, []core.Command{
+		{User: core.UserSys, Description: "OnMoveCardBF", Parameters: parameters},
+		{User: core.UserSys, Description: "MoveCard", Parameters: parameters},
+		{User: core.UserSys, Description: "OnMoveCardAF", Parameters: parameters},
+	})
+	return game, desk, p, nil
+}
+
+func MoveCard(ctx appengine.Context, game Game, stage core.Desktop, p core.Procedure, user string, fromStackId string, toStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
+	var err error
+	stage, err = core.MoveCard(ctx, stage, fromStackId, toStackId, 0, cardId)
+	if err != nil {
+		return game, stage, p, err
+	}
+	return game, stage, p, nil
+}
+
+// 轉移
 func UnitMove(ctx appengine.Context, game Game, stage core.Desktop, p core.Procedure, user string, slotStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
 	card := stage.Card[cardId]
 	if stage.CardStack[card.CardStack].Type != "slot" {
@@ -467,7 +569,7 @@ func UnitMove(ctx appengine.Context, game Game, stage core.Desktop, p core.Proce
 	var err error
 	toStack := slotStackId
 	fromStack := card.CardStack
-	stage, err = core.MoveCard(ctx, stage, fromStack, toStack, 0, cardId)
+	game, stage, p, err = InvokeMoveCard(ctx, game, stage, p, user, fromStack, toStack, cardId)
 	if err != nil {
 		return game, stage, p, err
 	}
@@ -501,6 +603,21 @@ func PerformDead(ctx appengine.Context, game Game, stage core.Desktop, p core.Pr
 	return game, stage, p, nil
 }
 
+// 121.1. 处于整备状态的单位不能发起战斗和宣告攻击，也不能启动费用中带有{横置}的能力。
+// 121.2. 通常情况下刚进入战场的单位会受到整备状态的影响，直到其操控者的下个回合开始为
+// 止。
+// 121.2a 具有神速能力的单位不受整备状态的影响。
+// 121.2b 只有单位才会受到整备状态的影响，非单位实体并不会受到整备状态的影响。
+// 301.1. 玩家可以在自己为进攻玩家的行动阶段（非战斗流程），拥有优先权且堆叠为空时，从
+// 手上打出战器牌。作为被打出的牌，被打出的战器牌使用堆叠。
+// 302.1. 玩家可以在自己为进攻玩家的行动阶段，拥有优先权且堆叠为空时，从手上打出单位牌。
+// 作为被打出的牌，被打出的单位牌进入堆叠。打出单位牌在支付费用的同时需要为其选择一个合
+// 法阵地。
+// 303.1. 玩家可以在自己为进攻玩家的行动阶段，拥有优先权且堆叠为空时，从手上打出阵略牌。
+// 作为被打出的牌，被打出的阵略牌进入堆叠。
+// 304.1a 玩家可以在自己为进攻玩家的行动阶段（非战斗流程中），拥有优先权且堆叠为空时，
+// 从手上打出{通常}锦囊牌。
+// 304.1b 玩家可以在拥有优先权时，从手上打出{瞬发}锦囊牌。
 func CollectCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cmd []core.Command) ([]core.Command, error) {
 	isStackEmpty := len(p.Block) == 0
 	if isStackEmpty {
@@ -549,10 +666,17 @@ func Pass(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure,
 	if len(p.Block) != 0 {
 		return game, desk, p, errors.New("堆疊不為空不能讓出優先權")
 	}
+	step := 1
+	// ID20司空先锋·张辽
+	// 每当张辽对玩家造成战斗伤害时，略过该玩家的下一个重置步骤。
+	// TODO 略过该玩家的下一个重置步骤
+	// if currentPhase == UntapStep
+	// step = 2
+
 	// 如果是重置或棄牌步驟，主動玩家呼叫讓過就是直接跳過
 	if game.CurrentPhase == UntapStep || game.CurrentPhase == DiscardStep {
 		if PlayerID(user) == game.OffensivePlayer {
-			return InvokeNextPhase(ctx, game, desk, p)
+			return InvokeNextPhase(ctx, game, desk, p, step)
 		}
 	}
 	// 沒有優先權的不能讓出優先權
@@ -564,7 +688,7 @@ func Pass(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure,
 	if game.ActionCount[game.PriorityPlayer] == 0 {
 		lastPlayer := PlayerID(core.Opponent(user))
 		if game.ActionCount[lastPlayer] == 0 {
-			return InvokeNextPhase(ctx, game, desk, p)
+			return InvokeNextPhase(ctx, game, desk, p, step)
 		}
 	}
 	// 交換優先權並重設行動次數
@@ -573,8 +697,8 @@ func Pass(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure,
 	return game, desk, p, nil
 }
 
-func NextPhase(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure) (Game, core.Desktop, core.Procedure, error) {
-	game.CurrentPhase = (game.CurrentPhase + 1) % PhaseCount
+func NextPhase(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, step int) (Game, core.Desktop, core.Procedure, error) {
+	game.CurrentPhase = (game.CurrentPhase + step) % PhaseCount
 	game.PriorityPlayer = game.OffensivePlayer
 	game.ActionCount = []int{-1, -1}
 	game.ActionCount[game.OffensivePlayer] = 0
@@ -582,10 +706,11 @@ func NextPhase(ctx appengine.Context, game Game, desk core.Desktop, p core.Proce
 }
 
 // 啟動往下一階段
-func InvokeNextPhase(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure) (Game, core.Desktop, core.Procedure, error) {
+func InvokeNextPhase(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, step int) (Game, core.Desktop, core.Procedure, error) {
 	// 加入user是為了給事件有統一的參數介面
 	parameters := map[string]interface{}{
 		"user": core.UserSys,
+		"step": float64(step),
 	}
 	p = core.AddBlock(ctx, p, []core.Command{
 		{User: core.UserSys, Description: "OnNextPhaseBF", Parameters: parameters},

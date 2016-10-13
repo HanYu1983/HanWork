@@ -61,7 +61,12 @@ func GetCommand(ctx appengine.Context, p Procedure) (Command, bool) {
 
 func CompleteCommand(ctx appengine.Context, p Procedure, c Command) Procedure {
 	p.Command[c.ID] = c
-	p.Block[c.Block].Cursor += 1
+	block := p.Block[c.Block]
+	if block.Command[block.Cursor] == c.ID {
+		block.Cursor += 1
+	}
+	p.Block[c.Block] = block
+	//p.Block[c.Block].Cursor += 1
 	return p
 }
 

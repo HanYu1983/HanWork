@@ -104,10 +104,30 @@ func TestBasic(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log("觸發打出牌後的事件")
+	t.Log("觸發卡移動前的事件")
 	c, _ = core.GetCommand(ctx, p)
-	if c.Description != "OnPlayCardFromAF" {
-		t.Fatal("OnPlayCardFromAF")
+	if c.Description != "OnMoveCardBF" {
+		t.Fatal("OnMoveCardBF")
+	}
+	game, desk, p, err = HandleCommand(ctx, game, desk, p, c)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("卡移動")
+	c, _ = core.GetCommand(ctx, p)
+	if c.Description != "MoveCard" {
+		t.Fatal("MoveCard")
+	}
+	game, desk, p, err = HandleCommand(ctx, game, desk, p, c)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("觸發卡移動後的事件")
+	c, _ = core.GetCommand(ctx, p)
+	if c.Description != "OnMoveCardAF" {
+		t.Fatal("OnMoveCardAF")
 	}
 	game, desk, p, err = HandleCommand(ctx, game, desk, p, c)
 	if err != nil {
@@ -139,6 +159,16 @@ func TestBasic(t *testing.T) {
 	c, _ = core.GetCommand(ctx, p)
 	if c.Description != "OnTakeCardFromAF" {
 		t.Fatal("OnTakeCardFromAF")
+	}
+	game, desk, p, err = HandleCommand(ctx, game, desk, p, c)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("觸發打出牌後的事件")
+	c, _ = core.GetCommand(ctx, p)
+	if c.Description != "OnPlayCardFromAF" {
+		t.Fatal("OnPlayCardFromAF")
 	}
 	game, desk, p, err = HandleCommand(ctx, game, desk, p, c)
 	if err != nil {

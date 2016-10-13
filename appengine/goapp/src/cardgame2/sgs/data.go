@@ -93,6 +93,30 @@ func 初陣(total []CardPrototype) []CardPrototype {
 			Defence:   "",
 			Text:      "目标单位具有迎击5（每当一个单位进入此单位的相对阵地时，此单位对前者造成5点伤害）直到回合结束。",
 		},
+		{
+			CardID:    "13",
+			Name:      "冷血皇后·张春华",
+			Cost:      "2",
+			Color:     ColorBlue,
+			ColorCost: ColorBlue,
+			Class:     "无双单位 ~ 女性",
+			Package:   "群星",
+			Attack:    "2",
+			Defence:   "3",
+			Text:      "若任一来源将对一个单位或玩家造成伤害，则改为使该单位或玩家失去等量的体力。",
+		},
+		{
+			CardID:    "97",
+			Name:      "矫情之花·小乔",
+			Cost:      "2",
+			Color:     ColorGreen,
+			ColorCost: ColorGreen,
+			Class:     "无双单位 ~ 女性",
+			Package:   "初阵",
+			Attack:    "1",
+			Defence:   "1",
+			Text:      "防止将对小乔造成的所有伤害。",
+		},
 	}
 	return append(total, cards...)
 }
