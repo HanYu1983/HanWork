@@ -4,6 +4,7 @@ import (
 	"appengine"
 	"appengine/datastore"
 	core "cardgame2/core"
+	"encoding/json"
 	"errors"
 	"strings"
 )
@@ -122,7 +123,7 @@ type CardInfo struct {
 	Attack        int
 	Defence       int
 	TurnPlay      int
-	ControlPlayer int
+	ControlPlayer string
 }
 
 type Player struct {
@@ -149,26 +150,15 @@ type Game struct {
 	ID           string
 	CardInfo     []CardInfo
 	Turn         int
-	Player       []Player
-	Winner       int
+	Player       map[string]Player
+	Winner       string
 	CurrentPhase int
 	// 進攻玩家
-	OffensivePlayer int
+	OffensivePlayer string
 	// 權先權玩家
-	PriorityPlayer int
+	PriorityPlayer string
 	// 權先權玩家的行動次數
-	ActionCount []int
-}
-
-// 取得Player的ID
-func PlayerID(user string) int {
-	if user == core.UserA {
-		return 0
-	}
-	if user == core.UserB {
-		return 1
-	}
-	panic("xxx")
+	ActionCount map[string]int
 }
 
 func CardType(info CardInfo) int {
@@ -178,21 +168,40 @@ func CardType(info CardInfo) int {
 	return Weapon
 }
 
+type GameWrapper struct {
+	Byte []byte
+}
+
 // 讀取陣面對決
 func LoadGame(ctx appengine.Context, gameID string) (Game, error) {
 	key := GameKey(ctx, gameID)
 	var game Game
 	var err error
-	err = datastore.Get(ctx, key, &game)
-	return game, err
+	var wrapper GameWrapper
+	err = datastore.Get(ctx, key, &wrapper)
+	if err != nil {
+		return game, err
+	}
+	err = json.Unmarshal(wrapper.Byte, &game)
+	if err != nil {
+		return game, err
+	}
+	return game, nil
 }
 
 // 記錄陣面對決
 func SaveGame(ctx appengine.Context, game Game) (Game, error) {
-	key := GameKey(ctx, game.ID)
 	var err error
-	_, err = datastore.Put(ctx, key, &game)
-	return game, err
+	bytes, err := json.Marshal(game)
+	if err != nil {
+		return game, err
+	}
+	key := GameKey(ctx, game.ID)
+	_, err = datastore.Put(ctx, key, &GameWrapper{bytes})
+	if err != nil {
+		return game, err
+	}
+	return game, nil
 }
 
 // 建立陣面對決的牌局
@@ -291,16 +300,24 @@ func CreateGame(ctx appengine.Context, gameId string) (Game, core.Desktop, error
 		User:      core.UserB,
 		HandLimit: 7,
 	}
-	players := make([]Player, 2)
-	players[PlayerID(playerA.User)] = playerA
-	players[PlayerID(playerB.User)] = playerB
+	offensivePlayer := core.UserA
+
+	players := map[string]Player{}
+	players[core.UserA] = playerA
+	players[core.UserB] = playerB
+
+	actionCnt := map[string]int{}
+	actionCnt[core.UserA] = -1
+	actionCnt[core.UserB] = -1
+	actionCnt[offensivePlayer] = 0
 	// 建立陣面對決
 	sgs := Game{
 		ID:              gameId,
 		Player:          players,
-		OffensivePlayer: PlayerID(core.UserA),
+		OffensivePlayer: offensivePlayer,
+		PriorityPlayer:  offensivePlayer,
 		// 次數一開始是-1，方便演算法計算
-		ActionCount: []int{0, -1},
+		ActionCount: actionCnt,
 	}
 	sgs, err = SaveGame(ctx, sgs)
 	if err != nil {

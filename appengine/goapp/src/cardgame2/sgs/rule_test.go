@@ -256,10 +256,10 @@ func TestPhase(t *testing.T) {
 	if game.CurrentPhase != UntapStep {
 		t.Fatal("一開始必須是重置階段")
 	}
-	if game.OffensivePlayer != PlayerID(core.UserA) {
+	if game.OffensivePlayer != core.UserA {
 		t.Fatal("進攻玩家必須是UserA")
 	}
-	if game.PriorityPlayer != PlayerID(core.UserA) {
+	if game.PriorityPlayer != core.UserA {
 		t.Fatal("優先權必須在UserA")
 	}
 	if len(desk.CardStack[core.UserA+Hand].Card) != 0 {
@@ -276,7 +276,7 @@ func TestPhase(t *testing.T) {
 		t.Fatal("現在必須是準備階段")
 	}
 
-	if game.PriorityPlayer != PlayerID(core.UserA) {
+	if game.PriorityPlayer != core.UserA {
 		t.Fatal("優先權必須在UserA")
 	}
 	t.Log("準備階段玩家A讓過")
@@ -284,7 +284,7 @@ func TestPhase(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if game.PriorityPlayer != PlayerID(core.UserB) {
+	if game.PriorityPlayer != core.UserB {
 		t.Fatal("優先權必須在UserB")
 	}
 
@@ -295,7 +295,7 @@ func TestPhase(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if game.PriorityPlayer != PlayerID(core.UserB) {
+	if game.PriorityPlayer != core.UserB {
 		t.Fatal("優先權必須在UserB")
 	}
 
@@ -309,7 +309,7 @@ func TestPhase(t *testing.T) {
 	if game.CurrentPhase != DrawStep {
 		t.Fatal("現在必須是抽牌階段")
 	}
-	if game.PriorityPlayer != PlayerID(core.UserA) {
+	if game.PriorityPlayer != core.UserA {
 		t.Fatal("優先權必須在UserA")
 	}
 	if len(desk.CardStack[core.UserA+Hand].Card) != 0 {
@@ -366,10 +366,10 @@ func TestPhase(t *testing.T) {
 	if game.CurrentPhase != UntapStep {
 		t.Fatal("現在必須是重置階段")
 	}
-	if game.OffensivePlayer != PlayerID(core.UserB) {
+	if game.OffensivePlayer != core.UserB {
 		t.Fatal("進攻玩家必須是UserB")
 	}
-	if game.PriorityPlayer != PlayerID(core.UserB) {
+	if game.PriorityPlayer != core.UserB {
 		t.Fatal("優先權必須在UserB")
 	}
 
@@ -392,7 +392,7 @@ func TestPhase(t *testing.T) {
 	if game.CurrentPhase != StandbyStep {
 		t.Fatal("現在必須是準備階段")
 	}
-	if game.PriorityPlayer != PlayerID(core.UserB) {
+	if game.PriorityPlayer != core.UserB {
 		t.Fatal("優先權必須在UserB")
 	}
 	if len(desk.CardStack[core.UserB+Hand].Card) != 7 {
@@ -404,7 +404,7 @@ func TestPhase(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if game.PriorityPlayer != PlayerID(core.UserA) {
+	if game.PriorityPlayer != core.UserA {
 		t.Fatal("優先權必須在UserA")
 	}
 
@@ -415,7 +415,7 @@ func TestPhase(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if game.PriorityPlayer != PlayerID(core.UserA) {
+	if game.PriorityPlayer != core.UserA {
 		t.Fatal("優先權必須在UserA")
 	}
 
@@ -429,7 +429,7 @@ func TestPhase(t *testing.T) {
 	if game.CurrentPhase != DrawStep {
 		t.Fatal("現在必須是抽牌階段")
 	}
-	if game.PriorityPlayer != PlayerID(core.UserB) {
+	if game.PriorityPlayer != core.UserB {
 		t.Fatal("優先權必須在UserB")
 	}
 
@@ -461,7 +461,7 @@ func TestPhase(t *testing.T) {
 		t.Fatal("現在必須是結束階段")
 	}
 
-	if game.OffensivePlayer != PlayerID(core.UserB) {
+	if game.OffensivePlayer != core.UserB {
 		t.Fatal("進攻玩家必須是UserB")
 	}
 
@@ -501,10 +501,10 @@ func TestPhase(t *testing.T) {
 	if game.CurrentPhase != UntapStep {
 		t.Fatal("現在必須是重置階段")
 	}
-	if game.OffensivePlayer != PlayerID(core.UserA) {
+	if game.OffensivePlayer != core.UserA {
 		t.Fatal("進攻玩家必須是UserB")
 	}
-	if game.PriorityPlayer != PlayerID(core.UserA) {
+	if game.PriorityPlayer != core.UserA {
 		t.Fatal("優先權必須在UserB")
 	}
 }

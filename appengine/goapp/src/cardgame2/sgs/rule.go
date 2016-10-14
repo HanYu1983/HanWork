@@ -166,9 +166,8 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		// 剛結束棄牌階段，切換回合
 		if game.CurrentPhase == DiscardStep {
 			game.Turn += 1
-			currOffensiveUser := game.Player[game.OffensivePlayer].User
-			nextUser := core.Opponent(currOffensiveUser)
-			game.OffensivePlayer = PlayerID(nextUser)
+			nextUser := core.Opponent(game.OffensivePlayer)
+			game.OffensivePlayer = nextUser
 			// 優先權會在NextPhase時設定
 		}
 		p = core.CompleteCommand(ctx, p, c)
@@ -274,7 +273,7 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 
 // 棄牌規定效果
 func InvokeDiscardCardInDiscardStep(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string) (Game, core.Desktop, core.Procedure, error) {
-	offset := len(desk.CardStack[user+Hand].Card) - game.Player[PlayerID(user)].HandLimit
+	offset := len(desk.CardStack[user+Hand].Card) - game.Player[user].HandLimit
 	if offset <= 0 {
 		return game, desk, p, nil
 	}
@@ -512,7 +511,7 @@ func UnitAttack(ctx appengine.Context, game Game, stage core.Desktop, p core.Pro
 	if len(stage.CardStack[opponentSlotId].Card) == 0 {
 		// 如果對手單地上沒有單位
 		// 攻擊對方玩家
-		game.Player[PlayerID(opponent)].HP -= attack
+		// game.Player[opponent].HP -= attack
 	} else {
 		// 如果對手Position上有單位
 		// 攻擊那個單位
@@ -622,7 +621,7 @@ func CollectCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.
 	isStackEmpty := len(p.Block) == 0
 	if isStackEmpty {
 		// 堆疊為空的狀況必須有優先權的玩家才能行動
-		if game.PriorityPlayer != PlayerID(user) {
+		if game.PriorityPlayer != user {
 			return nil, nil
 		}
 	}
@@ -634,7 +633,7 @@ func CollectCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.
 			// 如果在陣地上並且操控玩家是自己
 			// 就可以攻擊
 			if desk.CardStack[card.CardStack].Type == Position {
-				if info.ControlPlayer == PlayerID(user) {
+				if info.ControlPlayer == user {
 					cmd = append(cmd, core.Command{User: user, Description: "{cardId}通常攻擊", Parameters: nil})
 				}
 			}
@@ -650,7 +649,7 @@ func CollectCommand(ctx appengine.Context, game Game, desk core.Desktop, p core.
 	}
 	if isStackEmpty {
 		// 堆疊為空時才能讓出優先權
-		if game.PriorityPlayer == PlayerID(user) {
+		if game.PriorityPlayer == user {
 			cmd = append(cmd, core.Command{User: user, Description: "Pass", Parameters: nil})
 		}
 		// 堆疊為空時才能使用轉移
@@ -675,24 +674,24 @@ func Pass(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure,
 
 	// 如果是重置或棄牌步驟，主動玩家呼叫讓過就是直接跳過
 	if game.CurrentPhase == UntapStep || game.CurrentPhase == DiscardStep {
-		if PlayerID(user) == game.OffensivePlayer {
+		if user == game.OffensivePlayer {
 			return InvokeNextPhase(ctx, game, desk, p, step)
 		}
 	}
 	// 沒有優先權的不能讓出優先權
-	if game.PriorityPlayer != PlayerID(user) {
+	if game.PriorityPlayer != user {
 		return game, desk, p, errors.New("優先權在對方身上")
 	}
 	// 如果讓出的玩家沒有行動過並且上一個優先權的玩家也沒行動過
 	// 就跳到下一個階段
 	if game.ActionCount[game.PriorityPlayer] == 0 {
-		lastPlayer := PlayerID(core.Opponent(user))
+		lastPlayer := core.Opponent(user)
 		if game.ActionCount[lastPlayer] == 0 {
 			return InvokeNextPhase(ctx, game, desk, p, step)
 		}
 	}
 	// 交換優先權並重設行動次數
-	game.PriorityPlayer = PlayerID(core.Opponent(user))
+	game.PriorityPlayer = core.Opponent(user)
 	game.ActionCount[game.PriorityPlayer] = 0
 	return game, desk, p, nil
 }
@@ -700,7 +699,8 @@ func Pass(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure,
 func NextPhase(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, step int) (Game, core.Desktop, core.Procedure, error) {
 	game.CurrentPhase = (game.CurrentPhase + step) % PhaseCount
 	game.PriorityPlayer = game.OffensivePlayer
-	game.ActionCount = []int{-1, -1}
+	game.ActionCount[core.UserA] = -1
+	game.ActionCount[core.UserB] = -1
 	game.ActionCount[game.OffensivePlayer] = 0
 	return game, desk, p, nil
 }
