@@ -166,8 +166,9 @@ func InstallCardInfo(ctx appengine.Context, sgs Game, stage core.Desktop) (Game,
 			return sgs, err
 		}
 		cardInfo := CardInfo{
-			CardID:    card.ID,
-			Prototype: info,
+			CardID:        card.ID,
+			Prototype:     info,
+			ControlPlayer: card.Owner,
 		}
 		sgs.CardInfo = append(sgs.CardInfo, cardInfo)
 	}

@@ -74,7 +74,7 @@ const (
 )
 
 const (
-	BattleDamage = iota
+	BattleDamage = "戰鬥傷害"
 )
 
 const (
@@ -111,6 +111,10 @@ const (
 	ColorWhite = "無"
 )
 
+const (
+	DamageToken = "DamageToken"
+)
+
 // 卡牌狀態
 // 陣面對決的數值
 type CardInfo struct {
@@ -124,16 +128,17 @@ type CardInfo struct {
 	Defence       int
 	TurnPlay      int
 	ControlPlayer string
+	Token         []string
 }
 
 type Player struct {
 	User     string
-	HP       int
 	LoseTurn int
 	// Hand數量上限
 	HandLimit int
 	// 這回合第一個攻擊的卡牌ID
 	FirstAttackCardID int
+	Token             []string
 }
 
 type Buf struct {
