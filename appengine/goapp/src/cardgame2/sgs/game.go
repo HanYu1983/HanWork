@@ -74,7 +74,9 @@ const (
 )
 
 const (
-	BattleDamage = "戰鬥傷害"
+	BattleDamage  = "戰鬥傷害"
+	CounterDamage = "反擊傷害"
+	AssaultDamage = "突擊傷害"
 )
 
 const (

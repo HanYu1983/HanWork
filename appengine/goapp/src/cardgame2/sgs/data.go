@@ -117,6 +117,30 @@ func 初陣(total []CardPrototype) []CardPrototype {
 			Defence:   "1",
 			Text:      "防止将对小乔造成的所有伤害。",
 		},
+		{
+			CardID:    "28",
+			Name:      "三江城蛮丁",
+			Cost:      "2",
+			Color:     ColorRed,
+			ColorCost: ColorRed,
+			Class:     "单位边境 ~ 南蛮/步兵",
+			Package:   "乱华",
+			Attack:    "1",
+			Defence:   "1",
+			Text:      "暴乱1；迎击2",
+		},
+		{
+			CardID:    "85",
+			Name:      "飞将的利刃·张辽",
+			Cost:      "5",
+			Color:     ColorGray,
+			ColorCost: ColorGray + ColorGray,
+			Class:     "无双单位 ~ 武将",
+			Package:   "群星",
+			Attack:    "5",
+			Defence:   "1",
+			Text:      "神速；转移；突击1。当张辽对一名对手造成伤害时，该玩家弃一张牌。你可以从手上展示一张无双名称为【吕布】的牌，若如此做，你抓一张牌。",
+		},
 	}
 	return append(total, cards...)
 }

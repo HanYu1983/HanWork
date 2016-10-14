@@ -158,11 +158,6 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 				return game, desk, p, err
 			}
 		}
-		p = core.CompleteCommand(ctx, p, c)
-	case "卡移動後":
-		// TODO 迎擊
-		// TODO 突擊
-		p = core.CompleteCommand(ctx, p, c)
 	case "階段將結束":
 		// 剛結束棄牌階段，切換回合
 		if game.CurrentPhase == DiscardStep {
@@ -171,7 +166,6 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 			game.OffensivePlayer = nextUser
 			// 優先權會在NextPhase時設定
 		}
-		p = core.CompleteCommand(ctx, p, c)
 	case "階段將開始":
 		// 切換階段後等於重置階段的話，代表剛進入重置階段
 		// 立刻重置卡牌
@@ -203,14 +197,12 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 				return game, desk, p, err
 			}
 		}
-		p = core.CompleteCommand(ctx, p, c)
 	case "階段改變":
 		step := c.Parameters["step"].(float64)
 		game, desk, p, err = NextPhase(ctx, game, desk, p, int(step))
 		if err != nil {
 			return game, desk, p, err
 		}
-		p = core.CompleteCommand(ctx, p, c)
 	case "抽到卡":
 		user := c.Parameters["user"].(string)
 		cardId := int(c.Parameters["cardId"].(float64))
@@ -219,7 +211,6 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		if err != nil {
 			return game, desk, p, err
 		}
-		p = core.CompleteCommand(ctx, p, c)
 	case "卡打到陣地":
 		user := c.Parameters["user"].(string)
 		cardId := int(c.Parameters["cardId"].(float64))
@@ -229,7 +220,6 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		if err != nil {
 			return game, desk, p, err
 		}
-		p = core.CompleteCommand(ctx, p, c)
 	case "卡移動":
 		user := c.Parameters["user"].(string)
 		cardId := int(c.Parameters["cardId"].(float64))
@@ -239,7 +229,44 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		if err != nil {
 			return game, desk, p, err
 		}
-		p = core.CompleteCommand(ctx, p, c)
+	case "卡移動後":
+		user := c.Parameters["user"].(string)
+		cardId := int(c.Parameters["cardId"].(float64))
+		toStackId := c.Parameters["toStackId"].(string)
+		// 如果移到陣地中，判斷迎擊和突擊
+		if desk.CardStack[toStackId].Type == Position {
+			oppositeUnit, hasOppositeUnit, err := QueryUnitInOppositePosition(ctx, game, desk, p, toStackId)
+			if err != nil {
+				return game, desk, p, err
+			}
+			if hasOppositeUnit {
+				// 迎擊
+				// 注意：是給移動的單位傷害
+				power, hasCounter, err := ComputeCounter(ctx, game, desk, p, user, oppositeUnit)
+				if err != nil {
+					return game, desk, p, err
+				}
+				if hasCounter == true {
+					game, desk, p, err = InvokeDamageUnit(ctx, game, desk, p, user, power, CounterDamage, cardId)
+					if err != nil {
+						return game, desk, p, err
+					}
+				}
+				// 突擊
+				// 後處理的先發動，所以突擊會先結算
+				// 注意：是給對面單位傷害
+				power, hasAssault, err := ComputeAssault(ctx, game, desk, p, user, cardId)
+				if err != nil {
+					return game, desk, p, err
+				}
+				if hasAssault == true {
+					game, desk, p, err = InvokeDamageUnit(ctx, game, desk, p, user, power, AssaultDamage, oppositeUnit)
+					if err != nil {
+						return game, desk, p, err
+					}
+				}
+			}
+		}
 	case "單位移動":
 		user := c.Parameters["user"].(string)
 		cardId := int(c.Parameters["cardId"].(float64))
@@ -248,7 +275,6 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		if err != nil {
 			return game, desk, p, err
 		}
-		p = core.CompleteCommand(ctx, p, c)
 	case "單位攻擊":
 		user := c.Parameters["user"].(string)
 		cardId := int(c.Parameters["cardId"].(float64))
@@ -256,7 +282,6 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		if err != nil {
 			return game, desk, p, err
 		}
-		p = core.CompleteCommand(ctx, p, c)
 	case "單位受到傷害":
 		user := c.Parameters["user"].(string)
 		cardId := int(c.Parameters["cardId"].(float64))
@@ -266,7 +291,6 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		if err != nil {
 			return game, desk, p, err
 		}
-		p = core.CompleteCommand(ctx, p, c)
 	case "玩家受到傷害":
 		user := c.Parameters["user"].(string)
 		damage := int(c.Parameters["damage"].(float64))
@@ -276,18 +300,28 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		if err != nil {
 			return game, desk, p, err
 		}
-		p = core.CompleteCommand(ctx, p, c)
 	case "單位死亡":
 		cardId := int(c.Parameters["cardId"].(float64))
 		game, desk, p, err = UnitDead(ctx, game, desk, p, cardId)
 		if err != nil {
 			return game, desk, p, err
 		}
-		p = core.CompleteCommand(ctx, p, c)
-	default:
-		p = core.CompleteCommand(ctx, p, c)
 	}
+	p = core.CompleteCommand(ctx, p, c)
 	return game, desk, p, nil
+}
+
+func QueryUnitInOppositePosition(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, stack string) (int, bool, error) {
+	if desk.CardStack[stack].Type != Position {
+		return 0, false, errors.New("必須是陣地才能查詢對面的資料")
+	}
+	who, num := ParsePositionID(stack)
+	opponent := core.Opponent(who)
+	oppositeStack := PositionID(opponent, num)
+	if len(desk.CardStack[oppositeStack].Card) == 0 {
+		return 0, false, nil
+	}
+	return desk.CardStack[oppositeStack].Card[0], true, nil
 }
 
 // 棄牌規定效果
@@ -308,10 +342,24 @@ func UntapCardInUntapStep(ctx appengine.Context, game Game, desk core.Desktop, p
 	return game, desk, p, nil
 }
 
+// 計算突擊
+func ComputeAssault(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cardId int) (int, bool, error) {
+	card := desk.Card[cardId]
+	// 飞将的利刃·张辽
+	if card.Ref == "85" {
+		return 1, true, nil
+	}
+	return 0, false, nil
+}
+
 // 計算迎擊力
-// 回傳-1代表沒有迎擊能力
-func ComputeCounter(ctx appengine.Context, game Game, desk core.Desktop, user string, cardId int) (int, error) {
-	return -1, nil
+func ComputeCounter(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cardId int) (int, bool, error) {
+	card := desk.Card[cardId]
+	// 三江城蛮丁
+	if card.Ref == "28" {
+		return 2, true, nil
+	}
+	return 0, false, nil
 }
 
 // 計算基本攻擊力

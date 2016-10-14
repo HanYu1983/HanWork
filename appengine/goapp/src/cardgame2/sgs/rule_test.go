@@ -560,11 +560,19 @@ func TestBasicAttack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	desk, unitRef105, err := core.AddCard(ctx, desk, core.UserA+Position2, core.UserA, "105")
+	desk, unitRef85, err := core.AddCard(ctx, desk, core.UserA+Position3, core.UserA, "85")
+	if err != nil {
+		t.Fatal(err)
+	}
+	desk, unitRef105, err := core.AddCard(ctx, desk, core.UserA+Position5, core.UserA, "105")
 	if err != nil {
 		t.Fatal(err)
 	}
 	desk, unitRef105InUserB, err := core.AddCard(ctx, desk, core.UserB+Hand, core.UserB, "105")
+	if err != nil {
+		t.Fatal(err)
+	}
+	desk, unitRef28InUserB, err := core.AddCard(ctx, desk, core.UserB+Position2, core.UserB, "28")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -598,23 +606,29 @@ func TestBasicAttack(t *testing.T) {
 	var cmds []core.Command
 	cmds, err = CollectCommand(ctx, game, desk, p, core.UserA, cmds)
 
-	if len(cmds) != 3 {
-		t.Fatal("必須有3個行動")
+	if len(cmds) != 4 {
+		t.Fatal("必須有4個行動")
 	}
 	if cmds[0].Description != "{cardId}宣告攻擊" {
-		t.Fatal("第一個必須是宣告攻擊")
+		t.Fatal("第1個必須是宣告攻擊")
 	}
 	if int(cmds[0].Parameters["cardId"].(float64)) != unitRef22 {
-		t.Fatal("第一個宣告攻擊的單位必須是青洲探馬")
+		t.Fatal("第1個宣告攻擊的單位必須是青洲探馬")
 	}
 	if cmds[1].Description != "{cardId}宣告攻擊" {
-		t.Fatal("第二個必須是宣告攻擊")
+		t.Fatal("第2個必須是宣告攻擊")
 	}
-	if int(cmds[1].Parameters["cardId"].(float64)) != unitRef105 {
-		t.Fatal("第二個宣告攻擊的單位必須是ref105")
+	if int(cmds[1].Parameters["cardId"].(float64)) != unitRef85 {
+		t.Fatal("第2個宣告攻擊的單位必須是ref85")
 	}
-	if cmds[2].Description != "讓過" {
-		t.Fatal("第三個必須是讓過")
+	if cmds[2].Description != "{cardId}宣告攻擊" {
+		t.Fatal("第3個必須是宣告攻擊")
+	}
+	if int(cmds[2].Parameters["cardId"].(float64)) != unitRef105 {
+		t.Fatal("第3個宣告攻擊的單位必須是ref105")
+	}
+	if cmds[3].Description != "讓過" {
+		t.Fatal("第4個必須是讓過")
 	}
 
 	t.Log("青洲探馬宣告攻擊")
@@ -645,6 +659,15 @@ func TestBasicAttack(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	_, err = SaveGame(ctx, game)
+	if err != nil {
+		t.Fatal(err)
+	}
+	game, err = LoadGame(ctx, "first game")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	t.Log("青洲探馬宣告攻擊")
 	game, desk, p, err = InvokeUnitAttack(ctx, game, desk, p, core.UserA, unitRef22)
 	if err != nil {
@@ -663,5 +686,35 @@ func TestBasicAttack(t *testing.T) {
 			t.Fatal(err)
 		}
 		handleLoop()
+	}
+
+	if desk.Card[unitRef105InUserB].CardStack != core.UserB+Graveyard {
+		t.Fatal("玩家B的孫權必須在墓地")
+	}
+
+	t.Log("青洲探馬使用轉移")
+	game, desk, p, err = UnitMove(ctx, game, desk, p, core.UserA, PositionID(core.UserA, 2), unitRef22)
+	if err != nil {
+		t.Fatal(err)
+	}
+	handleLoop()
+
+	if desk.Card[unitRef22].CardStack != core.UserA+Graveyard {
+		t.Fatal("青洲探馬被迎擊死亡後應當在墓地")
+	}
+
+	t.Log("張遼使用轉移")
+	game, desk, p, err = UnitMove(ctx, game, desk, p, core.UserA, PositionID(core.UserA, 2), unitRef85)
+	if err != nil {
+		t.Fatal(err)
+	}
+	handleLoop()
+
+	if desk.Card[unitRef28InUserB].CardStack != core.UserB+Graveyard {
+		t.Fatal("三江城蛮丁被突擊死亡後應當在墓地")
+	}
+
+	if desk.Card[unitRef85].CardStack != core.UserA+Graveyard {
+		t.Fatal("張遼被突擊死亡後應當在墓地")
 	}
 }
