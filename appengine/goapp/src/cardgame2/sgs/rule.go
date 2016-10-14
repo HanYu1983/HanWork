@@ -158,7 +158,7 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 			}
 		}
 		p = core.CompleteCommand(ctx, p, c)
-	case "OnMoveCardBF":
+	case "OnMoveCardAF":
 		// TODO 迎擊
 		// TODO 突擊
 		p = core.CompleteCommand(ctx, p, c)

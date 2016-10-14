@@ -73,6 +73,10 @@ const (
 )
 
 const (
+	BattleDamage = iota
+)
+
+const (
 	// 戰器
 	Weapon = iota
 	// 單位
