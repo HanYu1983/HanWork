@@ -12,10 +12,13 @@ type Command struct {
 	Description string
 	Parameters  map[string]interface{}
 	Block       int
+	SourceUser  string
+	SourceCard  int
 }
 
 type Block struct {
 	ID      int
+	Name    string
 	Cursor  int
 	Command []int
 }
@@ -25,7 +28,7 @@ type Procedure struct {
 	Block   []Block
 }
 
-func AddBlock(ctx appengine.Context, p Procedure, cs []Command) Procedure {
+func AddBlock(ctx appengine.Context, p Procedure, name string, cs []Command) Procedure {
 	blockId := len(p.Block)
 	var ids []int
 	for _, c := range cs {
@@ -35,7 +38,7 @@ func AddBlock(ctx appengine.Context, p Procedure, cs []Command) Procedure {
 		p.Command = append(p.Command, c)
 		ids = append(ids, id)
 	}
-	p.Block = append(p.Block, Block{ID: blockId, Command: ids})
+	p.Block = append(p.Block, Block{ID: blockId, Name: name, Command: ids})
 	return p
 }
 

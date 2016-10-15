@@ -145,7 +145,24 @@ func CardCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p c
 func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, c core.Command) (Game, core.Desktop, core.Procedure, error) {
 	var err error
 	switch c.Description {
-	case "結束棄牌-{user}廢棄掉上一個指令的{cardIds}":
+	case "分配{totalDamage}中的{damage1}到{cardId}、{damage2}到{user}":
+		damage1 := int(c.Parameters["damage1"].(float64))
+		cardId := int(c.Parameters["cardId"].(float64))
+		damage2 := int(c.Parameters["damage2"].(float64))
+		user := c.Parameters["user"].(string)
+		if damage1 > 0 {
+			game, desk, p, err = InvokeDamageUnit(ctx, game, desk, p, user, c.SourceCard, damage1, CounterDamage, cardId)
+			if err != nil {
+				return game, desk, p, err
+			}
+		}
+		if damage2 > 0 {
+			game, desk, p, err = InvokeDamagePlayer(ctx, game, desk, p, user, c.SourceCard, damage2, CounterDamage, user)
+			if err != nil {
+				return game, desk, p, err
+			}
+		}
+	case "{user}廢棄掉上一個指令的{cardIds}":
 		pre := p.Command[c.ID-1]
 		if pre.Block != c.Block {
 			return game, desk, p, errors.New("不是同一個區塊的指令")
@@ -242,12 +259,12 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 			if hasOppositeUnit {
 				// 迎擊
 				// 注意：是給移動的單位傷害
-				power, hasCounter, err := ComputeCounter(ctx, game, desk, p, user, oppositeUnit)
+				powers, _, _, err := CheckKeyword(迎擊, ctx, game, desk, p, user, oppositeUnit)
 				if err != nil {
 					return game, desk, p, err
 				}
-				if hasCounter == true {
-					game, desk, p, err = InvokeDamageUnit(ctx, game, desk, p, user, power, CounterDamage, cardId)
+				for _, power := range powers {
+					game, desk, p, err = InvokeDamageUnit(ctx, game, desk, p, user, oppositeUnit, power, CounterDamage, cardId)
 					if err != nil {
 						return game, desk, p, err
 					}
@@ -255,12 +272,12 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 				// 突擊
 				// 後處理的先發動，所以突擊會先結算
 				// 注意：是給對面單位傷害
-				power, hasAssault, err := ComputeAssault(ctx, game, desk, p, user, cardId)
+				powers, _, _, err = CheckKeyword(突擊, ctx, game, desk, p, user, cardId)
 				if err != nil {
 					return game, desk, p, err
 				}
-				if hasAssault == true {
-					game, desk, p, err = InvokeDamageUnit(ctx, game, desk, p, user, power, AssaultDamage, oppositeUnit)
+				for _, power := range powers {
+					game, desk, p, err = InvokeDamageUnit(ctx, game, desk, p, user, cardId, power, AssaultDamage, oppositeUnit)
 					if err != nil {
 						return game, desk, p, err
 					}
@@ -282,6 +299,10 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		if err != nil {
 			return game, desk, p, err
 		}
+	case "單位將受到傷害":
+		cardId := int(c.Parameters["cardId"].(float64))
+		sourceCard := c.SourceCard
+		var _, _ = cardId, sourceCard
 	case "單位受到傷害":
 		user := c.Parameters["user"].(string)
 		cardId := int(c.Parameters["cardId"].(float64))
@@ -291,6 +312,21 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		if err != nil {
 			return game, desk, p, err
 		}
+	case "單位受到傷害後":
+		cardId := int(c.Parameters["cardId"].(float64))
+		info := game.CardInfo[cardId]
+		sourceCard := c.SourceCard
+		// 如果傷害來源有致命
+		_, _, hasKill, err := CheckKeyword(致命, ctx, game, desk, p, info.ControlPlayer, sourceCard)
+		if err != nil {
+			return game, desk, p, err
+		}
+		if hasKill == true {
+			game, desk, p, err = InvokeUnitDead(ctx, game, desk, p, cardId)
+			if err != nil {
+				return game, desk, p, err
+			}
+		}
 	case "玩家受到傷害":
 		user := c.Parameters["user"].(string)
 		damage := int(c.Parameters["damage"].(float64))
@@ -299,6 +335,21 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		game, desk, p, err = DamagePlayer(ctx, game, desk, p, user, damage, damageType, player)
 		if err != nil {
 			return game, desk, p, err
+		}
+	case "玩家受到傷害後":
+		sourceCard := c.SourceCard
+		damage := int(c.Parameters["damage"].(float64))
+		info := game.CardInfo[sourceCard]
+		// 處理斬獲
+		// 打掉多少血回復多少血
+		_, _, hasGetLife, err := CheckKeyword(斬獲, ctx, game, desk, p, info.ControlPlayer, sourceCard)
+		if err != nil {
+			return game, desk, p, err
+		}
+		if hasGetLife {
+			targetUser := info.ControlPlayer
+			var _, _ = targetUser, damage
+			// TODO 移除傷害指示物
 		}
 	case "單位死亡":
 		cardId := int(c.Parameters["cardId"].(float64))
@@ -324,42 +375,9 @@ func QueryUnitInOppositePosition(ctx appengine.Context, game Game, desk core.Des
 	return desk.CardStack[oppositeStack].Card[0], true, nil
 }
 
-// 棄牌規定效果
-func InvokeDiscardCardInDiscardStep(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string) (Game, core.Desktop, core.Procedure, error) {
-	offset := len(desk.CardStack[user+Hand].Card) - game.Player[user].HandLimit
-	if offset <= 0 {
-		return game, desk, p, nil
-	}
-	p = core.AddBlock(ctx, p, []core.Command{
-		{User: user, Description: "結束棄牌-選擇{num}張手牌{cardIds}", Parameters: map[string]interface{}{"num": float64(offset)}},
-		{User: core.UserSys, Description: "結束棄牌-{user}廢棄掉上一個指令的{cardIds}", Parameters: map[string]interface{}{"user": user}},
-	})
-	return game, desk, p, nil
-}
-
 // 重置規定效果
 func UntapCardInUntapStep(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string) (Game, core.Desktop, core.Procedure, error) {
 	return game, desk, p, nil
-}
-
-// 計算突擊
-func ComputeAssault(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cardId int) (int, bool, error) {
-	card := desk.Card[cardId]
-	// 飞将的利刃·张辽
-	if card.Ref == "85" {
-		return 1, true, nil
-	}
-	return 0, false, nil
-}
-
-// 計算迎擊力
-func ComputeCounter(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cardId int) (int, bool, error) {
-	card := desk.Card[cardId]
-	// 三江城蛮丁
-	if card.Ref == "28" {
-		return 2, true, nil
-	}
-	return 0, false, nil
 }
 
 // 計算基本攻擊力
@@ -374,104 +392,17 @@ func ComputeNormalAttack(ctx appengine.Context, game Game, desk core.Desktop, us
 
 // 計算基本防禦力
 // 沒有堅靭基本上都是0
-func ComputeNormalDefence(ctx appengine.Context, game Game, desk core.Desktop, user string, damageType string, cardId int) (int, error) {
-	return 0, nil
-}
-
-// 啟動傷害流程
-// 過程中會呼叫ComputeNormalDefence來計算減傷
-func InvokeDamageUnit(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, damage int, damageType string, cardId int) (Game, core.Desktop, core.Procedure, error) {
-	parameters := map[string]interface{}{
-		"user":       user,
-		"damage":     float64(damage),
-		"damageType": damageType,
-		"cardId":     float64(cardId),
+func ComputeNormalDefence(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, damageType string, cardId int) (int, error) {
+	// 處理堅靭
+	powers, _, _, err := CheckKeyword(堅靭, ctx, game, desk, p, user, cardId)
+	if err != nil {
+		return 0, err
 	}
-	p = core.AddBlock(ctx, p, []core.Command{
-		{User: core.UserSys, Description: "單位將受到傷害", Parameters: parameters},
-		{User: core.UserSys, Description: "單位受到傷害", Parameters: parameters},
-		{User: core.UserSys, Description: "單位受到傷害後", Parameters: parameters},
-	})
-	return game, desk, p, nil
-}
-
-// 啟動傷害流程
-// 過程中會呼叫ComputeNormalDefence來計算減傷
-func InvokeDamagePlayer(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, damage int, damageType string, player string) (Game, core.Desktop, core.Procedure, error) {
-	parameters := map[string]interface{}{
-		"user":       user,
-		"damage":     float64(damage),
-		"damageType": damageType,
-		"player":     player,
+	var total int
+	for _, power := range powers {
+		total += power
 	}
-	p = core.AddBlock(ctx, p, []core.Command{
-		{User: core.UserSys, Description: "玩家將受到傷害", Parameters: parameters},
-		{User: core.UserSys, Description: "玩家受到傷害", Parameters: parameters},
-		{User: core.UserSys, Description: "玩家受到傷害後", Parameters: parameters},
-	})
-	return game, desk, p, nil
-}
-
-// 啟動單位移動
-func InvokeUnitMove(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, slotStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
-	parameters := map[string]interface{}{
-		"user":        user,
-		"slotStackId": slotStackId,
-		"cardId":      float64(cardId),
-	}
-	p = core.AddBlock(ctx, p, []core.Command{
-		{User: core.UserSys, Description: "單位將移動", Parameters: parameters},
-		{User: core.UserSys, Description: "單位移動", Parameters: parameters},
-		{User: core.UserSys, Description: "單位移動後", Parameters: parameters},
-	})
-	return game, desk, p, nil
-}
-
-// 啟動單位攻擊
-func InvokeUnitAttack(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cardId int) (Game, core.Desktop, core.Procedure, error) {
-	parameters := map[string]interface{}{
-		"user":   user,
-		"cardId": float64(cardId),
-	}
-	p = core.AddBlock(ctx, p, []core.Command{
-		{User: core.UserSys, Description: "單位宣告攻擊", Parameters: parameters},
-		{User: core.UserSys, Description: "單位攻擊", Parameters: parameters},
-		{User: core.UserSys, Description: "單位攻擊後", Parameters: parameters},
-	})
-	return game, desk, p, nil
-}
-
-// 啟動抽卡
-// 可以指定從哪裡抽到手上
-func InvokeTakeCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, fromStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
-	parameters := map[string]interface{}{
-		"user":        user,
-		"fromStackId": fromStackId,
-		"cardId":      float64(cardId),
-	}
-	p = core.AddBlock(ctx, p, []core.Command{
-		{User: core.UserSys, Description: "將抽到卡", Parameters: parameters},
-		{User: core.UserSys, Description: "抽到卡", Parameters: parameters},
-		{User: core.UserSys, Description: "抽到卡後", Parameters: parameters},
-	})
-	return game, desk, p, nil
-}
-
-// 啟動打卡
-// 可以指定從哪裡打到陣地
-func InvokePlayCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, fromStackId string, slotNum int, cardId int) (Game, core.Desktop, core.Procedure, error) {
-	parameters := map[string]interface{}{
-		"user":        user,
-		"fromStackId": fromStackId,
-		"slotNum":     float64(slotNum),
-		"cardId":      float64(cardId),
-	}
-	p = core.AddBlock(ctx, p, []core.Command{
-		{User: core.UserSys, Description: "卡將打到陣地", Parameters: parameters},
-		{User: core.UserSys, Description: "卡打到陣地", Parameters: parameters},
-		{User: core.UserSys, Description: "卡打到陣地後", Parameters: parameters},
-	})
-	return game, desk, p, nil
+	return total, nil
 }
 
 // 取得Position卡堆的ID
@@ -546,22 +477,13 @@ func DamagePlayer(ctx appengine.Context, game Game, desk core.Desktop, p core.Pr
 }
 
 func DamageUnit(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, damage int, damageType string, cardId int) (Game, core.Desktop, core.Procedure, error) {
-	// 取得對手防禦力
-	defence, err := ComputeNormalDefence(ctx, game, desk, user, damageType, cardId)
-	if err != nil {
-		return game, desk, p, err
-	}
-	damage = damage - defence
-	if damage < 0 {
-		damage = 0
-	}
 	// 放置傷害Token
 	info := game.CardInfo[cardId]
 	for i := 0; i < damage; i += 1 {
 		info.Token = append(info.Token, DamageToken)
 	}
 	game.CardInfo[cardId] = info
-	isDead, err := IsUnitDead(ctx, game, desk, p, cardId)
+	isDead, _, err := IsUnitDead(ctx, game, desk, p, cardId)
 	if err != nil {
 		return game, desk, p, err
 	}
@@ -574,21 +496,7 @@ func DamageUnit(ctx appengine.Context, game Game, desk core.Desktop, p core.Proc
 	return game, desk, p, nil
 }
 
-func InvokeUnitDead(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, cardId int) (Game, core.Desktop, core.Procedure, error) {
-	// 加入user是為了給事件有統一的參數介面
-	parameters := map[string]interface{}{
-		"user":   core.UserSys,
-		"cardId": float64(cardId),
-	}
-	p = core.AddBlock(ctx, p, []core.Command{
-		{User: core.UserSys, Description: "單位將死亡", Parameters: parameters},
-		{User: core.UserSys, Description: "單位死亡", Parameters: parameters},
-		{User: core.UserSys, Description: "單位死亡後", Parameters: parameters},
-	})
-	return game, desk, p, nil
-}
-
-func IsUnitDead(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, cardId int) (bool, error) {
+func IsUnitDead(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, cardId int) (bool, int, error) {
 	info := game.CardInfo[cardId]
 	var damageCnt int
 	for _, token := range info.Token {
@@ -599,12 +507,12 @@ func IsUnitDead(ctx appengine.Context, game Game, desk core.Desktop, p core.Proc
 	}
 	def, err := strconv.Atoi(info.Prototype.Defence)
 	if err != nil {
-		return false, err
+		return false, 0, err
 	}
 	if damageCnt >= def {
-		return true, nil
+		return true, 0, nil
 	}
-	return false, nil
+	return false, def - damageCnt, nil
 }
 
 func PutDamageToken(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, cnt int, cardId int) (Game, core.Desktop, core.Procedure, error) {
@@ -626,112 +534,126 @@ func UnitDead(ctx appengine.Context, game Game, desk core.Desktop, p core.Proced
 }
 
 // 指定一個單位攻擊
-func UnitAttack(ctx appengine.Context, game Game, stage core.Desktop, p core.Procedure, user string, cardId int) (Game, core.Desktop, core.Procedure, error) {
+func UnitAttack(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cardId int) (Game, core.Desktop, core.Procedure, error) {
 	// 判斷單位有沒有在Position上
-	card := stage.Card[cardId]
-	if stage.CardStack[card.CardStack].Type != Position {
-		return game, stage, p, ErrUnitIsntAtSlot
+	card := desk.Card[cardId]
+	if desk.CardStack[card.CardStack].Type != Position {
+		return game, desk, p, ErrUnitIsntAtSlot
 	}
 	// 判斷是不是玩家的Position
 	slotUser, slotNum := ParsePositionID(card.CardStack)
 	if slotUser != user {
-		return game, stage, p, errors.New("this unit is not yours")
+		return game, desk, p, errors.New("this unit is not yours")
 	}
 	var err error
 	// 取得對方PositionID
 	opponent := core.Opponent(slotUser)
 	opponentSlotId := PositionID(opponent, slotNum)
 	// 取得自身攻擊力
-	attack, err := ComputeNormalAttack(ctx, game, stage, user, cardId)
+	attack, err := ComputeNormalAttack(ctx, game, desk, user, cardId)
 	if err != nil {
-		return game, stage, p, err
+		return game, desk, p, err
 	}
-	if len(stage.CardStack[opponentSlotId].Card) == 0 {
+	if len(desk.CardStack[opponentSlotId].Card) == 0 {
 		// 如果對手單地上沒有單位
 		// 攻擊對方玩家
-		game, stage, p, err = InvokeDamagePlayer(ctx, game, stage, p, user, attack, BattleDamage, opponent)
+		game, desk, p, err = InvokeDamagePlayer(ctx, game, desk, p, user, cardId, attack, BattleDamage, opponent)
 		if err != nil {
-			return game, stage, p, err
+			return game, desk, p, err
 		}
 	} else {
 		// 如果對手Position上有單位
-		// 攻擊那個單位
-		opponentCardId := stage.CardStack[opponentSlotId].Card[0]
-		game, stage, p, err = InvokeDamageUnit(ctx, game, stage, p, user, attack, BattleDamage, opponentCardId)
+		// 先處理破竹
+		// 取得單位剩下血量
+		isDead, hp, err := IsUnitDead(ctx, game, desk, p, cardId)
 		if err != nil {
-			return game, stage, p, err
+			return game, desk, p, err
+		}
+		// 查看有沒有破竹、並取得破竹力
+		powers, _, _, err := CheckKeyword(破竹, ctx, game, desk, p, user, cardId)
+		// 如果單位還存在並且有破竹
+		if isDead == false && len(powers) > 0 {
+			power := powers[0]
+			total := power - hp
+			// 破竹力滿足了消滅單位的傷害後還有剩下才發動破竹
+			if total > 0 {
+				p = core.AddBlock(ctx, p, "破竹", []core.Command{
+					{
+						User:        user,
+						Description: "分配{totalDamage}中的{damage1}到{cardId}、{damage2}到{user}",
+						Parameters: map[string]interface{}{
+							"totalDamage": float64(total),
+							"cardId":      float64(cardId),
+							"user":        opponent,
+						},
+						SourceCard: cardId,
+					},
+				})
+				// 直接回傳
+				return game, desk, p, nil
+			}
+		}
+		// 攻擊那個單位
+		opponentCardId := desk.CardStack[opponentSlotId].Card[0]
+		game, desk, p, err = InvokeDamageUnit(ctx, game, desk, p, user, cardId, attack, BattleDamage, opponentCardId)
+		if err != nil {
+			return game, desk, p, err
 		}
 	}
-	return game, stage, p, nil
-}
-
-func InvokeMoveCard(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, fromStackId string, toStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
-	// 加入user是為了給事件有統一的參數介面
-	parameters := map[string]interface{}{
-		"user":        user,
-		"fromStackId": fromStackId,
-		"toStackId":   toStackId,
-		"cardId":      float64(cardId),
-	}
-	p = core.AddBlock(ctx, p, []core.Command{
-		{User: core.UserSys, Description: "卡將移動", Parameters: parameters},
-		{User: core.UserSys, Description: "卡移動", Parameters: parameters},
-		{User: core.UserSys, Description: "卡移動後", Parameters: parameters},
-	})
 	return game, desk, p, nil
 }
 
-func MoveCard(ctx appengine.Context, game Game, stage core.Desktop, p core.Procedure, user string, fromStackId string, toStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
+func MoveCard(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, fromStackId string, toStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
 	var err error
-	stage, err = core.MoveCard(ctx, stage, fromStackId, toStackId, 0, cardId)
+	desk, err = core.MoveCard(ctx, desk, fromStackId, toStackId, 0, cardId)
 	if err != nil {
-		return game, stage, p, err
+		return game, desk, p, err
 	}
-	return game, stage, p, nil
+	return game, desk, p, nil
 }
 
 // 轉移
-func UnitMove(ctx appengine.Context, game Game, stage core.Desktop, p core.Procedure, user string, slotStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
-	card := stage.Card[cardId]
-	if stage.CardStack[card.CardStack].Type != Position {
-		return game, stage, p, errors.New("unit not in slot")
+func UnitMove(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, slotStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
+	card := desk.Card[cardId]
+	if desk.CardStack[card.CardStack].Type != Position {
+		return game, desk, p, errors.New("unit not in slot")
 	}
 	slotUser, _ := ParsePositionID(card.CardStack)
 	if user != slotUser {
-		return game, stage, p, errors.New("unit not in your slot")
+		return game, desk, p, errors.New("unit not in your slot")
 	}
-	if stage.CardStack[slotStackId].Type != Position {
-		return game, stage, p, errors.New("move target is not slot")
+	if desk.CardStack[slotStackId].Type != Position {
+		return game, desk, p, errors.New("move target is not slot")
 	}
-	if len(stage.CardStack[slotStackId].Card) > 0 {
-		return game, stage, p, errors.New("target slot is not empty")
+	if len(desk.CardStack[slotStackId].Card) > 0 {
+		return game, desk, p, errors.New("target slot is not empty")
 	}
 	var err error
 	toStack := slotStackId
 	fromStack := card.CardStack
-	game, stage, p, err = InvokeMoveCard(ctx, game, stage, p, user, fromStack, toStack, cardId)
+	game, desk, p, err = InvokeMoveCard(ctx, game, desk, p, user, fromStack, toStack, cardId)
 	if err != nil {
-		return game, stage, p, err
+		return game, desk, p, err
 	}
-	return game, stage, p, nil
+	return game, desk, p, nil
 }
 
 // 執行死亡判定
 // 任何可能造成單位或玩家傷害的方法呼叫之後都要呼叫這個方法
 // 死亡的單位會移到Graveyard
 // 玩家若死亡也會立刻結束遊戲
-func PerformDead(ctx appengine.Context, game Game, stage core.Desktop, p core.Procedure) (Game, core.Desktop, core.Procedure, error) {
+func PerformDead(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure) (Game, core.Desktop, core.Procedure, error) {
 	var err error
-	for _, card := range stage.Card {
+	for _, card := range desk.Card {
 		info := game.CardInfo[card.ID]
 		if info.Defence > 0 {
 			continue
 		}
 		fromStack := card.CardStack
 		toStack := card.Owner + Graveyard
-		stage, err = core.MoveCard(ctx, stage, fromStack, toStack, 0, card.ID)
+		desk, err = core.MoveCard(ctx, desk, fromStack, toStack, 0, card.ID)
 		if err != nil {
-			return game, stage, p, err
+			return game, desk, p, err
 		}
 	}
 	for idx, player := range game.Player {
@@ -739,7 +661,7 @@ func PerformDead(ctx appengine.Context, game Game, stage core.Desktop, p core.Pr
 		var _ = player
 		game.Winner = idx
 	}
-	return game, stage, p, nil
+	return game, desk, p, nil
 }
 
 // 121.1. 处于整备状态的单位不能发起战斗和宣告攻击，也不能启动费用中带有{横置}的能力。
@@ -858,10 +780,189 @@ func InvokeNextPhase(ctx appengine.Context, game Game, desk core.Desktop, p core
 		"user": core.UserSys,
 		"step": float64(step),
 	}
-	p = core.AddBlock(ctx, p, []core.Command{
-		{User: core.UserSys, Description: "階段將結束", Parameters: parameters},
-		{User: core.UserSys, Description: "階段改變", Parameters: parameters},
-		{User: core.UserSys, Description: "階段將開始", Parameters: parameters},
+	p = core.AddBlock(ctx, p, "規則", []core.Command{
+		{User: core.UserSys, Description: "階段將結束", Parameters: parameters, SourceUser: core.UserSys},
+		{User: core.UserSys, Description: "階段改變", Parameters: parameters, SourceUser: core.UserSys},
+		{User: core.UserSys, Description: "階段將開始", Parameters: parameters, SourceUser: core.UserSys},
+	})
+	return game, desk, p, nil
+}
+
+// 棄牌規定效果
+func InvokeDiscardCardInDiscardStep(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string) (Game, core.Desktop, core.Procedure, error) {
+	offset := len(desk.CardStack[user+Hand].Card) - game.Player[user].HandLimit
+	if offset <= 0 {
+		return game, desk, p, nil
+	}
+	p = core.AddBlock(ctx, p, "結束棄牌", []core.Command{
+		{User: user, Description: "選擇{num}張手牌{cardIds}", Parameters: map[string]interface{}{"num": float64(offset)}},
+		{User: core.UserSys, Description: "{user}廢棄掉上一個指令的{cardIds}", Parameters: map[string]interface{}{"user": user}},
+	})
+	return game, desk, p, nil
+}
+
+// 啟動傷害流程
+// 過程中會呼叫ComputeNormalDefence來計算減傷
+func InvokeDamageUnit(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, sourceCard int, damage int, damageType string, cardId int) (Game, core.Desktop, core.Procedure, error) {
+	// 如果是迎擊或是突擊，可能會遇到連續發動效果的過程中目標單位就已經死去
+	// 這個時候就忽略掉效果就行了
+	if damageType == CounterDamage || damageType == AssaultDamage {
+		isDead, _, err := IsUnitDead(ctx, game, desk, p, cardId)
+		if err != nil {
+			return game, desk, p, err
+		}
+		if isDead {
+			return game, desk, p, nil
+		}
+	}
+	// 突擊傷害來源若被横置則沒有傷害效果
+	if damageType == AssaultDamage {
+		card := desk.Card[sourceCard]
+		if card.Direction == core.DirectionTap {
+			return game, desk, p, nil
+		}
+	}
+	// 取得對手防禦力
+	defence, err := ComputeNormalDefence(ctx, game, desk, p, user, damageType, cardId)
+	if err != nil {
+		return game, desk, p, err
+	}
+	damage = damage - defence
+	if damage <= 0 {
+		return game, desk, p, nil
+	}
+	// TODO 防止性能力
+	// 處理抵抗
+	_, powers, _, err := CheckKeyword(抵抗, ctx, game, desk, p, user, cardId)
+	for _, power := range powers {
+		isMatch, err := IfMatchResistance(power, ctx, game, desk, p, cardId)
+		if err != nil {
+			return game, desk, p, err
+		}
+		if isMatch {
+			return game, desk, p, nil
+		}
+	}
+	// TODO 替代性能力
+	parameters := map[string]interface{}{
+		"user":       user,
+		"damage":     float64(damage),
+		"damageType": damageType,
+		"cardId":     float64(cardId),
+	}
+	p = core.AddBlock(ctx, p, "規則", []core.Command{
+		{User: core.UserSys, Description: "單位將受到傷害", Parameters: parameters, SourceCard: sourceCard},
+		{User: core.UserSys, Description: "單位受到傷害", Parameters: parameters, SourceCard: sourceCard},
+		{User: core.UserSys, Description: "單位受到傷害後", Parameters: parameters, SourceCard: sourceCard},
+	})
+	return game, desk, p, nil
+}
+
+// 啟動傷害流程
+// 過程中會呼叫ComputeNormalDefence來計算減傷
+func InvokeDamagePlayer(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, sourceCard int, damage int, damageType string, player string) (Game, core.Desktop, core.Procedure, error) {
+	parameters := map[string]interface{}{
+		"user":       user,
+		"damage":     float64(damage),
+		"damageType": damageType,
+		"player":     player,
+	}
+	p = core.AddBlock(ctx, p, "規則", []core.Command{
+		{User: core.UserSys, Description: "玩家將受到傷害", Parameters: parameters, SourceCard: sourceCard},
+		{User: core.UserSys, Description: "玩家受到傷害", Parameters: parameters, SourceCard: sourceCard},
+		{User: core.UserSys, Description: "玩家受到傷害後", Parameters: parameters, SourceCard: sourceCard},
+	})
+	return game, desk, p, nil
+}
+
+// 啟動單位移動
+func InvokeUnitMove(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, slotStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
+	parameters := map[string]interface{}{
+		"user":        user,
+		"slotStackId": slotStackId,
+		"cardId":      float64(cardId),
+	}
+	p = core.AddBlock(ctx, p, "規則", []core.Command{
+		{User: core.UserSys, Description: "單位將移動", Parameters: parameters, SourceUser: user},
+		{User: core.UserSys, Description: "單位移動", Parameters: parameters, SourceUser: user},
+		{User: core.UserSys, Description: "單位移動後", Parameters: parameters, SourceUser: user},
+	})
+	return game, desk, p, nil
+}
+
+// 啟動單位攻擊
+func InvokeUnitAttack(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cardId int) (Game, core.Desktop, core.Procedure, error) {
+	parameters := map[string]interface{}{
+		"user":   user,
+		"cardId": float64(cardId),
+	}
+	p = core.AddBlock(ctx, p, "規則", []core.Command{
+		{User: core.UserSys, Description: "單位宣告攻擊", Parameters: parameters, SourceUser: user},
+		{User: core.UserSys, Description: "單位攻擊", Parameters: parameters, SourceUser: user},
+		{User: core.UserSys, Description: "單位攻擊後", Parameters: parameters, SourceUser: user},
+	})
+	return game, desk, p, nil
+}
+
+func InvokeUnitDead(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, cardId int) (Game, core.Desktop, core.Procedure, error) {
+	// 加入user是為了給事件有統一的參數介面
+	parameters := map[string]interface{}{
+		"user":   core.UserSys,
+		"cardId": float64(cardId),
+	}
+	p = core.AddBlock(ctx, p, "規則", []core.Command{
+		{User: core.UserSys, Description: "單位將死亡", Parameters: parameters, SourceUser: core.UserSys},
+		{User: core.UserSys, Description: "單位死亡", Parameters: parameters, SourceUser: core.UserSys},
+		{User: core.UserSys, Description: "單位死亡後", Parameters: parameters, SourceUser: core.UserSys},
+	})
+	return game, desk, p, nil
+}
+
+func InvokeMoveCard(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, fromStackId string, toStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
+	// 加入user是為了給事件有統一的參數介面
+	parameters := map[string]interface{}{
+		"user":        user,
+		"fromStackId": fromStackId,
+		"toStackId":   toStackId,
+		"cardId":      float64(cardId),
+	}
+	p = core.AddBlock(ctx, p, "規則", []core.Command{
+		{User: core.UserSys, Description: "卡將移動", Parameters: parameters, SourceUser: user},
+		{User: core.UserSys, Description: "卡移動", Parameters: parameters, SourceUser: user},
+		{User: core.UserSys, Description: "卡移動後", Parameters: parameters, SourceUser: user},
+	})
+	return game, desk, p, nil
+}
+
+// 啟動抽卡
+// 可以指定從哪裡抽到手上
+func InvokeTakeCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, fromStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
+	parameters := map[string]interface{}{
+		"user":        user,
+		"fromStackId": fromStackId,
+		"cardId":      float64(cardId),
+	}
+	p = core.AddBlock(ctx, p, "規則", []core.Command{
+		{User: core.UserSys, Description: "將抽到卡", Parameters: parameters, SourceUser: user},
+		{User: core.UserSys, Description: "抽到卡", Parameters: parameters, SourceUser: user},
+		{User: core.UserSys, Description: "抽到卡後", Parameters: parameters, SourceUser: user},
+	})
+	return game, desk, p, nil
+}
+
+// 啟動打卡
+// 可以指定從哪裡打到陣地
+func InvokePlayCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, fromStackId string, slotNum int, cardId int) (Game, core.Desktop, core.Procedure, error) {
+	parameters := map[string]interface{}{
+		"user":        user,
+		"fromStackId": fromStackId,
+		"slotNum":     float64(slotNum),
+		"cardId":      float64(cardId),
+	}
+	p = core.AddBlock(ctx, p, "規則", []core.Command{
+		{User: core.UserSys, Description: "卡將打到陣地", Parameters: parameters, SourceUser: user},
+		{User: core.UserSys, Description: "卡打到陣地", Parameters: parameters, SourceUser: user},
+		{User: core.UserSys, Description: "卡打到陣地後", Parameters: parameters, SourceUser: user},
 	})
 	return game, desk, p, nil
 }

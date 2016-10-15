@@ -75,7 +75,7 @@ const (
 
 const (
 	BattleDamage  = "戰鬥傷害"
-	CounterDamage = "反擊傷害"
+	CounterDamage = "迎擊傷害"
 	AssaultDamage = "突擊傷害"
 )
 
@@ -92,18 +92,29 @@ const (
 	Territory
 )
 
-type CardPrototype struct {
-	CardID    string
-	Name      string
-	Cost      string
-	Color     string
-	ColorCost string
-	Class     string
-	Package   string
-	Attack    string
-	Defence   string
-	Text      string
-}
+const (
+	致命 = "致命"
+	附屬 = "附屬"
+	佩帶 = "佩帶"
+	伏擊 = "伏擊"
+	神速 = "神速"
+	洞察 = "洞察"
+	破竹 = "破竹"
+	射擊 = "射擊"
+	抵抗 = "抵抗"
+	轉移 = "轉移"
+	堅靭 = "堅靭"
+	突擊 = "突擊"
+	斬獲 = "斬獲"
+	迎擊 = "迎擊"
+	外交 = "外交"
+	逆境 = "逆境"
+	動蕩 = "動蕩"
+	賦力 = "賦力"
+	奇襲 = "奇襲"
+	暴亂 = "暴亂"
+	猛進 = "猛進"
+)
 
 const (
 	ColorBlue  = "魏"
@@ -116,6 +127,19 @@ const (
 const (
 	DamageToken = "DamageToken"
 )
+
+type CardPrototype struct {
+	CardID    string
+	Name      string
+	Cost      string
+	Color     string
+	ColorCost string
+	Class     string
+	Package   string
+	Attack    string
+	Defence   string
+	Text      string
+}
 
 // 卡牌狀態
 // 陣面對決的數值
@@ -131,6 +155,7 @@ type CardInfo struct {
 	TurnPlay      int
 	ControlPlayer string
 	Token         []string
+	Buf           []int
 }
 
 type Player struct {
@@ -144,6 +169,7 @@ type Player struct {
 }
 
 type Buf struct {
+	ID         int
 	FromCardID int
 	Turn       int
 }
@@ -156,6 +182,7 @@ type Buf struct {
 type Game struct {
 	ID           string
 	CardInfo     []CardInfo
+	Buf          []Buf
 	Turn         int
 	Player       map[string]Player
 	Winner       string
@@ -173,6 +200,33 @@ func CardType(info CardInfo) int {
 		return Tactics
 	}
 	return Weapon
+}
+
+func CheckKeyword(keyword string, ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cardId int) ([]int, []string, bool, error) {
+	card := desk.Card[cardId]
+	switch keyword {
+	case 迎擊:
+		if card.Ref == "28" {
+			return []int{2}, nil, true, nil
+		}
+	case 突擊:
+		if card.Ref == "85" {
+			return []int{1}, nil, true, nil
+		}
+	case 致命:
+		return nil, nil, false, nil
+	case 堅靭:
+		return nil, nil, false, nil
+		//return []int{1, 1}, nil, true, nil
+	case 抵抗:
+		return nil, nil, false, nil
+		//return nil, []string{"單位"}, true, nil
+	}
+	return nil, nil, false, nil
+}
+
+func IfMatchResistance(keyword string, ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, cardId int) (bool, error) {
+	return true, nil
 }
 
 type GameWrapper struct {
