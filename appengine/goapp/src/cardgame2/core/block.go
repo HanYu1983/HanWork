@@ -6,14 +6,19 @@ import (
 	"encoding/json"
 )
 
+type Key struct {
+	Kind     string
+	StringID string
+	IntID    int
+}
+
 type Command struct {
 	ID          int
 	User        string
 	Description string
 	Parameters  map[string]interface{}
 	Block       int
-	SourceUser  string
-	SourceCard  int
+	Source      Key
 }
 
 type Block struct {

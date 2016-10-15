@@ -503,7 +503,9 @@ func TestPhase(t *testing.T) {
 		t.Fatal("必須是玩家B的棄牌事件")
 	}
 	c.Parameters["cardIds"] = []float64{float64(desk.CardStack[core.UserB+Hand].Card[0])}
-	p = core.CompleteCommand(ctx, p, c)
+	// 資料補齊了，將責任者切換成系統
+	p.Command[c.ID].User = core.UserSys
+
 	t.Log("再讓系統處理")
 	handleLoop()
 

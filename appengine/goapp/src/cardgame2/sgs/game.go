@@ -195,6 +195,12 @@ type Game struct {
 	ActionCount map[string]int
 }
 
+type GameContext struct {
+	Game      Game
+	Desktop   core.Desktop
+	Procedure core.Procedure
+}
+
 func CardType(info CardInfo) int {
 	if strings.Contains(info.Class, "锦囊") {
 		return Tactics
@@ -202,7 +208,7 @@ func CardType(info CardInfo) int {
 	return Weapon
 }
 
-func CheckKeyword(keyword string, ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cardId int) ([]int, []string, bool, error) {
+func CheckKeyword(keyword string, ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, cardId int) ([]int, []string, bool, error) {
 	card := desk.Card[cardId]
 	switch keyword {
 	case 迎擊:
