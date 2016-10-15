@@ -175,9 +175,21 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 			game.Turn += 1
 			nextUser := core.Opponent(game.OffensivePlayer)
 			game.OffensivePlayer = nextUser
-			// 優先權會在NextPhase時設定
+			// 優先權會在"階段改變"時設定
+		}
+	case "階段改變":
+		step := c.Parameters["step"].(float64)
+		game, desk, p, err = NextPhase(ctx, game, desk, p, int(step))
+		if err != nil {
+			return game, desk, p, err
 		}
 	case "階段將開始":
+		// ID20司空先锋·张辽
+		// 每当张辽对玩家造成战斗伤害时，略过该玩家的下一个重置步骤。
+		// TODO 略过该玩家的下一个重置步骤
+		// if currentPhase == UntapStep
+		// step = 2
+
 		// 切換階段後等於重置階段的話，代表剛進入重置階段
 		// 立刻重置卡牌
 		offensiveUser := game.Player[game.OffensivePlayer].User
@@ -208,12 +220,6 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 				return game, desk, p, err
 			}
 		}
-	case "階段改變":
-		step := c.Parameters["step"].(float64)
-		game, desk, p, err = NextPhase(ctx, game, desk, p, int(step))
-		if err != nil {
-			return game, desk, p, err
-		}
 	case "抽到卡":
 		user := c.Parameters["user"].(string)
 		cardId := int(c.Parameters["cardId"].(float64))
@@ -230,6 +236,36 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		game, desk, p, err = PlayCardFrom(ctx, game, desk, p, user, fromStackId, slotNum, cardId)
 		if err != nil {
 			return game, desk, p, err
+		}
+	case "卡將移動":
+		cardId := int(c.Parameters["cardId"].(float64))
+		fromStackId := c.Parameters["fromStackId"].(string)
+		toStackId := c.Parameters["toStackId"].(string)
+		card := desk.Card[cardId]
+
+		// ID71 汉志传承者·蒋琬：若任一单位将死去，改为将该单位洗入其拥有者的牌库，而非置入其拥有者的墓地。
+		// 将至多两张目标单位牌从墓地放进战场。他们具有神速能力。在下一个结束步骤开始时，将他们放逐。如果他们将离开战场，则改为将他们放逐，而非置入其他区域。
+		// == 以上兩個能力有重疊的部分 ==
+		// 將死去 -> 移到牌庫 (死亡等同於離開戰場，離開不等於死亡)
+		// 将离开战场 -> 放逐
+		// 若兩個技能的對象剛好同一單位
+		// 要讓玩家可以選
+		// command = "從{ids}選擇{idx}發動", ids=[]string{"",""}, user = 操控玩家
+		isExitPosition := desk.CardStack[fromStackId].Type == Position && desk.CardStack[toStackId].Type != Position
+		if isExitPosition {
+			hasRef71 := false
+			if hasRef71 {
+				if c.Source.Kind == "規則-死亡" {
+					// 改成移到牌庫
+					nextCmd := p.Command[c.ID+1]
+					nextCmd.Parameters["toStackId"] = card.Owner + Library
+					// "卡移動"和"卡移動後"都要改
+					p.Command[c.ID+1] = nextCmd
+					p.Command[c.ID+2] = nextCmd
+					// 如果重疊能力（可以從Buf判斷是不是神速進場的）
+					// 就改變整個指令，讓玩家可以選擇效果
+				}
+			}
 		}
 	case "卡移動":
 		cardId := int(c.Parameters["cardId"].(float64))
@@ -385,6 +421,7 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 			var _, _ = targetUser, damage
 			// TODO 移除傷害指示物
 		}
+	case "單位將死亡":
 	case "單位死亡":
 		cardId := int(c.Parameters["cardId"].(float64))
 		game, desk, p, err = UnitDead(ctx, game, desk, p, cardId)
@@ -494,7 +531,7 @@ func PlayCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p core.Pr
 		return game, desk, p, TargetMissingError(ErrSlotIsntEmpty.Error())
 	}
 	var err error
-	game, desk, p, err = InvokeMoveCard(ctx, game, desk, p, user, fromStackId, targetStackId, cardId)
+	game, desk, p, err = InvokeMoveCard(ctx, game, desk, p, core.Key{Kind: "User", StringID: user}, fromStackId, targetStackId, cardId)
 	if err != nil {
 		return game, desk, p, TargetMissingError(err.Error())
 	}
@@ -549,22 +586,9 @@ func IsUnitDead(ctx appengine.Context, game Game, desk core.Desktop, p core.Proc
 	return false, def - damageCnt, nil
 }
 
-func PutDamageToken(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, cnt int, cardId int) (Game, core.Desktop, core.Procedure, error) {
-	// 觸發死亡流程
-	// ID71 汉志传承者·蒋琬：若任一单位将死去，改为将该单位洗入其拥有者的牌库，而非置入其拥有者的墓地。
-	// 将至多两张目标单位牌从墓地放进战场。他们具有神速能力。在下一个结束步骤开始时，将他们放逐。如果他们将离开战场，则改为将他们放逐，而非置入其他区域。
-	// == 以上兩個能力有重疊的部分 ==
-	// 將死去 -> 移到牌庫
-	// 将离开战场 -> 放逐
-	// 若兩個技能的對象剛好同一單位
-	// 要讓玩家可以選
-	// command = "從{ids}選擇{idx}發動", ids=[]string{"",""}, user = 操控玩家
-	return game, desk, p, nil
-}
-
 func UnitDead(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, cardId int) (Game, core.Desktop, core.Procedure, error) {
 	card := desk.Card[cardId]
-	return InvokeMoveCard(ctx, game, desk, p, core.UserSys, card.CardStack, card.Owner+Graveyard, cardId)
+	return InvokeMoveCard(ctx, game, desk, p, core.Key{Kind: "規則-死亡", StringID: core.UserSys}, card.CardStack, card.Owner+Graveyard, cardId)
 }
 
 // 指定一個單位攻擊
@@ -665,7 +689,7 @@ func UnitMove(ctx appengine.Context, game Game, desk core.Desktop, p core.Proced
 	var err error
 	toStack := slotStackId
 	fromStack := card.CardStack
-	game, desk, p, err = InvokeMoveCard(ctx, game, desk, p, user, fromStack, toStack, cardId)
+	game, desk, p, err = InvokeMoveCard(ctx, game, desk, p, core.Key{Kind: "User", StringID: user}, fromStack, toStack, cardId)
 	if err != nil {
 		return game, desk, p, err
 	}
@@ -767,17 +791,10 @@ func Pass(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure,
 	if len(p.Block) != 0 {
 		return game, desk, p, errors.New("堆疊不為空不能讓出優先權")
 	}
-	step := 1
-	// ID20司空先锋·张辽
-	// 每当张辽对玩家造成战斗伤害时，略过该玩家的下一个重置步骤。
-	// TODO 略过该玩家的下一个重置步骤
-	// if currentPhase == UntapStep
-	// step = 2
-
 	// 如果是重置或棄牌步驟，主動玩家呼叫讓過就是直接跳過
 	if game.CurrentPhase == UntapStep || game.CurrentPhase == DiscardStep {
 		if user == game.OffensivePlayer {
-			return InvokeNextPhase(ctx, game, desk, p, step)
+			return InvokeNextPhase(ctx, game, desk, p, 1)
 		}
 	}
 	// 沒有優先權的不能讓出優先權
@@ -789,7 +806,7 @@ func Pass(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure,
 	if game.ActionCount[game.PriorityPlayer] == 0 {
 		lastPlayer := core.Opponent(user)
 		if game.ActionCount[lastPlayer] == 0 {
-			return InvokeNextPhase(ctx, game, desk, p, step)
+			return InvokeNextPhase(ctx, game, desk, p, 1)
 		}
 	}
 	// 交換優先權並重設行動次數
@@ -909,16 +926,16 @@ func InvokeUnitDead(ctx appengine.Context, game Game, desk core.Desktop, p core.
 	return game, desk, p, nil
 }
 
-func InvokeMoveCard(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, fromStackId string, toStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
+func InvokeMoveCard(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, source core.Key, fromStackId string, toStackId string, cardId int) (Game, core.Desktop, core.Procedure, error) {
 	parameters := map[string]interface{}{
 		"fromStackId": fromStackId,
 		"toStackId":   toStackId,
 		"cardId":      float64(cardId),
 	}
 	p = core.AddBlock(ctx, p, "規則", []core.Command{
-		{User: core.UserSys, Description: "卡將移動", Parameters: parameters, Source: core.Key{Kind: "User", StringID: user}},
-		{User: core.UserSys, Description: "卡移動", Parameters: parameters, Source: core.Key{Kind: "User", StringID: user}},
-		{User: core.UserSys, Description: "卡移動後", Parameters: parameters, Source: core.Key{Kind: "User", StringID: user}},
+		{User: core.UserSys, Description: "卡將移動", Parameters: parameters, Source: source},
+		{User: core.UserSys, Description: "卡移動", Parameters: parameters, Source: source},
+		{User: core.UserSys, Description: "卡移動後", Parameters: parameters, Source: source},
 	})
 	return game, desk, p, nil
 }

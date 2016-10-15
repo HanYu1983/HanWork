@@ -48,9 +48,9 @@ func AddBlock(ctx appengine.Context, p Procedure, name string, cs []Command) Pro
 }
 
 func DeleteBlock(ctx appengine.Context, p Procedure, blockId int) Procedure {
-	head := p.Block[:blockId]
-	tail := p.Block[blockId+1:]
-	p.Block = append(head, tail...)
+	// 不能將block從列表中刪去，不然整個Block的ID都會亂掉
+	// 直接將指令指針移到最後就行了
+	p.Block[blockId].Cursor = len(p.Block[blockId].Command)
 	return p
 }
 
