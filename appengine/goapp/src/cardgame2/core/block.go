@@ -47,6 +47,13 @@ func AddBlock(ctx appengine.Context, p Procedure, name string, cs []Command) Pro
 	return p
 }
 
+func DeleteBlock(ctx appengine.Context, p Procedure, blockId int) Procedure {
+	head := p.Block[:blockId]
+	tail := p.Block[blockId+1:]
+	p.Block = append(head, tail...)
+	return p
+}
+
 func GetCommand(ctx appengine.Context, p Procedure) (Command, bool) {
 	blockLen := len(p.Block)
 	if blockLen == 0 {
