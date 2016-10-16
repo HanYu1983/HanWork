@@ -6,6 +6,7 @@ import (
 	core "cardgame2/core"
 	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
 )
 
@@ -128,6 +129,23 @@ const (
 	DamageToken = "DamageToken"
 )
 
+const (
+	UserA   = "A"
+	UserB   = "B"
+	UserSys = "sys"
+)
+
+func Opponent(user string) string {
+	switch user {
+	case UserA:
+		return UserB
+	case UserB:
+		return UserA
+	default:
+		return user
+	}
+}
+
 type CardPrototype struct {
 	CardID    string
 	Name      string
@@ -159,7 +177,6 @@ type CardInfo struct {
 }
 
 type Player struct {
-	User     string
 	LoseTurn int
 	// Hand數量上限
 	HandLimit int
@@ -235,6 +252,54 @@ func IfMatchResistance(keyword string, ctx appengine.Context, game Game, desk co
 	return true, nil
 }
 
+func MapStringsToInts(ss []string) ([]int, error) {
+	var ret []int
+	for _, s := range ss {
+		i, err := strconv.Atoi(s)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, i)
+	}
+	return ret, nil
+}
+
+// 支付消費
+// 如何支付全部由卡牌自定
+func ConsumeCostInCard(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cost string, costSlot []string, card core.Card) (Game, core.Desktop, core.Procedure, error) {
+	return game, desk, p, nil
+}
+
+// 支付費用
+// 由各個卡片實做中來呼叫
+// cost的格式是"無無魏"這樣的格式
+// cost的支付順序必須和cardIds給定的順序要一致
+func ConsumeCost(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, cost string, cardIds []int) (Game, core.Desktop, core.Procedure, error) {
+	// 將X轉為"無"序列
+	if cost == "X" {
+		panic("不在這裡處理X")
+	}
+	var err error
+	// 建立空的slot
+	// 這個slot必須被填滿
+	costSlot := make([]string, len([]rune(cost)))
+	for _, cardId := range cardIds {
+		// 支付消費
+		// 填充slot
+		game, desk, p, err = ConsumeCostInCard(ctx, game, desk, p, user, cost, costSlot, desk.Card[cardId])
+		if err != nil {
+			return game, desk, p, err
+		}
+	}
+	// 檢查slot是不是都被填滿了
+	for _, slot := range costSlot {
+		if slot == "" {
+			return game, desk, p, ErrManaIsntEnougth
+		}
+	}
+	return game, desk, p, nil
+}
+
 type GameWrapper struct {
 	Byte []byte
 }
@@ -282,76 +347,76 @@ func CreateGame(ctx appengine.Context, gameId string) (Game, core.Desktop, error
 		return Game{}, game, err
 	}
 	// 建立A玩家牌堆
-	game, err = core.AddCardStack(ctx, game, core.UserA+Library, Library)
+	game, err = core.AddCardStack(ctx, game, UserA+Library, Library)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+Hand, Hand)
+	game, err = core.AddCardStack(ctx, game, UserA+Hand, Hand)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+TerritoryZone, TerritoryZone)
+	game, err = core.AddCardStack(ctx, game, UserA+TerritoryZone, TerritoryZone)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+Graveyard, Graveyard)
+	game, err = core.AddCardStack(ctx, game, UserA+Graveyard, Graveyard)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+Position1, Position)
+	game, err = core.AddCardStack(ctx, game, UserA+Position1, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+Position2, Position)
+	game, err = core.AddCardStack(ctx, game, UserA+Position2, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+Position3, Position)
+	game, err = core.AddCardStack(ctx, game, UserA+Position3, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+Position4, Position)
+	game, err = core.AddCardStack(ctx, game, UserA+Position4, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserA+Position5, Position)
+	game, err = core.AddCardStack(ctx, game, UserA+Position5, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
 	// 建立B玩家牌堆
-	game, err = core.AddCardStack(ctx, game, core.UserB+Library, Library)
+	game, err = core.AddCardStack(ctx, game, UserB+Library, Library)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+Hand, Hand)
+	game, err = core.AddCardStack(ctx, game, UserB+Hand, Hand)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+TerritoryZone, TerritoryZone)
+	game, err = core.AddCardStack(ctx, game, UserB+TerritoryZone, TerritoryZone)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+Graveyard, Graveyard)
+	game, err = core.AddCardStack(ctx, game, UserB+Graveyard, Graveyard)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+Position1, Position)
+	game, err = core.AddCardStack(ctx, game, UserB+Position1, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+Position2, Position)
+	game, err = core.AddCardStack(ctx, game, UserB+Position2, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+Position3, Position)
+	game, err = core.AddCardStack(ctx, game, UserB+Position3, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+Position4, Position)
+	game, err = core.AddCardStack(ctx, game, UserB+Position4, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
-	game, err = core.AddCardStack(ctx, game, core.UserB+Position5, Position)
+	game, err = core.AddCardStack(ctx, game, UserB+Position5, Position)
 	if err != nil {
 		return Game{}, game, err
 	}
@@ -360,22 +425,20 @@ func CreateGame(ctx appengine.Context, gameId string) (Game, core.Desktop, error
 		return Game{}, game, err
 	}
 	playerA := Player{
-		User:      core.UserA,
 		HandLimit: 7,
 	}
 	playerB := Player{
-		User:      core.UserB,
 		HandLimit: 7,
 	}
-	offensivePlayer := core.UserA
+	offensivePlayer := UserA
 
 	players := map[string]Player{}
-	players[core.UserA] = playerA
-	players[core.UserB] = playerB
+	players[UserA] = playerA
+	players[UserB] = playerB
 
 	actionCnt := map[string]int{}
-	actionCnt[core.UserA] = -1
-	actionCnt[core.UserB] = -1
+	actionCnt[UserA] = -1
+	actionCnt[UserB] = -1
 	actionCnt[offensivePlayer] = 0
 	// 建立陣面對決
 	sgs := Game{

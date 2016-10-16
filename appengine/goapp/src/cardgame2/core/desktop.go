@@ -14,12 +14,6 @@ const (
 )
 
 const (
-	UserA   = "A"
-	UserB   = "B"
-	UserSys = "sys"
-)
-
-const (
 	DirectionUntap = 0
 	DirectionTap   = 90
 )
@@ -155,17 +149,6 @@ func TopCardInCardStack(ctx appengine.Context, desk Desktop, stackID string) (in
 		return 0, ErrCardNotExist
 	}
 	return desk.CardStack[stackID].Card[length-1], nil
-}
-
-func Opponent(user string) string {
-	switch user {
-	case UserA:
-		return UserB
-	case UserB:
-		return UserA
-	default:
-		return user
-	}
 }
 
 // 建立一場牌局

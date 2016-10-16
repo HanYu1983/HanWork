@@ -2,6 +2,7 @@ package core
 
 import (
 	"appengine/aetest"
+	"net/url"
 	"testing"
 )
 
@@ -12,12 +13,13 @@ func TestBlock(t *testing.T) {
 	}
 	defer ctx.Close()
 	var _ = ctx
-
+	UserA := "A"
+	UserSys := "Sys"
 	var p Procedure
 	var c Command
 	var has bool
 	p, err = LoadProcedure(ctx, "first game")
-	p = AddBlock(ctx, p, []Command{
+	p = AddBlock(ctx, p, "", []Command{
 		{User: UserSys, Description: "call OnMoveBF"},
 		{User: UserSys, Description: "call Move"},
 		{User: UserSys, Description: "call OnMoveAF"},
@@ -27,11 +29,11 @@ func TestBlock(t *testing.T) {
 	if c.Description != "call OnMoveBF" {
 		t.Fatal("2")
 	}
-	p = AddBlock(ctx, p, []Command{
+	p = AddBlock(ctx, p, "", []Command{
 		{
 			User:        UserA,
 			Description: "選2張{cardIds}，啟動{cardId}的{abilityId}",
-			Parameters:  map[string]interface{}{"cardId": 3.0, "abilityId": "中毒"},
+			Parameters:  url.Values{"cardId": {"3"}, "abilityId": {"中毒"}},
 		},
 	})
 	p = CompleteCommand(ctx, p, c)
@@ -47,31 +49,31 @@ func TestBlock(t *testing.T) {
 
 	// 前台上傳完消費的卡Id
 	// map裡面不用整數，因為轉成JSON後再轉回來，數字類全部變成float64
-	c.Parameters["cardIds"] = []float64{1.0, 2.0}
-	cardIds := c.Parameters["cardIds"].([]float64)
-	cardId := c.Parameters["cardId"].(float64)
-	abilityId := c.Parameters["abilityId"].(string)
+	c.Parameters["cardIds"] = []string{"1", "2"}
+	cardIds := c.Parameters["cardIds"]
+	cardId := c.Parameters["cardId"][0]
+	abilityId := c.Parameters["abilityId"][0]
 
-	if int(cardId) != 3 {
+	if cardId != "3" {
 		t.Fatal("4")
 	}
 	if abilityId != "中毒" {
 		t.Fatal("5")
 	}
 	// 啟動卡牌能力
-	p = AddBlock(ctx, p, []Command{
+	p = AddBlock(ctx, p, "", []Command{
 		{
 			User:        UserSys,
 			Description: "call 中毒(cardId)",
-			Parameters: map[string]interface{}{
-				"cardId": cardIds[0],
+			Parameters: url.Values{
+				"cardId": {cardIds[0]},
 			},
 		},
 		{
 			User:        UserSys,
 			Description: "call 中毒(cardId)",
-			Parameters: map[string]interface{}{
-				"cardId": cardIds[1],
+			Parameters: url.Values{
+				"cardId": {cardIds[1]},
 			},
 		},
 	})
@@ -81,7 +83,7 @@ func TestBlock(t *testing.T) {
 	if c.Description != "call 中毒(cardId)" {
 		t.Fatal("6")
 	}
-	if c.Parameters["cardId"] != cardIds[0] {
+	if c.Parameters["cardId"][0] != cardIds[0] {
 		t.Fatal("7")
 	}
 	p = CompleteCommand(ctx, p, c)
@@ -100,7 +102,7 @@ func TestBlock(t *testing.T) {
 	if c.Description != "call 中毒(cardId)" {
 		t.Fatal("8")
 	}
-	if c.Parameters["cardId"] != cardIds[1] {
+	if c.Parameters["cardId"][0] != cardIds[1] {
 		t.Fatal("9")
 	}
 	p = CompleteCommand(ctx, p, c)

@@ -4,6 +4,7 @@ import (
 	"appengine"
 	"appengine/datastore"
 	"encoding/json"
+	"net/url"
 )
 
 type Key struct {
@@ -16,7 +17,7 @@ type Command struct {
 	ID          int
 	User        string
 	Description string
-	Parameters  map[string]interface{}
+	Parameters  url.Values
 	Block       int
 	Source      Key
 }
