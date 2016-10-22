@@ -1,8 +1,9 @@
-package sgs
+package script
 
 import (
 	"appengine/aetest"
 	core "cardgame/core"
+	. "cardgame/sgs/core"
 	"testing"
 )
 
@@ -17,7 +18,7 @@ func TestIndex(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var stage core.Game
+	var stage core.Desktop
 	var game Game
 
 	t.Log("建立一場遊戲")
@@ -26,31 +27,29 @@ func TestIndex(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	manaStackId := core.HasCardStack(ctx, stage, core.UserA+CardStackMana)
-	handStackId := core.HasCardStack(ctx, stage, core.UserA+CardStackHand)
-
-	var cards []core.Card
+	var cards []int
 	t.Log("加入玩家卡組")
-	stage, _, err = core.AddCardsTo(ctx, stage, []string{"179"}, core.UserA+CardStackBase, core.UserA)
+	stage, _, err = core.AddCards(ctx, stage, core.UserA+CardStackBase, core.UserA, []string{"179"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	stage, cards, err = core.AddCardsTo(ctx, stage, []string{"179", "179", "179"}, core.UserA+CardStackMana, core.UserA)
+	stage, cards, err = core.AddCards(ctx, stage, core.UserA+CardStackMana, core.UserA, []string{"179", "179", "179"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	// 將加入mana的卡翻成正面
-	for idx, _ := range stage.CardStack[manaStackId].Card {
-		stage.CardStack[manaStackId].Card[idx].Face = core.FaceOpen
+	for _, cardId := range stage.CardStack[core.UserA+CardStackMana].Card {
+		stage.Card[cardId].Face = core.FaceOpen
 	}
 
 	t.Log("確認初始狀態")
-	for _, card := range cards {
+	for _, cardId := range cards {
+		card := stage.Card[cardId]
 		if card.Direction != core.DirectionUntap {
 			t.Fatal("剛加入的卡必須是直立狀態")
 		}
 	}
-	if len(stage.CardStack[handStackId].Card) != 0 {
+	if len(stage.CardStack[core.UserA+CardStackHand].Card) != 0 {
 		t.Fatal("手牌必須有0張卡")
 	}
 
@@ -72,11 +71,11 @@ func TestIndex(t *testing.T) {
 	if actions[0].Description != "使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}" {
 		t.Fatal("動作方案必須是-使用{cardIds}支付{cost}，觸發{cardId}的{abilityId}")
 	}
-	if actions[0].FromID != cards[0].ID {
+	if actions[0].FromID != cards[0] {
 		t.Fatal("觸發的卡必須是cards[0]")
 	}
 
-	info := GetCardInfo(game, cards[0])
+	info := game.CardInfo[cards[0]]
 
 	t.Log("執行的卡是", info)
 	if info.Prototype.Name != "魏领土" {
@@ -87,7 +86,7 @@ func TestIndex(t *testing.T) {
 	// 前台先複制一份
 	// 把剩下的參數補足
 	userAction := actions[0]
-	userAction.Parameters["cardIds"] = []string{cards[0].ID, cards[1].ID, cards[2].ID}
+	userAction.Parameters["cardIds"] = []int{cards[0], cards[1], cards[2]}
 
 	t.Log("取得現在的切入狀態")
 	var cut core.Cut
@@ -125,20 +124,21 @@ func TestIndex(t *testing.T) {
 
 	t.Log("確認效果後狀態")
 
-	for _, card := range stage.CardStack[manaStackId].Card {
+	for _, cardId := range stage.CardStack[core.UserA+CardStackMana].Card {
+		card := stage.Card[cardId]
 		if card.Direction != core.DirectionTap {
 			t.Fatal("執行完效果後必須是横置狀態")
 		}
-		if card.ID == cards[0].ID {
+		if card.ID == cards[0] {
 			if card.Face != core.FaceClose {
 				t.Fatal("發動的卡必須變成反面")
 			}
 		}
 	}
-	if len(stage.CardStack[handStackId].Card) != 1 {
+	if len(stage.CardStack[core.UserA+CardStackHand].Card) != 1 {
 		t.Fatal("手牌必須有1張卡")
 	}
-	if stage.CardStack[handStackId].Card[0].Ref != "179" {
+	if stage.Card[stage.CardStack[core.UserA+CardStackHand].Card[0]].Ref != "179" {
 		t.Fatal("必須抽到179的卡")
 	}
 

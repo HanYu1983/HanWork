@@ -70,10 +70,10 @@ func CreateCut(ctx appengine.Context, gameId string) error {
 // 玩家要切入的話，就呼叫AddEffect
 // 玩家不切入的話，就呼叫SolveCut
 // == 解決流程 ==
-// 前台呼叫GetLastGoal取得這個切必需要解決的Goal
-// 如果是自己的問題就解決直到GetLastGoal沒有取得問題
+// 前台呼叫GetCutLastGoal取得這個切必需要解決的Goal
+// 如果是自己的問題就解決直到GetCutLastGoal沒有取得問題
 // 注意
-// GetLastGoal取得的是那個Goal的根
+// GetCutLastGoal取得的是那個Goal的根
 // 必須呼叫GetDependGoal來取得它的依賴
 // 好處也在這，我們可以在根描述這次Goal的行為，比如play一張卡等，發動A卡的能力等
 // 反正指定User為sys，這樣可以被系統忽略掉
@@ -120,17 +120,25 @@ func GetEffects(ctx appengine.Context, gameId string) ([]Effect, error) {
 	return effects, nil
 }
 
-func AddEffect(ctx appengine.Context, gameId string, effect Effect) error {
+func AddEffect(ctx appengine.Context, gameId string, force bool, effect Effect) error {
 	var err error
-	cut, err := GetCut(ctx, gameId)
-	if cut.State != CutStateCutting {
-		return ErrNotCuttingNow
-	}
-	effects, err := GetEffects(ctx, gameId)
-	if len(effects) > 0 {
-		topEffect := effects[0]
-		if topEffect.UserID == effect.UserID {
-			return ErrYouCanNotAppendToCutBecauseLastCutIsYours
+	if force == false {
+		cut, err := GetCut(ctx, gameId)
+		if err != nil {
+			return err
+		}
+		if cut.State != CutStateCutting {
+			return ErrNotCuttingNow
+		}
+		effects, err := GetEffects(ctx, gameId)
+		if err != nil {
+			return err
+		}
+		if len(effects) > 0 {
+			topEffect := effects[0]
+			if topEffect.UserID == effect.UserID {
+				return ErrYouCanNotAppendToCutBecauseLastCutIsYours
+			}
 		}
 	}
 	effect.Time = time.Now()
@@ -187,7 +195,7 @@ func CompleteCut(ctx appengine.Context, gameId string) error {
 	return PutCut(ctx, gameId, cut)
 }
 
-func GetLastGoal(ctx appengine.Context, gameId string) (Goal, bool, error) {
+func GetCutLastGoal(ctx appengine.Context, gameId string) (Goal, bool, error) {
 	var err error
 	cut, err := GetCut(ctx, gameId)
 	if err != nil {

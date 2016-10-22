@@ -1,11 +1,14 @@
 package sgs
 
 import (
+	"appengine"
+	"appengine/datastore"
+	core "cardgame/core"
 	_ "errors"
 )
 
-func 初陣(total []Card) []Card {
-	cards := []Card{
+func 初陣(total []CardPrototype) []CardPrototype {
+	cards := []CardPrototype{
 		{
 			CardID:    "51",
 			Name:      "决斗",
@@ -56,4 +59,54 @@ func 初陣(total []Card) []Card {
 		},
 	}
 	return append(total, cards...)
+}
+
+var (
+	Packages = []func([]CardPrototype) []CardPrototype{
+		初陣,
+	}
+)
+
+func InstallPackage(ctx appengine.Context) error {
+	var total []CardPrototype
+	var key *datastore.Key
+	var err error
+	for _, pkg := range Packages {
+		total = pkg(total)
+	}
+	for _, card := range total {
+		key = CardKey(ctx, card.CardID)
+		_, err = datastore.Put(ctx, key, &card)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func GetCardPrototype(ctx appengine.Context, id string) (CardPrototype, error) {
+	key := CardKey(ctx, id)
+	var card CardPrototype
+	var err error
+	err = datastore.Get(ctx, key, &card)
+	if err != nil {
+		return CardPrototype{}, err
+	}
+	return card, nil
+}
+
+// 將台面上所有的卡牌的遊戲資料加入
+// 在將玩家的牌組加入遊戲時呼叫
+// 這個方法一定要呼叫，不然遊戲不能玩
+func InstallCardInfo(ctx appengine.Context, sgs Game, stage core.Desktop) (Game, error) {
+	for _, card := range stage.Card {
+		var err error
+		info, err := GetCardPrototype(ctx, card.Ref)
+		if err != nil {
+			return sgs, err
+		}
+		cardInfo := CardInfo{CardID: card.ID, Prototype: info}
+		sgs.CardInfo = append(sgs.CardInfo, cardInfo)
+	}
+	return sgs, nil
 }

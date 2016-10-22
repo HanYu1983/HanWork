@@ -1,0 +1,100 @@
+
+on攻擊宣告(){
+	for each allCard {
+		id = 我要不要丟一張發動回血指令
+		AddEffect()
+	}
+}
+
+
+
+Attack(id, id2){
+	1 = 攻擊宣告(id)
+	2 = 傷害(id2)
+	3 = 攻擊結束(id)
+	AddEffect()
+}
+
+移動結束(){
+	我要不要丟一張卡，發動我也可移動
+	AddEffect()
+}
+
+Move(){
+	1 = 移動宣告
+	2 = move card
+	3 = 移動結束
+	4 = 處理迎擊，突擊 
+	AddEffect()
+}
+
+
+moveCard = 真正的移動卡
+
+onMoveBefore = 
+Block {
+	[]Command{
+		"指定那張移動的卡死去",
+		"call move"
+	}
+}
+AddBlock
+
+onMoveAfter =
+if 我有迎擊
+	Block {
+		[]Command{
+		// 丟一張牌獲得迎擊
+			"drop one card and call invokeCounter"
+		}
+	}
+AddBlock
+
+
+Ability = 
+Block {
+	[]Command{
+		"call invokeFlipCard"
+		"call invokeFlipCard"
+		"call invokeFlipCard"
+		"call invokeDrawCard"
+	}
+}
+
+invokeFlipCard = 
+Block {
+	[]Command {
+		"call onFlipCardBefore"
+		"call flipCard"
+		"call onFlipCardAfter"
+	}
+}
+
+invokeCounter =
+Block {
+	[]Command {
+		"call onCounterBefore"
+		"call invokeDamage"
+		"call onCounterAfter"
+	}
+}
+
+invokeDamage = 
+Block {
+	[]Command {
+		"call onDamageBefore"
+		"call damage"
+		"call onDamageAfter"
+	}
+}
+
+invokeMove = 
+Block {
+	[]Command{
+		Command{"call onMoveBefore"},
+		Command{"call moveCard"},
+		Command{"call onMoveAfter"},
+	},
+	1
+}
+AddBlock

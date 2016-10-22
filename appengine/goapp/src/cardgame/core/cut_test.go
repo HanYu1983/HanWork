@@ -95,7 +95,7 @@ func TestCut(t *testing.T) {
 
 	var goal Goal
 	var has bool
-	goal, has, err = GetLastGoal(ctx, gameId)
+	goal, has, err = GetCutLastGoal(ctx, gameId)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +110,7 @@ func TestCut(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	goal, has, err = GetLastGoal(ctx, gameId)
+	goal, has, err = GetCutLastGoal(ctx, gameId)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,7 +134,7 @@ func TestCut(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, has, err = GetLastGoal(ctx, gameId)
+	_, has, err = GetCutLastGoal(ctx, gameId)
 	if err != nil {
 		t.Fatal(err)
 	}
