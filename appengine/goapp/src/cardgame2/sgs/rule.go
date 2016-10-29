@@ -151,31 +151,102 @@ func CardCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p c
 func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, c core.Command) (Game, core.Desktop, core.Procedure, error) {
 	var err error
 	switch c.Description {
-	case "使用{costIds}支付{cost}目標是{user}或{unitId}。使用{cardId}":
-		/*
-			costIds := c.Parameters["costIds"].([]float64)
-			cardId, err = strconv.Atoi(c.Parameters.Get("cardId"))
-			user := c.Parameters.Get("user")
-			cost := c.Parameters["cost"].(string)
-			unitId := int(c.Parameters["unitId"].(float64))
-			card := desk.Card[cardId]
-			switch card.Ref {
-			case "90":
-				// 火攻
-				game, desk, p, err = ConsumeCost(ctx, game, desk, p, user, cost, nil)
-				if err != nil {
-					return game, desk, p, err
-				}
-			}
-		*/
-	case "分配{totalDamage}中的{damage1}到{cardId}、{damage2}到{user}":
-		//damage1 := int(c.Parameters["damage1"].(float64))
-		damage1, err := strconv.Atoi(c.Parameters.Get("damage1"))
-		cardId, err := strconv.Atoi(c.Parameters.Get("cardId"))
-		damage2, err := strconv.Atoi(c.Parameters.Get("damage2"))
-		//damage2 := int(c.Parameters["damage2"].(float64))
+	case "{user}打出錦囊{cardId}":
 		user := c.Parameters.Get("user")
-		//user := c.Parameters.Get("user")
+		switch c.Cost {
+		case "{costIds}支付{cost}":
+			costIds, err := MapStringsToInts(c.Parameters["costIds"])
+			if err != nil {
+				return game, desk, p, err
+			}
+			cost := c.Parameters.Get("cost")
+			game, desk, p, err = ConsumeCost(ctx, game, desk, p, user, cost, costIds)
+			if err != nil {
+				return game, desk, p, err
+			}
+		}
+		cardId, err := strconv.Atoi(c.Parameters.Get("cardId"))
+		if err != nil {
+			return game, desk, p, err
+		}
+		var _ = cardId
+		// TODO 打出錦囊步驟
+	case "將打出錦囊":
+		// TODO
+	case "打出錦囊":
+		// TODO
+	case "打出錦囊後":
+		// TODO
+	case "{user}打出單位{cardId}到{slotNum}":
+		user := c.Parameters.Get("user")
+		switch c.Cost {
+		case "{costIds}支付{cost}":
+			costIds, err := MapStringsToInts(c.Parameters["costIds"])
+			if err != nil {
+				return game, desk, p, err
+			}
+			cost := c.Parameters.Get("cost")
+			game, desk, p, err = ConsumeCost(ctx, game, desk, p, user, cost, costIds)
+			if err != nil {
+				return game, desk, p, err
+			}
+		}
+		cardId, err := strconv.Atoi(c.Parameters.Get("cardId"))
+		if err != nil {
+			return game, desk, p, err
+		}
+		slotNum, err := strconv.Atoi(c.Parameters.Get("slotNum"))
+		if err != nil {
+			return game, desk, p, err
+		}
+		game, desk, p, err = InvokePlayCardFrom(ctx, game, desk, p, user, user+Hand, slotNum, cardId)
+		if err != nil {
+			return game, desk, p, err
+		}
+	case "使用{costIds}支付{cost}目標是{user}或{unitId}。使用{cardId}":
+		// TODO 火攻不應該實做在這裡
+		costIds, err := MapStringsToInts(c.Parameters["costIds"])
+		if err != nil {
+			return game, desk, p, err
+		}
+		cardId, err := strconv.Atoi(c.Parameters.Get("cardId"))
+		if err != nil {
+			return game, desk, p, err
+		}
+		user := c.Parameters.Get("user")
+		cost := c.Parameters.Get("cost")
+		unitId, err := strconv.Atoi(c.Parameters.Get("unitId"))
+		if err != nil {
+			return game, desk, p, err
+		}
+		game, desk, p, err = ConsumeCost(ctx, game, desk, p, user, cost, costIds)
+		if err != nil {
+			return game, desk, p, err
+		}
+		card := desk.Card[cardId]
+		switch card.Ref {
+		case "90":
+			// 火攻
+			damage := len(costIds)
+			game, desk, p, err = InvokeDamageUnit(ctx, game, desk, p, core.Key{Kind: "打出錦囊", IntID: cardId}, damage, CounterDamage, unitId)
+			if err != nil {
+				return game, desk, p, err
+			}
+		}
+	case "分配{totalDamage}中的{damage1}到{cardId}、{damage2}到{user}":
+		damage1, err := strconv.Atoi(c.Parameters.Get("damage1"))
+		if err != nil {
+			return game, desk, p, err
+		}
+		cardId, err := strconv.Atoi(c.Parameters.Get("cardId"))
+		if err != nil {
+			return game, desk, p, err
+		}
+		damage2, err := strconv.Atoi(c.Parameters.Get("damage2"))
+		if err != nil {
+			return game, desk, p, err
+		}
+		user := c.Parameters.Get("user")
 		if damage1 > 0 {
 			game, desk, p, err = InvokeDamageUnit(ctx, game, desk, p, c.Source, damage1, CounterDamage, cardId)
 			if err != nil {
@@ -190,8 +261,10 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		}
 	case "{user}選擇{num}張手牌{cardIds}廢棄":
 		user := c.Parameters.Get("user")
-		// cardIds := c.Parameters["cardIds"].([]float64)
 		cardIds, err := MapStringsToInts(c.Parameters["cardIds"])
+		if err != nil {
+			return game, desk, p, err
+		}
 		for _, cardId := range cardIds {
 			desk, err = core.MoveCard(ctx, desk, user+Hand, user+Graveyard, 0, int(cardId))
 			if err != nil {
@@ -208,6 +281,9 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		}
 	case "階段改變":
 		step, err := strconv.Atoi(c.Parameters.Get("step"))
+		if err != nil {
+			return game, desk, p, err
+		}
 		game, desk, p, err = NextPhase(ctx, game, desk, p, step)
 		if err != nil {
 			return game, desk, p, err
@@ -283,7 +359,6 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		fromStackId := c.Parameters.Get("fromStackId")
 		toStackId := c.Parameters.Get("toStackId")
 		card := desk.Card[cardId]
-
 		// ID71 汉志传承者·蒋琬：若任一单位将死去，改为将该单位洗入其拥有者的牌库，而非置入其拥有者的墓地。
 		// 将至多两张目标单位牌从墓地放进战场。他们具有神速能力。在下一个结束步骤开始时，将他们放逐。如果他们将离开战场，则改为将他们放逐，而非置入其他区域。
 		// == 以上兩個能力有重疊的部分 ==
@@ -382,7 +457,13 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		}
 	case "單位將受到傷害":
 		cardId, err := strconv.Atoi(c.Parameters.Get("cardId"))
+		if err != nil {
+			return game, desk, p, err
+		}
 		damage, err := strconv.Atoi(c.Parameters.Get("damage"))
+		if err != nil {
+			return game, desk, p, err
+		}
 		damageType := c.Parameters.Get("damageType")
 		// 如果是迎擊或是突擊，可能會遇到連續發動效果的過程中目標單位就已經死去
 		// 這個時候就忽略掉效果就行了
@@ -418,6 +499,9 @@ func BasicCommandHandler(ctx appengine.Context, game Game, desk core.Desktop, p 
 		// TODO 防止性能力
 		// 處理抵抗
 		_, powers, _, err := CheckKeyword(抵抗, ctx, game, desk, p, cardId)
+		if err != nil {
+			return game, desk, p, err
+		}
 		for _, power := range powers {
 			isMatch, err := IfMatchResistance(power, ctx, game, desk, p, cardId)
 			if err != nil {

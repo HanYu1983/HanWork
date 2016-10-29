@@ -16,6 +16,8 @@ type Key struct {
 type Command struct {
 	ID          int
 	User        string
+	Target      string
+	Cost        string
 	Description string
 	Parameters  url.Values
 	Block       int
