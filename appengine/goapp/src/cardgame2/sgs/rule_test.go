@@ -559,29 +559,23 @@ func TestBasicAttack(t *testing.T) {
 	}
 
 	t.Log("初始配置")
-	desk, unitRef22, err := core.AddCard(ctx, desk, UserA+Position1, UserA, "22")
+	game, desk, unitRef22, err := AddCard(ctx, game, desk, UserA+Position1, UserA, "22")
 	if err != nil {
 		t.Fatal(err)
 	}
-	desk, unitRef85, err := core.AddCard(ctx, desk, UserA+Position3, UserA, "85")
+	game, desk, unitRef85, err := AddCard(ctx, game, desk, UserA+Position3, UserA, "85")
 	if err != nil {
 		t.Fatal(err)
 	}
-	desk, unitRef105, err := core.AddCard(ctx, desk, UserA+Position5, UserA, "105")
+	game, desk, unitRef105, err := AddCard(ctx, game, desk, UserA+Position5, UserA, "105")
 	if err != nil {
 		t.Fatal(err)
 	}
-	desk, unitRef105InUserB, err := core.AddCard(ctx, desk, UserB+Hand, UserB, "105")
+	game, desk, unitRef105InUserB, err := AddCard(ctx, game, desk, UserB+Hand, UserB, "105")
 	if err != nil {
 		t.Fatal(err)
 	}
-	desk, unitRef28InUserB, err := core.AddCard(ctx, desk, UserB+Position2, UserB, "28")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log("安裝卡組資訊")
-	game, err = InstallCardInfo(ctx, game, desk)
+	game, desk, unitRef28InUserB, err := AddCard(ctx, game, desk, UserB+Position2, UserB, "28")
 	if err != nil {
 		t.Fatal(err)
 	}

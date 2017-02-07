@@ -198,3 +198,28 @@ func InstallCardInfo(ctx appengine.Context, sgs Game, stage core.Desktop) (Game,
 	}
 	return sgs, nil
 }
+
+func AddCard(ctx appengine.Context, game Game, desk core.Desktop, stack string, user string, cardRef string) (Game, core.Desktop, int, error) {
+	var err error
+	desk, cardId, err := core.AddCard(ctx, desk, stack, user, cardRef)
+	if err != nil {
+		return game, desk, 0, err
+	}
+	info, err := GetCardPrototype(ctx, cardRef)
+	if err != nil {
+		return game, desk, 0, err
+	}
+	cardInfo := CardInfo{
+		CardID:        cardId,
+		Prototype:     info,
+		ControlPlayer: user,
+	}
+	shouldExpend := cardId >= len(game.CardInfo)
+	if shouldExpend {
+		newList := make([]CardInfo, cardId+1)
+		copy(newList, game.CardInfo)
+		newList[cardId] = cardInfo
+		game.CardInfo = newList
+	}
+	return game, desk, cardId, nil
+}

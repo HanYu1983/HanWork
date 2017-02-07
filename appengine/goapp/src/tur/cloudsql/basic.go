@@ -11,7 +11,7 @@ import (
 // 這個實例只要建立一個
 var db *sql.DB
 
-func init() {
+func initDB() {
 	var dbname string
 	// 是否在本機
 	if appengine.IsDevAppServer() {
