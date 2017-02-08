@@ -678,12 +678,13 @@ func TakeCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p core.Pr
 func PlayCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p core.Procedure, user string, fromStackId string, slotNum int, cardId int) (Game, core.Desktop, core.Procedure, error) {
 	var err error
 	targetStackId := PositionID(user, slotNum)
+	// 先處理下單位，再處理替任
 	game, desk, p, err = InvokeMoveCard(ctx, game, desk, p, core.Key{Kind: "User", StringID: user}, fromStackId, targetStackId, cardId)
 	if err != nil {
 		return game, desk, p, err
 	}
 	// 處理替任
-	// 再次提醒：後放入堆疊的先處理，所以替任要放在後面
+	// 再次提醒：後放入堆疊的先處理，所以替任處理要放在後面
 	// 115.1. 若一个单位将进入的阵地上有其他单位，那么原先的单位会被放逐（移出游戏），这个
 	// 过程叫做替任。
 	// 115.2. 替任为一种特殊动作，不会进入堆叠，但由于替任从而触发的单位离场能力会置入堆叠。
@@ -692,7 +693,7 @@ func PlayCardFrom(ctx appengine.Context, game Game, desk core.Desktop, p core.Pr
 	if hasUnit {
 		existCardId := desk.CardStack[targetStackId].Card[0]
 		existCard := desk.Card[existCardId]
-		game, desk, p, err = InvokeMoveCard(ctx, game, desk, p, core.Key{Kind: "規則-替任", StringID: UserSys}, targetStackId, existCard.Owner+Graveyard, existCardId)
+		game, desk, p, err = InvokeMoveCard(ctx, game, desk, p, core.Key{Kind: "規則-替任", StringID: UserSys}, targetStackId, existCard.Owner+ExileZone, existCardId)
 		if err != nil {
 			return game, desk, p, err
 		}

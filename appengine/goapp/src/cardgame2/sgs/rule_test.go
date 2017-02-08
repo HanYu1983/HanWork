@@ -650,7 +650,7 @@ func TestBasicAttack(t *testing.T) {
 		t.Fatal("玩家B必須有4個傷害標記")
 	}
 
-	t.Log("產生孫權在青洲探馬對面陣地")
+	t.Log("玩家B打出孫權在青洲探馬對面陣地")
 	desk, err = core.MoveCard(ctx, desk, UserB+Hand, UserB+Position1, 0, unitRef105InUserB)
 	if err != nil {
 		t.Fatal(err)
@@ -670,6 +670,9 @@ func TestBasicAttack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	handleLoop()
+	// 呼叫多次並不會造成任何副作用
+	handleLoop()
 	handleLoop()
 
 	if len(game.CardInfo[unitRef105InUserB].Token) != 1 {
