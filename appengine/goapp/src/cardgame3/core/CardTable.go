@@ -27,13 +27,11 @@ type Card struct {
 	Ref       string
 	Face      int
 	Direction int
-	Owner     string
 	CardStack string
 }
 
 // 資料設計應該要仿照關聯式資料庫才正確
 type CardTable struct {
-	ID string
 	Card map[string]Card
 	CardStack map[string]CardStack
 }
@@ -44,9 +42,8 @@ var (
 	ErrCardNotExist          = errors.New("card not exist")
 )
 
-func NewCardTable(id string) CardTable {
+func NewCardTable(ctx appengine.Context) CardTable {
 	return CardTable{
-		ID: id,
 		Card: map[string]Card{},
 		CardStack: map[string]CardStack{},
 	}
@@ -61,13 +58,13 @@ func AddCardStack(ctx appengine.Context, desk CardTable, stackName string, t str
 	return desk, nil
 }
 
-func AddCard(ctx appengine.Context, desk CardTable, stackName string, owner string, ref string) (CardTable, string, error) {
+func AddCard(ctx appengine.Context, desk CardTable, stackName string, ref string) (CardTable, string, error) {
 	_, has := desk.CardStack[stackName]
 	if has == false {
 		return desk, "", ErrCardStackNotExist
 	}
 	cardId := uuid.NewV4().String()
-	desk.Card[cardId] = Card{ID: cardId, Ref: ref, Owner: owner, CardStack: stackName}
+	desk.Card[cardId] = Card{ID: cardId, Ref: ref, CardStack: stackName}
 
 	cardStack := desk.CardStack[stackName]
 	cardStack.Card = append(cardStack.Card, cardId)
@@ -75,12 +72,12 @@ func AddCard(ctx appengine.Context, desk CardTable, stackName string, owner stri
 	return desk, cardId, nil
 }
 
-func AddCards(ctx appengine.Context, desk CardTable, stackName string, owner string, refs []string) (CardTable, []string, error) {
+func AddCards(ctx appengine.Context, desk CardTable, stackName string, refs []string) (CardTable, []string, error) {
 	var cards []string
 	var card string
 	var err error
 	for _, ref := range refs {
-		desk, card, err = AddCard(ctx, desk, stackName, owner, ref)
+		desk, card, err = AddCard(ctx, desk, stackName, ref)
 		if err != nil {
 			return desk, nil, err
 		}
