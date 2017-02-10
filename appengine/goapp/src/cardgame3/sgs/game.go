@@ -3,7 +3,6 @@ package sgs
 import (
 	"appengine"
 	core "cardgame3/core"
-	"github.com/satori/go.uuid"
 	"errors"
 	"strconv"
 	"strings"
@@ -222,7 +221,7 @@ var (
 	ErrUnitIsntAtSlot        = errors.New("unit isnt at alot")
 )
 
-func NewGame(ctx appengine.Context) (Game, error) {
+func NewGame(ctx appengine.Context, gameId string) (Game, error) {
 	var table core.CardTable
 	var err error
 	// 建立台面
@@ -320,7 +319,7 @@ func NewGame(ctx appengine.Context) (Game, error) {
 	actionCnt[offensivePlayer] = 0
 
 	return Game{
-		ID:              uuid.NewV4().String(),
+		ID:              gameId,
 		CardTable:       table,
 		Procedure:       core.NewProcedure(ctx),
 		CardState:       map[string]CardState{},

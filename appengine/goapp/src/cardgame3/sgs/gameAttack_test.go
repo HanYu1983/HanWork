@@ -5,6 +5,7 @@ import (
 	"testing"
 	"appengine"
 	core "cardgame3/core"
+	"appengine/datastore"
 )
 
 func TestBasicAttack(t *testing.T) {
@@ -19,7 +20,7 @@ func TestBasicAttack(t *testing.T) {
 	var table core.CardTable
 
 	t.Log("建立遊戲")
-	game, err = NewGame(ctx)
+	game, err = NewGame(ctx, "temp")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,6 +142,14 @@ func TestBasicAttack(t *testing.T) {
 	game.Procedure = core.AddBlock(ctx, game.Procedure, "規則", []core.Command{
 		unitRef22AttackCmd,
 	})
+
+	t.Log("測試記錄和讀取")
+	groupKey := datastore.NewKey(ctx, "Group", "temp", 0, nil)
+	SaveGame(ctx, game, groupKey)
+	game, err = LoadGame (ctx, game.ID, groupKey)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	game, _ = handleLoop(ctx, game)
 	// 呼叫多次並不會造成任何副作用

@@ -17,7 +17,7 @@ func TestPhase(t *testing.T) {
 
 	var game Game
 
-	game, err = NewGame(ctx)
+	game, err = NewGame(ctx, "temp")
 	if err != nil {
 		t.Fatal(err.Error())
 	}

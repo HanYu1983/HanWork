@@ -7,6 +7,8 @@ import (
 	channel "tur/channel"
 	cookie "tur/cookie"
 	img "tur/image"
+	mux "github.com/gorilla/mux"
+	sgs "cardgame3/http"
 )
 
 func init() {
@@ -29,6 +31,13 @@ func init() {
 	http.HandleFunc("/go/cardgame/ask/goal/dep", ask.GetDependsGoal)
 	http.HandleFunc("/go/cardgame/ask/solve", ask.SolveGoalHttp)
 	http.HandleFunc("/go/cardgame/ask/step", ask.StepGoalHttp)
+
+	r := mux.NewRouter()
+	r.HandleFunc("/go/sgs/room", sgs.RoomList).Methods("GET")
+	r.HandleFunc("/go/sgs/room", sgs.NewRoom).Methods("POST")
+	r.HandleFunc("/go/sgs/room/{roomId}/join", sgs.JoinRoom).Methods("POST")
+	r.HandleFunc("/go/sgs/room/{roomId}/validate", sgs.ValidateRoom).Methods("POST")
+	http.Handle("/go/sgs/", r)
 }
 
 func SayHi(w http.ResponseWriter, r *http.Request) {
