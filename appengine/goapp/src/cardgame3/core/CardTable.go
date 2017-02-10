@@ -99,10 +99,12 @@ func MoveCard(ctx appengine.Context, desk CardTable, fromStack string, toStack s
 	var has bool
 	_, has = desk.CardStack[fromStack]
 	if has == false {
+		ctx.Warningf("fromStack:%v", fromStack)
 		return desk, ErrCardStackNotExist
 	}
 	_, has = desk.CardStack[toStack]
 	if has == false {
+		ctx.Warningf("toStack:%v", toStack)
 		return desk, ErrCardStackNotExist
 	}
 	var err error

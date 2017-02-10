@@ -64,7 +64,7 @@ func TestPhase(t *testing.T) {
 	}
 
 	t.Log("重置階段，主動玩家直接呼叫讓過")
-	game, err = Pass(ctx, game, UserA)
+	game, err = PlayerPass(ctx, game, UserA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func TestPhase(t *testing.T) {
 		t.Fatal("優先權必須在UserA")
 	}
 	t.Log("準備階段玩家A讓過")
-	game, err = Pass(ctx, game, UserA)
+	game, err = PlayerPass(ctx, game, UserA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestPhase(t *testing.T) {
 	}
 
 	t.Log("準備階段玩家A再次讓過")
-	game, err = Pass(ctx, game, UserA)
+	game, err = PlayerPass(ctx, game, UserA)
 	if err != nil {
 		if err.Error() != "優先權在對方身上" {
 			t.Fatal(err)
@@ -100,7 +100,7 @@ func TestPhase(t *testing.T) {
 	}
 
 	t.Log("準備階段玩家B讓過")
-	game, err = Pass(ctx, game, UserB)
+	game, err = PlayerPass(ctx, game, UserB)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,11 +117,11 @@ func TestPhase(t *testing.T) {
 	}
 
 	t.Log("玩家A,B讓過，進入行動階段")
-	game, err = Pass(ctx, game, UserA)
+	game, err = PlayerPass(ctx, game, UserA)
 	if err != nil {
 		t.Fatal(err)
 	}
-	game, err = Pass(ctx, game, UserB)
+	game, err = PlayerPass(ctx, game, UserB)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,11 +131,11 @@ func TestPhase(t *testing.T) {
 	}
 
 	t.Log("玩家A,B讓過，進入結束階段")
-	game, err = Pass(ctx, game, UserA)
+	game, err = PlayerPass(ctx, game, UserA)
 	if err != nil {
 		t.Fatal(err)
 	}
-	game, err = Pass(ctx, game, UserB)
+	game, err = PlayerPass(ctx, game, UserB)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,11 +145,11 @@ func TestPhase(t *testing.T) {
 	}
 
 	t.Log("玩家A,B讓過，進入棄牌階段")
-	game, err = Pass(ctx, game, UserA)
+	game, err = PlayerPass(ctx, game, UserA)
 	if err != nil {
 		t.Fatal(err)
 	}
-	game, err = Pass(ctx, game, UserB)
+	game, err = PlayerPass(ctx, game, UserB)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,7 +158,7 @@ func TestPhase(t *testing.T) {
 		t.Fatal("現在必須是棄牌階段")
 	}
 
-	game, err = Pass(ctx, game, UserA)
+	game, err = PlayerPass(ctx, game, UserA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,7 +175,7 @@ func TestPhase(t *testing.T) {
 
 	t.Log("=========換玩家B==========")
 	t.Log("重置階段，主動玩家直接呼叫讓過")
-	game, err = Pass(ctx, game, UserB)
+	game, err = PlayerPass(ctx, game, UserB)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -191,7 +191,7 @@ func TestPhase(t *testing.T) {
 	}
 
 	t.Log("準備階段玩家B讓過")
-	game, err = Pass(ctx, game, UserB)
+	game, err = PlayerPass(ctx, game, UserB)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,7 +200,7 @@ func TestPhase(t *testing.T) {
 	}
 
 	t.Log("準備階段玩家B再次讓過")
-	game, err = Pass(ctx, game, UserB)
+	game, err = PlayerPass(ctx, game, UserB)
 	if err != nil {
 		if err.Error() != "優先權在對方身上" {
 			t.Fatal(err)
@@ -211,7 +211,7 @@ func TestPhase(t *testing.T) {
 	}
 
 	t.Log("準備階段玩家A讓過")
-	game, err = Pass(ctx, game, UserA)
+	game, err = PlayerPass(ctx, game, UserA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,11 +225,11 @@ func TestPhase(t *testing.T) {
 	}
 
 	t.Log("玩家A,B讓過，進入行動階段")
-	game, err = Pass(ctx, game, UserB)
+	game, err = PlayerPass(ctx, game, UserB)
 	if err != nil {
 		t.Fatal(err)
 	}
-	game, err = Pass(ctx, game, UserA)
+	game, err = PlayerPass(ctx, game, UserA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,11 +239,11 @@ func TestPhase(t *testing.T) {
 	}
 
 	t.Log("玩家A,B讓過，進入結束階段")
-	game, err = Pass(ctx, game, UserB)
+	game, err = PlayerPass(ctx, game, UserB)
 	if err != nil {
 		t.Fatal(err)
 	}
-	game, err = Pass(ctx, game, UserA)
+	game, err = PlayerPass(ctx, game, UserA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -257,11 +257,11 @@ func TestPhase(t *testing.T) {
 	}
 
 	t.Log("玩家A,B讓過，進入棄牌階段")
-	game, err = Pass(ctx, game, UserB)
+	game, err = PlayerPass(ctx, game, UserB)
 	if err != nil {
 		t.Fatal(err)
 	}
-	game, err = Pass(ctx, game, UserA)
+	game, err = PlayerPass(ctx, game, UserA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -291,7 +291,7 @@ func TestPhase(t *testing.T) {
 		t.Fatal("手牌又回復成7張")
 	}
 
-	game, err = Pass(ctx, game, UserB)
+	game, err = PlayerPass(ctx, game, UserB)
 	if err != nil {
 		t.Fatal(err)
 	}
