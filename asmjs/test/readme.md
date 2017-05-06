@@ -4,6 +4,6 @@
 ## 測試
 1. cd project/asmjs/test
 1. 改變compile.sh中的路徑
-1. sh compile.sh
+1. sh compile.sh(產生game.js)
 1. 打開main.html並看log
 1. 完成
