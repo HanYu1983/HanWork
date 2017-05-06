@@ -1,0 +1,23 @@
+<html>
+	<body>
+		<script src='game.js'></script>
+		<script>
+			function onInitOK(){
+				console.log("call from c : onInitOK")
+			}
+			
+			var asm = Module
+			var onInit = asm.cwrap('onInit', 'void', [])
+			var onUpdate = asm.cwrap('onUpdate', 'void', [])
+			var onDestroy = asm.cwrap('onDestroy', 'void', [])
+			var gameData = asm.cwrap('gameData', 'string', [])
+			onInit();
+			// game loop
+			for(var i=0; i<5; ++i){
+				onUpdate(1);
+				console.log(gameData())
+			}
+			onDestroy();
+		</script>
+	</body>
+</html>

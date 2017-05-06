@@ -4,11 +4,18 @@
 #include <emscripten.h>
 #include "cJSON.h"
 
+// js interop
 void onInit();
 void onUpdate(float t);
 void onDestroy();
 char *gameData();
 
+// utils
+void callJs(char *msg){
+	emscripten_run_script(msg);
+}
+
+// game logic
 typedef struct {
 	int id;
 	int x, y;
@@ -19,10 +26,6 @@ typedef struct {
 	Enemy *enemies;
 	int enemyCount;
 } App;
-
-void callJs(char *msg){
-	emscripten_run_script(msg);
-}
 
 void loadApp(App *app, int enemyCount){
 	memset(app, 0, sizeof(App));
@@ -47,10 +50,13 @@ void updateApp(App *app, float t){
 	}
 }
 
+// binding
 App _app;
 
 void onInit(){
 	loadApp(&_app, 5);
+	// 只有在html的環境中有效果!
+	callJs("onInitOK()");
 }
 
 void onUpdate(float t){

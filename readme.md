@@ -5,6 +5,7 @@
 1. [使用Elm](elm/)
 1. [App Engine基本使用](appengine/)
 1. [App Engine卡牌遊戲](appengine/goapp/src/tur/cardgame/)
+1. [使用asmjs](asmjs/)
 
 ## 前朝遺臣
 1. [Python Demo](old/pythongamedemo/)

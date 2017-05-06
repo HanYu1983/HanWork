@@ -10,4 +10,5 @@ for(var i=0; i<5; ++i){
   onUpdate(1);
   console.log(gameData())
 }
+
 onDestroy();
