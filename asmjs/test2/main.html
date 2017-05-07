@@ -1,0 +1,11 @@
+<html>
+	<body>
+		<canvas id='webgl'></canvas>
+		<script src='lib.js'></script>
+		<script>
+			var asm = Module
+			var test = asm.cwrap('test', 'void', [])
+			test();
+		</script>
+	</body>
+</html>
