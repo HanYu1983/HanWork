@@ -9,5 +9,8 @@
   },
   "scripts": {
     "compile": "gulp"
+  },
+  "dependencies": {
+    "elm": "^0.16.0"
   }
 }

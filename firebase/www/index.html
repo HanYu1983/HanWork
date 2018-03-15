@@ -1,0 +1,10 @@
+<script src='build/js/elm-main.js'></script>
+<script>
+var app = Elm.worker(Elm.Main, {cmd:""})
+
+app.ports.cmd.send("app start")
+			
+app.ports.model.subscribe(function(info){
+	console.log(info)
+})
+</script>
