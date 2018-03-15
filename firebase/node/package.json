@@ -1,0 +1,13 @@
+{
+  "name": "HanWork",
+  "devDependencies": {
+    "gulp": "*",
+    "gulp-util": "2.2.14",
+    "gulp-plumber": "*",
+    "gulp-elm": "*",
+    "gulp-browserify": "*"
+  },
+  "scripts": {
+    "compile": "gulp"
+  }
+}
