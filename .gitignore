@@ -7,3 +7,5 @@ github.com/
 pkg/
 # goglang
 appengine/goapp/.idea/
+gradle/
+.*/
