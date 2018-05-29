@@ -25,7 +25,8 @@ public class ChooserActivity extends AppCompatActivity implements AdapterView.On
             IdTokenActivity.class,
             ServerAuthCodeActivity.class,
             RestApiActivity.class,
-            TestActivity.class
+            TestActivity.class,
+            FBLoginActivity.class
     };
 
     private static final int[] DESCRIPTION_IDS = new int[] {
@@ -34,6 +35,7 @@ public class ChooserActivity extends AppCompatActivity implements AdapterView.On
             R.string.desc_id_token_activity,
             R.string.desc_auth_code_activity,
             R.string.desc_rest_activity,
+            R.string.desc_auth_code_activity,
             R.string.desc_auth_code_activity,
     };
 

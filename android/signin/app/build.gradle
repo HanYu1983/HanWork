@@ -58,5 +58,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test:rules:0.5'
     androidTestImplementation 'com.android.support.test.uiautomator:uiautomator-v18:2.1.2'
     androidTestImplementation 'com.android.support:support-annotations:27.1.0'
-}
 
+    implementation 'com.facebook.android:facebook-login:[4,5)'
+}
