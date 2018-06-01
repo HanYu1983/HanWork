@@ -26,7 +26,8 @@ public class ChooserActivity extends AppCompatActivity implements AdapterView.On
             ServerAuthCodeActivity.class,
             RestApiActivity.class,
             TestUnity.class,
-            FBLoginActivity.class
+            FBLoginActivity.class,
+            TestBilling.class
     };
 
     private static final int[] DESCRIPTION_IDS = new int[] {

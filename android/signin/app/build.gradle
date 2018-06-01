@@ -13,7 +13,7 @@ android {
     compileSdkVersion 27
     buildToolsVersion '27.0.3'
     defaultConfig {
-        applicationId "com.example.johny.testgooglelogin"
+        applicationId "org.hanvic.testdemo"
         minSdkVersion 18
         targetSdkVersion 27
         versionCode 1
