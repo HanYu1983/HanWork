@@ -31,25 +31,20 @@ public class ChooserActivity extends AppCompatActivity implements AdapterView.On
     private static final Class[] CLASSES = new Class[]{
             GoogleLoginActivity.class,
             GooglePlayBillingActivity.class,
-            SignInActivity.class,
-            SignInActivityWithDrive.class,
             IdTokenActivity.class,
-            ServerAuthCodeActivity.class,
-            RestApiActivity.class,
-            FBLoginActivity.class,
-            TestBilling.class,
+            org.hanvic.testdemo.FBLoginActivity.class,
             UnityActivityX.class,
-            TestActivity.class,
-            TestKt2.class
     };
 
     private HashMap<Class, String> DESCRIPTION_IDS = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
+        super.onCreate(savedInstanceState);
         DESCRIPTION_IDS.put(GoogleLoginActivity.class, "測試谷歌登入");
         DESCRIPTION_IDS.put(GooglePlayBillingActivity.class, "測試谷歌內購");
+        DESCRIPTION_IDS.put(UnityActivityX.class, "運行UNITY");
+        DESCRIPTION_IDS.put(org.hanvic.testdemo.FBLoginActivity.class, "Facebook Login");
 
         setContentView(R.layout.activity_chooser);
         // Set up ListView and Adapter
