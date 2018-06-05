@@ -12,9 +12,11 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.example.testlibrary.GooglePlayBilling;
 import com.example.testlibrary.UnityActivityX;
 
 import org.hanvic.testdemo.GoogleLoginActivity;
+import org.hanvic.testdemo.GooglePlayBillingActivity;
 import org.hanvic.testdemo.TestKt2;
 
 import java.util.HashMap;
@@ -27,6 +29,8 @@ import java.util.HashMap;
 public class ChooserActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
     private static final Class[] CLASSES = new Class[]{
+            GoogleLoginActivity.class,
+            GooglePlayBillingActivity.class,
             SignInActivity.class,
             SignInActivityWithDrive.class,
             IdTokenActivity.class,
@@ -36,7 +40,6 @@ public class ChooserActivity extends AppCompatActivity implements AdapterView.On
             TestBilling.class,
             UnityActivityX.class,
             TestActivity.class,
-            GoogleLoginActivity.class,
             TestKt2.class
     };
 
@@ -46,6 +49,7 @@ public class ChooserActivity extends AppCompatActivity implements AdapterView.On
     protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
         DESCRIPTION_IDS.put(GoogleLoginActivity.class, "測試谷歌登入");
+        DESCRIPTION_IDS.put(GooglePlayBillingActivity.class, "測試谷歌內購");
 
         setContentView(R.layout.activity_chooser);
         // Set up ListView and Adapter

@@ -65,6 +65,7 @@
             </intent-filter>
         </activity>
         <activity android:name="org.hanvic.testdemo.GoogleLoginActivity" />
+        <activity android:name="org.hanvic.testdemo.GooglePlayBillingActivity" />
         <activity android:name="org.hanvic.testdemo.TestKt2" />
         <activity android:name=".TestBilling"></activity>
     </application>
