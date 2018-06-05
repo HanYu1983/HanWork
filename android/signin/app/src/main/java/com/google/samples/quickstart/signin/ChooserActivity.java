@@ -12,6 +12,13 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.example.testlibrary.UnityActivityX;
+
+import org.hanvic.testdemo.GoogleLoginActivity;
+import org.hanvic.testdemo.TestKt2;
+
+import java.util.HashMap;
+
 /**
  * Simple list-based Activity to redirect to one of the other Activities. The code here is
  * uninteresting, {@link SignInActivity} is a good place to start if you are curious about
@@ -25,27 +32,22 @@ public class ChooserActivity extends AppCompatActivity implements AdapterView.On
             IdTokenActivity.class,
             ServerAuthCodeActivity.class,
             RestApiActivity.class,
-            TestUnity.class,
             FBLoginActivity.class,
-            TestBilling.class
+            TestBilling.class,
+            UnityActivityX.class,
+            TestActivity.class,
+            GoogleLoginActivity.class,
+            TestKt2.class
     };
 
-    private static final int[] DESCRIPTION_IDS = new int[] {
-            R.string.desc_sign_in_activity,
-            R.string.desc_sign_in_activity_scopes,
-            R.string.desc_id_token_activity,
-            R.string.desc_auth_code_activity,
-            R.string.desc_rest_activity,
-            R.string.desc_auth_code_activity,
-            R.string.desc_auth_code_activity,
-            R.string.desc_auth_code_activity,
-    };
+    private HashMap<Class, String> DESCRIPTION_IDS = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_chooser);
+            super.onCreate(savedInstanceState);
+        DESCRIPTION_IDS.put(GoogleLoginActivity.class, "測試谷歌登入");
 
+        setContentView(R.layout.activity_chooser);
         // Set up ListView and Adapter
         ListView listView = findViewById(R.id.list_view);
 
@@ -66,7 +68,7 @@ public class ChooserActivity extends AppCompatActivity implements AdapterView.On
 
         private Context mContext;
         private Class[] mClasses;
-        private int[] mDescriptionIds;
+        private HashMap<Class, String> mDescriptionIds;
 
         public MyArrayAdapter(Context context, int resource, Class[] objects) {
             super(context, resource, objects);
@@ -85,12 +87,14 @@ public class ChooserActivity extends AppCompatActivity implements AdapterView.On
             }
 
             ((TextView) view.findViewById(android.R.id.text1)).setText(mClasses[position].getSimpleName());
-            ((TextView) view.findViewById(android.R.id.text2)).setText(mDescriptionIds[position]);
-
+            if(mDescriptionIds.containsKey(mClasses[position])){
+                String des = mDescriptionIds.get(mClasses[position]);
+                ((TextView) view.findViewById(android.R.id.text2)).setText(des);
+            }
             return view;
         }
 
-        public void setDescriptionIds(int[] descriptionIds) {
+        public void setDescriptionIds(HashMap<Class, String> descriptionIds) {
             mDescriptionIds = descriptionIds;
         }
     }

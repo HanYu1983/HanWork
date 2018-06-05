@@ -64,7 +64,8 @@
                 <data android:scheme="@string/fb_login_protocol_scheme" />
             </intent-filter>
         </activity>
-        <activity android:name=".TestUnity" />
+        <activity android:name="org.hanvic.testdemo.GoogleLoginActivity" />
+        <activity android:name="org.hanvic.testdemo.TestKt2" />
         <activity android:name=".TestBilling"></activity>
     </application>
 

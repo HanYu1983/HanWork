@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.testlibrary" >
+
+    <application>
+        <activity android:name=".TestKtActivity" />
+        <activity android:name=".UnityActivityX" />
+    </application>
+</manifest>
