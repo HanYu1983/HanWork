@@ -37,3 +37,4 @@
 
 其它
 - 請參照本[github](https://github.com/HanYu1983/HanWork)
+- [上善若水線上卡牌平台實況影片](https://www.youtube.com/watch?v=TX4Rn182urU&list=PLcReQCVhkEm2HQEbO5YkSEd_LGjMrj0vA)
