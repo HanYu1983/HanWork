@@ -21,6 +21,9 @@
 
 [三國鋼彈](spec/)
 
+## 漢化作品
+[首頁](translate/)
+
 ## 履歷
 
 [github履歷](resume/)
