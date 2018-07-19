@@ -1,6 +1,7 @@
 # 罪與罰10翻譯
 
-請參照[生肉](https://www.k886.net/index-look-name-%E7%BD%AA%E7%BD%B0%E6%97%A5%E6%96%87-cid-9720-id-31405)
+[漢化版1~9](https://tw.manhuagui.com/comic/14105/)
+[日文版10](https://www.k886.net/index-look-name-%E7%BD%AA%E7%BD%B0%E6%97%A5%E6%96%87-cid-9720-id-31405)
 
 ## 開始
 
