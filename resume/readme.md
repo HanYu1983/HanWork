@@ -22,6 +22,15 @@
 - 後端: golang/nodejs/java
 - PC端: c#/java/unity
 
+目標平台
+- web app
+- mobile app
+- PC app
+- chrome extension
+- dapp
+- Google App Engine
+- Google FireBase
+
 語言
 - 英文可讀原文資料(自我技術學習的程度)
 - 日文JLPT3左右
@@ -38,3 +47,5 @@
 其它
 - 請參照本[github](https://github.com/HanYu1983/HanWork)
 - [上善若水線上卡牌平台實況影片](https://www.youtube.com/watch?v=TX4Rn182urU&list=PLcReQCVhkEm2HQEbO5YkSEd_LGjMrj0vA)
+- Chrome extension[自動下注程式](https://www.youtube.com/watch?v=FM9C7HB2kVs&feature=youtu.be)
+- dapp 使用metamask[You Are My Diamond](https://hanyu1983.github.io/Test2/YouAreMyDiamond/index.html)
