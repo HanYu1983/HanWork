@@ -49,3 +49,7 @@
 - [上善若水線上卡牌平台實況影片](https://www.youtube.com/watch?v=TX4Rn182urU&list=PLcReQCVhkEm2HQEbO5YkSEd_LGjMrj0vA)
 - Chrome extension[自動下注程式](https://www.youtube.com/watch?v=FM9C7HB2kVs&feature=youtu.be)
 - dapp 使用metamask You Are My Diamond
+
+聯絡我
+- hanyushome@gmail.com
+- [facebook](https://www.facebook.com/han.yu.100)
