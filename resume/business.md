@@ -24,5 +24,6 @@
 # 聯絡方式
 余漢君  
 - 0981734540
+- hanyushome@gmail.com
 - [臉書](https://www.facebook.com/han.yu.100)
 - [履歷](readme.md)
