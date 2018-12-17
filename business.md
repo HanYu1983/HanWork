@@ -21,5 +21,5 @@
 # 聯絡方式
 余漢君  
 0981734540  
-[臉書](https://www.facebook.com/)
-[履歷](resume.md)
+[臉書](https://www.facebook.com/)  
+[履歷](resume.md)  
