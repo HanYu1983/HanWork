@@ -50,6 +50,8 @@
 - Chrome extension[自動下注程式](https://www.youtube.com/watch?v=FM9C7HB2kVs&feature=youtu.be)
 - dapp 使用metamask You Are My Diamond
 
+[業務合作](business.md)
+
 聯絡我
 - hanyushome@gmail.com
-- [facebook](https://www.facebook.com/han.yu.100)
+- [臉書](https://www.facebook.com/han.yu.100)
