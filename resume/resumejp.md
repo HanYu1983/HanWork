@@ -8,7 +8,7 @@
 プロジェクトを全面的に理解でき、仕事を穏便に進める  
 時にコンサルの存在として、同僚の仕事の問題を解決する  
 ゲーム開発のはUnityを愛用  
-関数式を好むため、時にコンパイル言語やスタイルを使います(clojure,livescript,elm)  
+関数式を好むため、時にコンパイル言語を使います(clojure,livescript,elm)  
 1. html/js
 2. unity/c#
 3. 開発ツール/python/node
@@ -29,13 +29,13 @@ Unityとandroid/ios連動するプラグイン開発、日本にゲームサー�
 ### ゲームエンジニア
 2013/04~2014/06  
 遊悅科技股份有限公司  
-半年海外で仕事しました、Unityでゲーム開発、pythonで開発ツール
+半年フィリピンで仕事、Unityでゲーム開発、pythonで開発ツール
 
 ### ゲームエンジニア
 2011/12~2013/01  
 遊戲夢工埸  
-[iosゲームSheepRunRun](https://www.youtube.com/watch?v=KLzvoD4S6f0)  
-[flashゲーム](https://www.youtube.com/watch?v=iJNzlbMn0bs)  
+iosゲーム[SheepRunRun](https://www.youtube.com/watch?v=KLzvoD4S6f0)  
+flashゲーム[替身戒](https://www.youtube.com/watch?v=iJNzlbMn0bs)  
 
 ### エンジニア
 2010/04~2011/12  
@@ -53,3 +53,4 @@ Unityとandroid/ios連動するプラグイン開発、日本にゲームサー�
 ## その他
 - [facebook](https://www.facebook.com/han.yu.100)
 - [中国経歴書](readme.md)
+- [日本語翻訳作品](https://github.com/HanYu1983/HanWork/blob/master/translate/tumitobatu10.md)
