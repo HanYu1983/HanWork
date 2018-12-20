@@ -7,12 +7,12 @@ I learned a lot of programming languages, because I have hobbies in various tech
 Frond End and Back End are part of my work, so I can fully understand the project and make work easier.  
 Sometime I become consult to resolve the problem of colleague work.  
 I love unity when I do game development.  
-Sometimes I use compiled languages because I like funcional programming. (clojure, livescript, elm)  
+Sometimes I use compiled languages because I like functional programming. (clojure, livescript, elm)  
 
 # Technical Skills
 1. html/js
 2. unity/c#
-3. 開発ツール/python/node
+3. develop tool/python/node
 4. server/golang/node/java
 5. ios/objc++
 6. android/java/kotlin
