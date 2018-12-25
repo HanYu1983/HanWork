@@ -49,7 +49,7 @@
 - [上善若水線上卡牌平台實況影片](https://www.youtube.com/watch?v=TX4Rn182urU&list=PLcReQCVhkEm2HQEbO5YkSEd_LGjMrj0vA)
 - Chrome extension[自動下注程式](https://www.youtube.com/watch?v=FM9C7HB2kVs&feature=youtu.be)
 - dapp 使用metamask You Are My Diamond
-- [合作專案Remix的DEMO版本](https://storage.googleapis.com/particle-resources/works/remix/remix.apk)
+- [合作專案Remix的DEMO版本apk](https://storage.googleapis.com/particle-resources/works/remix/remix.apk)
 
 [業務合作](business.md)
 
