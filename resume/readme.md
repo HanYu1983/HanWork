@@ -39,7 +39,7 @@
 - Unity沙盒RPG原型
 - Unity機器人大戰原型(支援多人即時)
 - Unity紅色警戒原型(支援多人即時)
-- [上善若水](https://particle-979.appspot.com/manager/index.html)
+- [上善若水卡片遊戲平台](https://particle-979.appspot.com/manager/index.html)
 
 測試專案
 - [Unity小遊戲-太空模擬戰](https://storage.googleapis.com/particle-resources/works/spacewar/index.html)
