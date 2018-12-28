@@ -22,7 +22,7 @@
 - 後端: golang/nodejs/java
 - PC端: c#/java/unity
 
-目標平台
+開發平台
 - web app
 - mobile app
 - PC app
