@@ -45,7 +45,7 @@
 - [Unity小遊戲-太空模擬戰](https://storage.googleapis.com/particle-resources/works/spacewar/index.html)
 
 其它
-- 請參照本[github](https://github.com/HanYu1983/HanWork)
+- [程式教學與過去的遺物](https://github.com/HanYu1983/HanWork)
 - [上善若水線上卡牌平台實況影片](https://www.youtube.com/watch?v=TX4Rn182urU&list=PLcReQCVhkEm2HQEbO5YkSEd_LGjMrj0vA)
 - Chrome extension[自動下注程式](https://www.youtube.com/watch?v=FM9C7HB2kVs&feature=youtu.be)
 - dapp 使用metamask You Are My Diamond
