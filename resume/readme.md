@@ -52,7 +52,9 @@
 - [合作專案Remix節奏遊戲的DEMO版本apk](https://storage.googleapis.com/particle-resources/works/remix/remix.apk)
 - [活動網站](http://storage.googleapis.com/particle-resources/works/htcm9/index.html#index)
 
-[業務合作](business.md)
+業務合作
+- [接案](business.md)
+- 業餘興趣開發, 採分潤型式
 
 聯絡我
 - hanyushome@gmail.com
