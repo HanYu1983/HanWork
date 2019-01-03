@@ -33,7 +33,7 @@
 
 語言
 - 英文可讀原文資料(自我技術學習的程度)
-- 日文JLPT3左右
+- 日文N3左右
 
 自己的專案
 - [Unity沙盒RPG原型](https://storage.googleapis.com/particle-resources/works/Niba/index.html)(等待內容填充)
