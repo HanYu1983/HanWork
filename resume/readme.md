@@ -45,7 +45,7 @@
 - [合作專案Remix節奏遊戲的DEMO版本apk](https://storage.googleapis.com/particle-resources/works/remix/remix.apk)
 - [HTC活動網站](http://storage.googleapis.com/particle-resources/works/htcm9/index.html#index)(flash開發)
 - Chrome extension[自動下注程式](https://www.youtube.com/watch?v=FM9C7HB2kVs&feature=youtu.be)
-- dapp 使用metamask You Are My Diamond
+- You Are My Diamond - dapp(智能合約)使用metamask 
 
 其它
 - [程式教學與過去遺物](https://github.com/HanYu1983/HanWork)
