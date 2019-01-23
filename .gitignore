@@ -9,3 +9,5 @@ pkg/
 appengine/goapp/.idea/
 gradle/
 .*/
+assets/
+jniLibs/
