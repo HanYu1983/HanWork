@@ -42,7 +42,6 @@
         (fn [ctx]
           (reduce 
             (fn [ctx e]
-              ;(.log js/console (clj->js e))
               (condp = (:type e)
                 :go
                 (let [targets (:targets e)
@@ -64,6 +63,8 @@
 (defn main []
   (def model nil)
   (def evt (a/chan))
+  (def keys ["q" "w" "e" "a" "s" "d" "z" "x" "c"])
+  
   (js/setInterval
       (fn []
         (am/go
@@ -79,15 +80,16 @@
     (am/go-loop [ctx {:time (-> (js/Date.) (.getTime))
                       :targets (concat 
                                  [firstTarget]
-                                 [(targetCreate {:pos [100 200]})
-                                  (targetCreate {:pos [100 300]})
-                                  (targetCreate {:pos [200 100]})
-                                  (targetCreate {:pos [200 200]})
-                                  (targetCreate {:pos [200 300]})
+                                 [(targetCreate {:pos [200 100]})
                                   (targetCreate {:pos [300 100]})
+                                  (targetCreate {:pos [100 200]})
+                                  (targetCreate {:pos [200 200]})
                                   (targetCreate {:pos [300 200]})
+                                  (targetCreate {:pos [100 300]})
+                                  (targetCreate {:pos [200 300]})
                                   (targetCreate {:pos [300 300]})])
-                      :events [{:type :go :targets [firstTarget]}]}]
+                      :events [{:type :go :targets [firstTarget]}]
+                      :score 0}]
       (set! model ctx)
       ;(.log js/console (clj->js ctx))
       (let [e (a/<! evt)]
@@ -99,6 +101,21 @@
           :randomGo
           (recur
             (update-in ctx [:events] conj {:type :go :targets [(nth (:targets ctx) (rand-int 9))]}))
+          
+          :keyPressed
+          (let [key (:key e)
+                keyToIdx (zipmap keys (range 9))
+                idx (get keyToIdx key)]
+            (recur
+              (cond
+                (some (partial = key) keys)
+                (let [{state :state :as target} (nth (:targets ctx) idx)]
+                  (if-not (some (partial = state) [:wait :go])
+                    ctx
+                    (update-in ctx [:score] inc)))
+                
+                :else
+                ctx)))
           
           (recur (update ctx))))))
   
@@ -113,20 +130,31 @@
                   (a/>! evt {:type :mousePressed}))))
             (.parent canvas "container")
             (.position txt 20 20)))
+        keyPressed
+        (fn []
+          (am/go
+            (a/>! evt {:type :keyPressed :key (.-key p5)})))
         draw
         (fn []
           (.background p5 0)
           (.fill p5 255)
           (.stroke p5 100)
-          ;(.log js/console (clj->js model))
           (when model
             (dorun
-              (doseq [{pos :pos origin :origin :as t} (:targets model)]
+              (doseq [[idx, {pos :pos origin :origin :as t}] (map vector (range) (:targets model))]
                 (let [[x y] pos
-                      [ox oy] origin]
+                      [ox oy] origin
+                      showKey (nth keys idx)]
+                  (.fill p5 255)
                   (.ellipse p5 x y 50 50)
-                  (.rect p5 (- ox 25) (- oy 25) 50 50))))))]
+                  (.rect p5 (- ox 25) (- oy 25) 50 50)
+                  
+                  (.fill p5 100 0 0)
+                  (.text p5 showKey ox oy))))
+            (.fill p5 255)
+            (.text p5 (str "score:" (:score model)) 50 20)))]
     (set! (.-setup p5) setup)
-    (set! (.-draw p5) draw)))
+    (set! (.-draw p5) draw)
+    (set! (.-keyPressed p5) keyPressed)))
 
 (main)
