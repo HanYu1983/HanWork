@@ -4,6 +4,11 @@
   (:require [cljs.core.async :as a]
             [clojure.set :as s]))
 
+(def cw 600)
+(def ch 400)
+(def spd (/ ch 50))
+(def bltspd (/ ch 25))
+(def thrustSpd 1)
 
 (defn updatePlayerInput [ctx]
   (reduce
@@ -12,36 +17,36 @@
         ctx
         (condp = key
           "w"
-          (update-in ctx [:player :pos] (partial map + [0 -1]))
+          (update-in ctx [:player :pos] (partial map + [0 (- spd)]))
 
           "s"
-          (update-in ctx [:player :pos] (partial map + [0 1]))
+          (update-in ctx [:player :pos] (partial map + [0 spd]))
           
           "a"
-          (update-in ctx [:player :pos] (partial map + [-1 0]))
+          (update-in ctx [:player :pos] (partial map + [(- spd) 0]))
           
           "d"
-          (update-in ctx [:player :pos] (partial map + [1 0]))
+          (update-in ctx [:player :pos] (partial map + [spd 0]))
           
           "j"
-          (update-in ctx [:entities] #(conj % {:flag #{:playerBullet} :pos (get-in ctx [:player :pos]) :velocity [10 0]}))
+          (update-in ctx [:entities] #(conj % {:flag #{:playerBullet} :pos (get-in ctx [:player :pos]) :velocity [bltspd 0]}))
           
           ctx)))
     ctx
     ["w" "a" "s" "d" "j"]))
 
 (defn updatePlayerThrust [ctx]
-  (update-in ctx [:player :pos] (partial map + [1 0])))
+  (update-in ctx [:player :pos] (partial map + [thrustSpd 0])))
 
 (defn updateKey [ctx]
   (merge ctx {:keyPressed (s/difference (:keyPressed ctx) (:keyReleased ctx))
               :keyReleased #{}}))
 
 (defn updateCamera [ctx]
-  (update-in ctx [:camera :pos] (partial map + [1 0])))
+  (update-in ctx [:camera :pos] (partial map + [thrustSpd 0])))
 
 (defn updateVelocity [entity]
-  (if-not (contains? entity :velocity)
+  (if-not (every? (partial contains? entity) [:pos :velocity])
     entity
     (update-in entity [:pos] (partial map + (:velocity entity)))))
 
@@ -53,36 +58,38 @@
         entities (:entities ctx)]
     (merge ctx {:entities (filter 
                             (fn [{[x _] :pos :as entity}]
-                              (and (< x (+ cx 500))
-                                   (> x (- cx 100))))
+                              (and (< x (+ cx cw))
+                                   (> x (- cx cw))))
                             entities)})))
 
 (defn spawnEnemy [ctx]
-  (let [spawnPos [[1 1 1 1 0 0 0 0]
-                  [0 0 0 0 1 1 1 1]
-                  [0 0 0 0 0 0 0 0]
-                  [0 0 0 0 1 1 1 1]
-                  [1 1 1 1 0 0 0 0]]
+  (let [spawnPos [[1 1 1 1 0 0 0 0 0 0 0 0]
+                  [0 0 0 0 1 1 1 1 0 0 0 0]
+                  [0 0 0 0 0 0 0 0 1 1 1 1]
+                  [0 0 0 0 1 1 1 1 0 0 0 0]
+                  [1 1 1 1 0 0 0 0 0 0 0 0]]
         [cx _] (get-in ctx [:camera :pos])
-        c (int (/ cx 50))
+        c (int (/ cx 30))
         rcs (for [r (range 5)] [r c (get-in spawnPos [r c])])
         spawnRcs (filter #(< 0 (nth % 2)) rcs)
         spawnRcsOnce (s/difference (set spawnRcs) (:mark ctx))
-        spawnEnemies (map (fn [[r c]] {:pos [(+ cx 200) (* r 30)] :velocity [-1 0]}) spawnRcsOnce)]
+        spawnEnemies (map 
+                       (fn [[r c]] 
+                         {:pos [(+ cx cw) (- (* (inc r) (/ ch 6)) (/ ch 2))] 
+                          :velocity [-1 0]})
+                       spawnRcsOnce)]
     (merge ctx {:mark (s/union (:mark ctx) (set spawnRcs))
                 :entities (concat (:entities ctx) spawnEnemies)})))
 
 (defn update [ctx]
-  (let [{player :player} ctx
-        [px py pr] (:pos player)]
-    (-> ctx 
-        updatePlayerInput
-        updatePlayerThrust
-        updateEntities
-        removeEntityIfOutOfBound
-        spawnEnemy
-        updateCamera
-        updateKey)))
+  (-> ctx 
+      updatePlayerInput
+      updatePlayerThrust
+      updateEntities
+      removeEntityIfOutOfBound
+      spawnEnemy
+      updateCamera
+      updateKey))
 
 (defn projection [{view :view} camera pos]
   (->>
@@ -118,10 +125,10 @@
         (recur (update ctx)))))
   
   (let [p5 js/window
-        projectionFn (partial projection {:view [50 200]})]
+        projectionFn (partial projection {:view [50 (int (/ ch 2))]})]
     (set! (.-setup p5)
       (fn []
-        (let [canvas (.createCanvas p5 600 400)]
+        (let [canvas (.createCanvas p5 cw ch)]
           (.parent canvas "container"))))
     
     (set! (.-draw p5)
@@ -129,7 +136,7 @@
         (when model
           (let [[px py] (->> (get-in model [:player :pos]) (projectionFn (get-in model [:camera :pos])))]
             (.fill p5 255)
-            (.rect p5 0 0 599 399)
+            (.rect p5 0 0 cw ch)
             (.push p5)
             (.translate p5 px py)
             (.rotate p5 0)
