@@ -9,6 +9,7 @@
 (def spd (/ ch 50))
 (def bltspd (/ ch 25))
 (def thrustSpd 1)
+(def p5 js/window)
 
 (defn updatePlayerInput [ctx]
   (reduce
@@ -75,11 +76,24 @@
         spawnRcsOnce (s/difference (set spawnRcs) (:mark ctx))
         spawnEnemies (map 
                        (fn [[r c]] 
-                         {:pos [(+ cx cw) (- (* (inc r) (/ ch 6)) (/ ch 2))] 
+                         {:flag #{:enemy}
+                          :pos [(+ cx cw) (- (* (inc r) (/ ch 6)) (/ ch 2))] 
                           :velocity [-1 0]})
                        spawnRcsOnce)]
     (merge ctx {:mark (s/union (:mark ctx) (set spawnRcs))
                 :entities (concat (:entities ctx) spawnEnemies)})))
+
+(defn checkCollide [ctx]
+  (let [playerBullets (filter #(contains? (:flag %) :playerBullet) (:entities ctx))
+        enemies (filter #(contains? (:flag %) :enemy) (:entities ctx))
+        check (for [b playerBullets
+                    e enemies]
+                 (let [[bx by] (:pos b)
+                       [ex ey] (:pos e)]
+                   [b e (.collidePointRect p5 ex ey bx by 30 30)]))
+        collide (filter (fn [[_ _ isCollide]] isCollide) check)
+        removeEnemies (filter #(not (some (partial = %) (map second collide))) (:entities ctx))]
+    (merge ctx {:entities removeEnemies})))
 
 (defn update [ctx]
   (-> ctx 
@@ -87,6 +101,7 @@
       updatePlayerThrust
       updateEntities
       removeEntityIfOutOfBound
+      checkCollide
       spawnEnemy
       updateCamera
       updateKey))
@@ -120,12 +135,15 @@
         (recur (update-in ctx [:keyPressed] conj (:key e)))
         
         :keyReleased
-        (recur (update-in ctx [:keyReleased] conj (:key e)))
+        (if (= (:key e) "q")
+          (do 
+            (.log js/console "exit")
+            (a/close! evt))
+          (recur (update-in ctx [:keyReleased] conj (:key e))))
         
         (recur (update ctx)))))
   
-  (let [p5 js/window
-        projectionFn (partial projection {:view [50 (int (/ ch 2))]})]
+  (let [projectionFn (partial projection {:view [50 (int (/ ch 2))]})]
     (set! (.-setup p5)
       (fn []
         (let [canvas (.createCanvas p5 cw ch)]
