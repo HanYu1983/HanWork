@@ -62,5 +62,5 @@
 聯絡我
 - hanyushome@gmail.com
 - [臉書](https://www.facebook.com/han.yu.100)
-- [日文履歷](resumejp.md)
-- [英文履歷](resumeen.md)
+- [日本語resume](resumejp.md)
+- [english resume](resumeen.md)
