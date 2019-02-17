@@ -118,7 +118,7 @@
   (let [; 先去除滿格的列
         nextCells (reduce
                     (fn [cells line]
-                      (if (every? #(not (= emptyCell %)) line)
+                      (if (every? (complement (partial = emptyCell)) line)
                         cells
                         (conj cells line)))
                     []    ;使用[]使順序一致，代表reduce是從前面開始
