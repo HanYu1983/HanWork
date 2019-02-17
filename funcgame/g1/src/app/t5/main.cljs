@@ -97,13 +97,37 @@
                                     (update-in ctx [:cells r c] (constantly (inc type))))) 
                                 ctx
                                 fixedShape))
-            eatLine (fn [ctx] ctx)
             randomNext (fn [ctx] (merge ctx {:drop {:type (rand-int (count shapes)) :pos [20 20] :dir 0}}))]
         (-> ctx
             applyFixedShape
-            eatLine
             randomNext)))))
-    
+
+(defn eatLine [ctx]
+  (let [; 先去除滿格的列
+        nextCells (reduce
+                    (fn [cells line]
+                      (if (every? #(not (= 0 %)) line)
+                        cells
+                        (conj cells line)))
+                    []    ;使用[]使順序一致，代表reduce是從前面開始
+                    (:cells ctx))
+        ; 計算需要回補幾行
+        offset (- h (count nextCells))]
+    ; 若不需回補就直接回傳
+    (if (<= offset 0)
+      ctx
+      ; 將空白行塞到前面
+      (merge ctx {:cells (reduce
+                           conj
+                           (->> 0
+                                repeat
+                                (take w)
+                                (into [])
+                                repeat
+                                (take offset)
+                                (into []))
+                           nextCells)}))))
+
 (defn handleInput [key ctx]
   (condp = key
     "a"
@@ -150,7 +174,8 @@
 (defn update [ctx]
   (-> ctx
       dropShape
-      collide))
+      collide
+      eatLine))
 
 (defn drawShape [p5 shape [px py :as pos]]
   (dorun
@@ -191,7 +216,7 @@
       33)
   
   (am/go-loop [ctx {:cells cells
-                    :drop {:pos [50 50] :type 4 :dir 0}}]
+                    :drop {:pos [50 50] :type 1 :dir 0}}]
     (set! model ctx)
     (let [e (a/<! evt)]
       (condp = (:type e)
