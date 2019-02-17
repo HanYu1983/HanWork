@@ -2,6 +2,8 @@
 1. [連連看](funcgame/g1/src/app/t1/main.cljs)
 1. [打地鼠](funcgame/g1/src/app/t2/main.cljs)
 1. [射擊遊戲](funcgame/g1/src/app/t3/main.cljs)
+1. [記憶遊戲](funcgame/g1/src/app/t4/main.cljs)
+1. [俄羅斯方塊](funcgame/g1/src/app/t5/main.cljs)
 
 # 程式碼範例
 1. 使用gulp整合前後端fullstack開發方案：[node/glup](dev/node/)

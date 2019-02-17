@@ -17,7 +17,7 @@
 (def spawnPos [40 20])
 (def dropSpd 3)
 
-; 建立空白區塊
+; 建立背景區塊
 (def cells 
   (->> emptyCell
        repeat
@@ -80,7 +80,8 @@
   (let [[type dir pos] (map #(get-in ctx [:drop %]) [:type :dir :pos])
         [c r :as cr] (pos2cr pos)
         shape (->> (get shapes type) (rotate type dir))
-        cells (map (fn [s] (map + cr s)) shape)
+        shapeWithPos (map (fn [s] (map + cr s)) shape)
+        ; 尋找上方不會碰撞的空間
         findEmpty (fn [shape or]
                     (if (<= or 0)
                       or
@@ -88,18 +89,23 @@
                         (if (not (isCollide ctx shapeWithPos))
                           or
                           (recur shape (dec or))))))]
-    (if-not (isCollide ctx cells)
+    (if-not (isCollide ctx shapeWithPos)
       ctx
-      (let [topR (findEmpty shape r)
+      (let [; 找出方塊落下的行列座標
+            topR (findEmpty shape r)
+            ; 方塊在背景區塊所佔據的位置
             fixedShape (map (fn [s] (map + [c topR] s)) shape)
+            ; 佔據位置
             applyFixedShape (fn [ctx]
                               (reduce
                                 (fn [ctx [c r]]
+                                  ; 行列座標小於0的不處理
                                   (if (some (partial > 0) [c r])
                                     ctx
                                     (update-in ctx [:cells r c] (constantly type)))) 
                                 ctx
                                 fixedShape))
+            ; 成生下一個方塊
             randomNext (fn [ctx] (merge ctx {:drop {:pos spawnPos 
                                                     :type (rand-int (count shapes))
                                                     :dir 0}}))]
@@ -211,16 +217,10 @@
     (.fill p5 255)))
 
 (defn main []
-  
   (def model nil)
   (def evt (a/chan))
   
-  (js/setInterval
-      (fn []
-        (am/go
-          (a/>! evt {:type :update})))
-      33)
-  
+  ; 遊戲迴圈
   (am/go-loop [ctx {:cells cells
                     :drop {:pos spawnPos 
                            :type (rand-int (count shapes)) 
@@ -247,6 +247,8 @@
       (.stroke p5 0)
       (.rect p5 0 0 (dec 100) (dec 300))
       (when model
+        ; 背景區塊
+        ; 使用dorun來強制墮性序列求值
         (dorun
           (for [x (range w) y (range h)]
             (let [type (get-in model [:cells y x])]
@@ -254,13 +256,22 @@
                 (fillShapeColor p5 type)
                 (.stroke p5 0)
                 (.rect p5 (* cellW x) (* cellH y) cellW cellH)))))
-        (let [type (get-in model [:drop :type])
-              dir (get-in model [:drop :dir])
-              pos (get-in model [:drop :pos])
-              s (->> (get shapes type) (rotate type dir))]
+        ; 下落中的方塊
+        (let [[type dir pos] (map #(get-in model [:drop %]) [:type :dir :pos])
+              shape (->> (get shapes type) (rotate type dir))]
           (fillShapeColor p5 type)
-          (drawShape p5 s pos)))))
+          (drawShape p5 shape pos)))))
   
+  ; =====
+  ; EVENT
+  ; =====
+  
+  (js/setInterval
+      (fn []
+        (am/go
+          (a/>! evt {:type :update})))
+      33)
+      
   (set! (.-keyPressed p5)
     (fn []
       (am/go
