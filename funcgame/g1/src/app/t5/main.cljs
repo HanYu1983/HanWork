@@ -4,12 +4,17 @@
   (:require [cljs.core.async :as a]))
 
 (def p5 js/window)
+
+; =====
+; MODEL
+; =====
+
 (def w 10)
 (def h 30)
 (def cellW (/ 100 w))
 (def cellH (/ 300 h))
 (def emptyCell -1)
-(def spawnPos [40 0])
+(def spawnPos [40 20])
 (def dropSpd 3)
 
 ; 建立空白區塊
@@ -22,7 +27,7 @@
        (take h)
        (into [])))
 
-; 定義形狀
+; 定義方塊
 ; 因碰撞演算法的限制，y不得小於-2
 (def shapes [[[-1 -1] [0 -1] [-1 0] [0 0]]
              [[0 -2] [0 -1] [0 0] [0 1]]
@@ -38,12 +43,12 @@
   (into [] (map (fn [[x y]] 
                   [(- x) (- y)]) s)))
 
-; 旋轉形狀
+; 旋轉方塊
 (defn rotate [type dir s]
   (condp = type
-    ; 0代表方塊，不必旋轉
+    ; 0代表正方形，不必旋轉
     0 s
-    ; 1是長條，只分垂直和水平
+    ; 1是長條形，只分垂直和水平
     1 (cond
         (some (partial = dir) [1 3])
         (rotate90 s)
@@ -70,29 +75,12 @@
       (not (= emptyCell (get-in ctx [:cells r c])))) 
     shape))
 
-(defn fixPos [ctx]
-  (let [type (get-in ctx [:drop :type])
-        dir (get-in ctx [:drop :dir])
-        pos (get-in ctx [:drop :pos])
-        shape (->> (get shapes type) (rotate type dir))
-        allColumns (->> shape
-                        (map (fn [s] (map + (pos2cr pos) s)))
-                        (map first))
-        minColumn (apply min allColumns)
-        maxColumn (apply max allColumns)
-        offset1 (if (< minColumn 0) (* cellW (- minColumn)) 0)
-        offset2 (if (> maxColumn (dec w)) (* cellW (- (dec w) maxColumn)) 0)
-        offset (+ offset1 offset2)]
-    (update-in ctx [:drop :pos] (partial map + [offset 0]))))
-
-; 是否碰撞
+; 處理碰撞
 (defn collide [ctx]
-  (let [type (get-in ctx [:drop :type])
-        dir (get-in ctx [:drop :dir])
-        pos (get-in ctx [:drop :pos])
-        [c r] (pos2cr pos)
+  (let [[type dir pos] (map #(get-in ctx [:drop %]) [:type :dir :pos])
+        [c r :as cr] (pos2cr pos)
         shape (->> (get shapes type) (rotate type dir))
-        cells (map (fn [s] (map + [c r] s)) shape)
+        cells (map (fn [s] (map + cr s)) shape)
         findEmpty (fn [shape or]
                     (if (<= or 0)
                       or
@@ -146,12 +134,11 @@
                                 (into []))
                            nextCells)}))))
 
+; 處理輸入
 (defn handleInput [key ctx]
   (condp = key
     "a"
-    (let [type (get-in ctx [:drop :type])
-          dir (get-in ctx [:drop :dir])
-          pos (get-in ctx [:drop :pos])
+    (let [[type dir pos] (map #(get-in ctx [:drop %]) [:type :dir :pos])
           [c r :as cr] (pos2cr pos)
           shape (->> (get shapes type) (rotate type dir))
           nextCr (map + cr [-1 0])
@@ -161,9 +148,7 @@
         (update-in ctx [:drop :pos] (partial map + [(- cellW) 0]))))
     
     "d"
-    (let [type (get-in ctx [:drop :type])
-          dir (get-in ctx [:drop :dir])
-          pos (get-in ctx [:drop :pos])
+    (let [[type dir pos] (map #(get-in ctx [:drop %]) [:type :dir :pos])
           [c r :as cr] (pos2cr pos)
           shape (->> (get shapes type) (rotate type dir))
           nextCr (map + cr [1 0])
@@ -173,9 +158,7 @@
         (update-in ctx [:drop :pos] (partial map + [(+ cellW) 0]))))
     
     " "
-    (let [type (get-in ctx [:drop :type])
-          dir (get-in ctx [:drop :dir])
-          pos (get-in ctx [:drop :pos])
+    (let [[type dir pos] (map #(get-in ctx [:drop %]) [:type :dir :pos])
           [c r :as cr] (pos2cr pos)
           nextDir (mod (inc dir) 4)
           shape (->> (get shapes type) (rotate type nextDir))
@@ -185,7 +168,8 @@
         (update-in ctx [:drop :dir] #(mod (inc %) 4))))
     
     ctx))
-
+    
+; 處理下降方塊
 (defn dropShape [ctx]
   (update-in ctx [:drop :pos] (partial map + [0 dropSpd])))
 
@@ -195,12 +179,18 @@
       collide
       eatLine))
 
+; ====
+; VIEW
+; ====
+
+; 畫方塊
 (defn drawShape [p5 shape [px py :as pos]]
   (dorun
     (doseq [s shape]
       (let [[x y] s]
         (.rect p5 (+ px (* cellW x)) (+ py (* cellH y)) cellW cellH)))))
 
+; 設定方塊顏色
 (defn fillShapeColor [p5 type]
   (condp = type
     0
