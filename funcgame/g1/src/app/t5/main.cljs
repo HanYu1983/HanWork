@@ -10,6 +10,8 @@
 (def cellW (/ 100 w))
 (def cellH (/ 300 h))
 (def emptyCell -1)
+(def spawnPos [40 20])
+(def dropSpd 3)
 
 (def cells 
   (->> emptyCell
@@ -98,7 +100,9 @@
                                     (update-in ctx [:cells r c] (constantly type)))) 
                                 ctx
                                 fixedShape))
-            randomNext (fn [ctx] (merge ctx {:drop {:type (rand-int (count shapes)) :pos [20 20] :dir 0}}))]
+            randomNext (fn [ctx] (merge ctx {:drop {:pos spawnPos 
+                                                    :type (rand-int (count shapes))
+                                                    :dir 0}}))]
         (-> ctx
             applyFixedShape
             randomNext)))))
@@ -170,7 +174,7 @@
     ctx))
 
 (defn dropShape [ctx]
-  (update-in ctx [:drop :pos] (partial map + [0 1])))
+  (update-in ctx [:drop :pos] (partial map + [0 dropSpd])))
 
 (defn update [ctx]
   (-> ctx
@@ -215,16 +219,19 @@
       33)
   
   (am/go-loop [ctx {:cells cells
-                    :drop {:pos [50 50] :type 1 :dir 0}}]
+                    :drop {:pos spawnPos 
+                           :type (rand-int (count shapes)) 
+                           :dir 0}}]
     (set! model ctx)
     (let [e (a/<! evt)]
       (condp = (:type e)
-        :keyPressed 
-        (recur (->> ctx
-                    (handleInput (:key e))
-                    fixPos))
+        :keyPressed
+        (recur (handleInput (:key e) ctx))
+
+        :update
+        (recur (update ctx))
         
-        (recur (update ctx)))))
+        (recur ctx))))
   
   (set! (.-setup p5)
     (fn []
