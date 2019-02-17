@@ -2,7 +2,6 @@
   (:require-macros
     [cljs.core.async.macros :as am])
   (:require [cljs.core.async :as a]))
-            
 
 (def p5 js/window)
 (def w 10)
@@ -10,9 +9,10 @@
 (def cellW (/ 100 w))
 (def cellH (/ 300 h))
 (def emptyCell -1)
-(def spawnPos [40 20])
+(def spawnPos [40 0])
 (def dropSpd 3)
 
+; 建立空白區塊
 (def cells 
   (->> emptyCell
        repeat
@@ -22,6 +22,8 @@
        (take h)
        (into [])))
 
+; 定義形狀
+; 因碰撞演算法的限制，y不得小於-2
 (def shapes [[[-1 -1] [0 -1] [-1 0] [0 0]]
              [[0 -2] [0 -1] [0 0] [0 1]]
              [[-1 -1] [0 -1] [0 0] [0 1]]
@@ -36,15 +38,19 @@
   (into [] (map (fn [[x y]] 
                   [(- x) (- y)]) s)))
 
+; 旋轉形狀
 (defn rotate [type dir s]
   (condp = type
+    ; 0代表方塊，不必旋轉
     0 s
+    ; 1是長條，只分垂直和水平
     1 (cond
         (some (partial = dir) [1 3])
         (rotate90 s)
         
         :else
         s)
+    ; 其它的形狀就必須處理4個方向
     (condp = dir
       0 s
       1 (rotate180 (rotate90 s))
@@ -52,9 +58,12 @@
       3 (rotate90 s)
       s)))
 
+; 將像素座標改為區塊的行列座標
+; 這裡要注意，列數會額外加1。因為每個方塊是以左上角為錨點，加1代表錨點改為左下角，這樣計算碰撞會比較正確
 (defn pos2cr [[x y :as pos]]
   [(int (/ x cellW)) (inc (int (/ y cellH)))])
 
+; 計算是否有碰䃥
 (defn isCollide [ctx shape]
   (some 
     (fn [[c r]] 
@@ -76,6 +85,7 @@
         offset (+ offset1 offset2)]
     (update-in ctx [:drop :pos] (partial map + [offset 0]))))
 
+; 是否碰撞
 (defn collide [ctx]
   (let [type (get-in ctx [:drop :type])
         dir (get-in ctx [:drop :dir])
@@ -84,10 +94,12 @@
         shape (->> (get shapes type) (rotate type dir))
         cells (map (fn [s] (map + [c r] s)) shape)
         findEmpty (fn [shape or]
-                    (let [shapeWithPos (map (fn [s] (map + [c or] s)) shape)]
-                      (if (not (isCollide ctx shapeWithPos))
-                        or
-                        (recur shape (dec or)))))]
+                    (if (<= or 0)
+                      or
+                      (let [shapeWithPos (map (fn [s] (map + [c or] s)) shape)]
+                        (if (not (isCollide ctx shapeWithPos))
+                          or
+                          (recur shape (dec or))))))]
     (if-not (isCollide ctx cells)
       ctx
       (let [topR (findEmpty shape r)
@@ -107,6 +119,7 @@
             applyFixedShape
             randomNext)))))
 
+; 吃掉滿格的列
 (defn eatLine [ctx]
   (let [; 先去除滿格的列
         nextCells (reduce
