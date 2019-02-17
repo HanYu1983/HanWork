@@ -1,5 +1,5 @@
 # 函數式遊戲程式設計使用clojurescript(進行中)
-1. [連連看](funcgame/g1/src/app/t1/main.cljs)
+1. [連連看](https://hanyu1983.github.io/HanWork/www/funcgame/t1.html)(funcgame/g1/src/app/t1/main.cljs)
 1. [打地鼠](funcgame/g1/src/app/t2/main.cljs)
 1. [射擊遊戲](funcgame/g1/src/app/t3/main.cljs)
 1. [記憶遊戲](funcgame/g1/src/app/t4/main.cljs)
