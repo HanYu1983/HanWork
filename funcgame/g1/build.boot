@@ -18,7 +18,7 @@
   '[adzerk.boot-reload :refer [reload]]
   '[pandeiro.boot-http :refer [serve]])
 
-(def targetDir "www/js")
+(def targetDir "../../docs/www/funcgame/js")
 
 (deftask run []
   (comp
