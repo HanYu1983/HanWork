@@ -9,9 +9,10 @@
 (def h 30)
 (def cellW (/ 100 w))
 (def cellH (/ 300 h))
+(def emptyCell -1)
 
 (def cells 
-  (->> 0
+  (->> emptyCell
        repeat
        (take w)
        (into [])
@@ -55,7 +56,7 @@
 (defn isCollide [ctx shape]
   (some 
     (fn [[c r]] 
-      (not (= 0 (get-in ctx [:cells r c])))) 
+      (not (= emptyCell (get-in ctx [:cells r c])))) 
     shape))
 
 (defn fixPos [ctx]
@@ -94,7 +95,7 @@
                                 (fn [ctx [c r]]
                                   (if (some (partial > 0) [c r])
                                     ctx
-                                    (update-in ctx [:cells r c] (constantly (inc type))))) 
+                                    (update-in ctx [:cells r c] (constantly type)))) 
                                 ctx
                                 fixedShape))
             randomNext (fn [ctx] (merge ctx {:drop {:type (rand-int (count shapes)) :pos [20 20] :dir 0}}))]
@@ -106,7 +107,7 @@
   (let [; 先去除滿格的列
         nextCells (reduce
                     (fn [cells line]
-                      (if (every? #(not (= 0 %)) line)
+                      (if (every? #(not (= emptyCell %)) line)
                         cells
                         (conj cells line)))
                     []    ;使用[]使順序一致，代表reduce是從前面開始
@@ -119,7 +120,7 @@
       ; 將空白行塞到前面
       (merge ctx {:cells (reduce
                            conj
-                           (->> 0
+                           (->> emptyCell
                                 repeat
                                 (take w)
                                 (into [])
@@ -201,8 +202,6 @@
     (.fill p5 128 0 128)
     
     (.fill p5 255)))
-    
-;(.log js/console (clj->js cells))
 
 (defn main []
   
@@ -229,20 +228,20 @@
   
   (set! (.-setup p5)
     (fn []
-      (let [canvas (.createCanvas p5 300 600)]
+      (let [canvas (.createCanvas p5 100 300)]
         (.parent canvas "container"))))
   
   (set! (.-draw p5)
     (fn []
       (.fill p5 255)
       (.stroke p5 0)
-      (.rect p5 0 0 300 600)
+      (.rect p5 0 0 (dec 100) (dec 300))
       (when model
         (dorun
           (for [x (range w) y (range h)]
             (let [type (get-in model [:cells y x])]
-              (when (> type 0)
-                (fillShapeColor p5 (dec type))
+              (when (> type emptyCell)
+                (fillShapeColor p5 type)
                 (.stroke p5 0)
                 (.rect p5 (* cellW x) (* cellH y) cellW cellH)))))
         (let [type (get-in model [:drop :type])
