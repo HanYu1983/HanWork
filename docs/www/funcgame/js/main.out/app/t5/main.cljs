@@ -92,7 +92,7 @@
     (if-not (isCollide ctx shapeWithPos)
       ctx
       (let [; 找出方塊落下的行列座標
-            topR (findEmpty shape r)
+            topR (findEmpty shape (dec r))
             ; 方塊在背景區塊所佔據的位置
             fixedShape (map (fn [s] (map + [c topR] s)) shape)
             ; 佔據位置
