@@ -5,6 +5,7 @@
 1. [射擊遊戲](https://hanyu1983.github.io/HanWork/www/funcgame/t3.html) [code](funcgame/g1/src/app/t3/main.cljs)
 1. [記憶遊戲](https://hanyu1983.github.io/HanWork/www/funcgame/t4.html) [code](funcgame/g1/src/app/t4/main.cljs)
 1. [俄羅斯方塊](https://hanyu1983.github.io/HanWork/www/funcgame/t5.html) [code](funcgame/g1/src/app/t5/main.cljs)
+1. 踩地雷
 
 # 程式碼範例
 1. 使用gulp整合前後端fullstack開發方案：[node/glup](dev/node/)
