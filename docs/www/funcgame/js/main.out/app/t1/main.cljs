@@ -78,7 +78,7 @@
   (->>
        ; 相對向量
        (map - [x y] p)
-       ; 相對向量內積自己後對於向量長度的平方
+       ; 相對向量內積自己後等於向量長度的平方
        (repeat)
        (take 2)
        (apply map *)
@@ -142,7 +142,6 @@
   
   (set! (.-draw pc)
     (fn []
-      ;(.log js/console (clj->js model))
       (if-not model
         (.text pc "no model" 30 30)
         (let [mousePos (:mousePos model)

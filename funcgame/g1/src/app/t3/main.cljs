@@ -11,6 +11,7 @@
 (def thrustSpd 1)
 (def p5 js/window)
 
+; 處理使用者輸入
 (defn updatePlayerInput [ctx]
   (reduce
     (fn [ctx key]
@@ -30,30 +31,40 @@
           (update-in ctx [:player :pos] (partial map + [spd 0]))
           
           "j"
-          (update-in ctx [:entities] #(conj % {:flag #{:playerBullet} :pos (get-in ctx [:player :pos]) :velocity [bltspd 0]}))
+          ; 發射子彈
+          (update-in ctx [:entities] #(conj % {:flag #{:playerBullet} 
+                                               :pos (get-in ctx [:player :pos]) 
+                                               :velocity [bltspd 0]}))
           
           ctx)))
     ctx
     ["w" "a" "s" "d" "j"]))
 
+; 自機自動噴射位移
 (defn updatePlayerThrust [ctx]
   (update-in ctx [:player :pos] (partial map + [thrustSpd 0])))
 
+; 更新按鍵狀態
 (defn updateKey [ctx]
   (merge ctx {:keyPressed (s/difference (:keyPressed ctx) (:keyReleased ctx))
               :keyReleased #{}}))
 
+; 更新攝影機位置
+; 速率與自機噴射同
 (defn updateCamera [ctx]
   (update-in ctx [:camera :pos] (partial map + [thrustSpd 0])))
 
+; 若有pos與velocity，更新pos
 (defn updateVelocity [entity]
   (if-not (every? (partial contains? entity) [:pos :velocity])
     entity
     (update-in entity [:pos] (partial map + (:velocity entity)))))
 
+; 更新實體
 (defn updateEntities [ctx]
   (merge ctx {:entities (map updateVelocity (:entities ctx))}))
 
+; 移除螢幕範圍外的實體
 (defn removeEntityIfOutOfBound [ctx]
   (let [[cx _] (get-in ctx [:camera :pos])
         entities (:entities ctx)]
@@ -63,36 +74,51 @@
                                    (> x (- cx cw))))
                             entities)})))
 
+; 生成敵機
 (defn spawnEnemy [ctx]
-  (let [spawnPos [[1 1 1 1 0 0 0 0 0 0 0 0]
+  (let [; 定義成生位置。分成5個列，每個數值間隔30像素
+        spawnPos [[1 1 1 1 0 0 0 0 0 0 0 0]
                   [0 0 0 0 1 1 1 1 0 0 0 0]
                   [0 0 0 0 0 0 0 0 1 1 1 1]
                   [0 0 0 0 1 1 1 1 0 0 0 0]
                   [1 1 1 1 0 0 0 0 0 0 0 0]]
+        ; 用攝相機座標判斷
         [cx _] (get-in ctx [:camera :pos])
         c (int (/ cx 30))
+        ; 取得對映行列的值
         rcs (for [r (range 5)] [r c (get-in spawnPos [r c])])
+        ; 大於0的值代表要生成
         spawnRcs (filter #(< 0 (nth % 2)) rcs)
+        ; 成生過的記錄起來，下次不在生成
         spawnRcsOnce (s/difference (set spawnRcs) (:mark ctx))
+        ; 生成
         spawnEnemies (map 
                        (fn [[r c]] 
                          {:flag #{:enemy}
                           :pos [(+ cx cw) (- (* (inc r) (/ ch 6)) (/ ch 2))] 
                           :velocity [-1 0]})
                        spawnRcsOnce)]
+    ; 套用
     (merge ctx {:mark (s/union (:mark ctx) (set spawnRcs))
                 :entities (concat (:entities ctx) spawnEnemies)})))
 
+; 判斷碰撞
 (defn checkCollide [ctx]
-  (let [playerBullets (filter #(contains? (:flag %) :playerBullet) (:entities ctx))
+  (let [; 自機子彈
+        playerBullets (filter #(contains? (:flag %) :playerBullet) (:entities ctx))
+        ; 敵機
         enemies (filter #(contains? (:flag %) :enemy) (:entities ctx))
+        ; 碰撞偵測
         check (for [b playerBullets
                     e enemies]
                  (let [[bx by] (:pos b)
                        [ex ey] (:pos e)]
                    [b e (.collidePointRect p5 ex ey bx by 30 30)]))
+        ; 取得碰撞對象
         collide (filter (fn [[_ _ isCollide]] isCollide) check)
+        ; 移除對象
         removeEnemies (filter #(not (some (partial = %) (map second collide))) (:entities ctx))]
+    ; 套用
     (merge ctx {:entities removeEnemies})))
 
 (defn update [ctx]
@@ -106,6 +132,7 @@
       updateCamera
       updateKey))
 
+; 依攝相機投影
 (defn projection [{view :view} camera pos]
   (->>
        (map - pos camera)
@@ -128,7 +155,6 @@
                     :entities [{:pos [100 0] :velocity [0 -1]}]
                     :mark #{}}]
     (set! model ctx)
-    ; (.log js/console (clj->js ctx))
     (let [e (a/<! evt)]
       (condp = (:type e)
         :keyPressed

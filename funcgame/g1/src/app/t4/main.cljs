@@ -4,12 +4,15 @@
   (:require [cljs.core.async :as a]
             [clojure.walk :as w]))
 
+; 翻開卡片
 (defn flip [[y x :as pos] ctx]
-  (let [openCnt (->
+  (let [; 翻開的數量大於2就不能翻
+        openCnt (->
                     (fn [v] 
                       (some (partial = (:state v)) [:open :wait]))
                     (filter (flatten (:view ctx)))                    
                     count)
+        ; 已是成功狀態的卡不能翻
         isPass (->
                    (get-in ctx [:view y x :state])
                    (= :pass))]
@@ -21,9 +24,11 @@
 (defn updateView [ctx]
   (let [changeState 
         (fn [v]
+          ; 只針對葉節點進行修改
           (if-not (map? v)
             v
             (condp = (:state v)
+              ; 翻開1後秒等待配對
               :open
               (if-not (> (:timer v) 1000)
                 v
@@ -32,21 +37,26 @@
               :close v
               
               v)))]
+    ; 2維陣列使用walk套件來處理比較方便
     (merge ctx {:view (w/prewalk changeState (:view ctx))})))
 
+; wait狀態代表要配對
 (defn checkWait [ctx]
-  (let [waitView (->
+  (let [; 取得要配對的卡，若張數大於2張
+        waitView (->
                      (fn [v] 
                        (some (partial = (:state v)) [:wait]))
                      (filter (flatten (:view ctx))))
         waitCnt (count waitView)]
     (if (< waitCnt 2)
       ctx
+      ; 判斷2張是否相等
       (let [pass (->>
                       waitView
                       (map :id)
                       (map (fn [[y x :as id]] (get-in ctx (concat [:data] id))))
                       (apply =))]
+        ; 修改狀態
         (reduce
           (fn [ctx {[y x :as id] :id :as v}]
             (update-in ctx (concat [:view] id) 
@@ -59,11 +69,13 @@
 (defn updateViewTimer [ctx]
   (let [changeState 
         (fn [v]
+          ; 只針對葉節點進行修改
           (if-not (map? v)
             v
             (update-in v [:timer] (partial + (get-in ctx [:timer :elapsed])))))]
     (merge ctx {:view (w/prewalk changeState (:view ctx))})))
 
+; 計算每偵時間間隔
 (defn updateTimer [ctx]
   (let [now (-> (js/Date.) (.getTime))
         last (get-in ctx [:timer :last])
@@ -87,9 +99,11 @@
           (a/>! evt {:type :update})))
       33)
   
-  (let [data [[0 0 1 1 2 2]
+  (let [; 定義卡片資料
+        data [[0 0 1 1 2 2]
               [3 3 4 4 5 5]
               [6 6 7 7 8 8]]
+        ; 建立視覺物件
         view (->>
                   (for [y (range 3)
                         x (range 6)]
