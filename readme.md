@@ -1,4 +1,5 @@
 # 函數式遊戲程式設計使用clojurescript(進行中)
+以下範例請先點擊繪圖區距焦，並換成英文輸入才能正常進行展示哦
 1. [連連看](https://hanyu1983.github.io/HanWork/www/funcgame/t1.html) [code](funcgame/g1/src/app/t1/main.cljs)
 1. [打地鼠](https://hanyu1983.github.io/HanWork/www/funcgame/t2.html) [code](funcgame/g1/src/app/t2/main.cljs)
 1. [射擊遊戲](https://hanyu1983.github.io/HanWork/www/funcgame/t3.html) [code](funcgame/g1/src/app/t3/main.cljs)
