@@ -1,17 +1,17 @@
 // Compiled by ClojureScript 1.10.238 {}
 goog.provide('app.app1');
 goog.require('cljs.core');
-var ret__4533__auto___5542 = (function (){
+var ret__4533__auto___8432 = (function (){
 app.app1._LT__ = (function app$app1$_LT__(var_args){
 var args__4502__auto__ = [];
-var len__4499__auto___5543 = arguments.length;
-var i__4500__auto___5544 = (0);
+var len__4499__auto___8433 = arguments.length;
+var i__4500__auto___8434 = (0);
 while(true){
-if((i__4500__auto___5544 < len__4499__auto___5543)){
-args__4502__auto__.push((arguments[i__4500__auto___5544]));
+if((i__4500__auto___8434 < len__4499__auto___8433)){
+args__4502__auto__.push((arguments[i__4500__auto___8434]));
 
-var G__5545 = (i__4500__auto___5544 + (1));
-i__4500__auto___5544 = G__5545;
+var G__8435 = (i__4500__auto___8434 + (1));
+i__4500__auto___8434 = G__8435;
 continue;
 } else {
 }
@@ -31,17 +31,17 @@ return new cljs.core.Symbol(null,"list","list",-1889078086,null);
 app.app1._LT__.cljs$lang$maxFixedArity = (4);
 
 /** @this {Function} */
-app.app1._LT__.cljs$lang$applyTo = (function (seq5537){
-var G__5538 = cljs.core.first.call(null,seq5537);
-var seq5537__$1 = cljs.core.next.call(null,seq5537);
-var G__5539 = cljs.core.first.call(null,seq5537__$1);
-var seq5537__$2 = cljs.core.next.call(null,seq5537__$1);
-var G__5540 = cljs.core.first.call(null,seq5537__$2);
-var seq5537__$3 = cljs.core.next.call(null,seq5537__$2);
-var G__5541 = cljs.core.first.call(null,seq5537__$3);
-var seq5537__$4 = cljs.core.next.call(null,seq5537__$3);
+app.app1._LT__.cljs$lang$applyTo = (function (seq8427){
+var G__8428 = cljs.core.first.call(null,seq8427);
+var seq8427__$1 = cljs.core.next.call(null,seq8427);
+var G__8429 = cljs.core.first.call(null,seq8427__$1);
+var seq8427__$2 = cljs.core.next.call(null,seq8427__$1);
+var G__8430 = cljs.core.first.call(null,seq8427__$2);
+var seq8427__$3 = cljs.core.next.call(null,seq8427__$2);
+var G__8431 = cljs.core.first.call(null,seq8427__$3);
+var seq8427__$4 = cljs.core.next.call(null,seq8427__$3);
 var self__4486__auto__ = this;
-return self__4486__auto__.cljs$core$IFn$_invoke$arity$variadic(G__5538,G__5539,G__5540,G__5541,seq5537__$4);
+return self__4486__auto__.cljs$core$IFn$_invoke$arity$variadic(G__8428,G__8429,G__8430,G__8431,seq8427__$4);
 });
 
 return null;

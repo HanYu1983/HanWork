@@ -60,12 +60,15 @@
       :update
       (recur (update ctx))
       
+      ; 記錄游標位置
       :mousemove
       (recur (merge ctx {:mousePos (:info e)}))
       
+      ; 記錄按鍵狀態
       :mouseup
       (recur (merge ctx {:mousePressed false :mouseUp true}))
       
+      ; 記錄按鍵狀態
       :mousedown
       (recur (merge ctx {:mousePressed true :mouseDown true}))
       
@@ -73,14 +76,14 @@
 
 (defn isPointInCircle [p [x y radius]]
   (->>
-       ; offset
+       ; 相對向量
        (map - [x y] p)
-       ; dot
+       ; 相對向量內積自己後對於向量長度的平方
        (repeat)
        (take 2)
        (apply map *)
        (apply +)
-       ; test radius
+       ; 測試碰撞半徑（一樣用平方來比較）
        (> (* radius radius))))
 
 (defn checkAnswer [ctx s1 s2]
@@ -90,27 +93,36 @@
 
 (defn update [ctx]
   (cond
+    ; 按下游標
     (:mouseDown ctx)
-    (let [idx (->>
+    (let [idx (->> ; 和左方的圓圈測試點擊
                    (map (partial isPointInCircle (:mousePos ctx)) (:leftCircle ctx))
+                   ; 將結果配對索引
                    (map vector (range))
+                   ; 找出點擊到的圓圈索引
                    (filter (fn [[_ selected]] selected))
+                   ; 取出索引
                    (ffirst))]
+      ; 設定選擇1
       (merge ctx {:mouseDown false :select1 idx}))
     
+    ; 放開游標
     (:mouseUp ctx)
-    (let [idx (->>
+    (let [idx (->> ; 同上。但和右方的圓圈測試
                    (map (partial isPointInCircle (:mousePos ctx)) (:rightCircle ctx))
                    (map vector (range))
                    (filter (fn [[_ selected]] selected))
                    (ffirst))]
       (if-not idx
+        ; 若放開時沒有在右邊圓圈內，則取消選擇1
         (merge ctx {:mouseUp false :select1 nil})
+        ; 計算答案
         (let [s1 (:select1 ctx)
               s2 idx
               pass (checkAnswer ctx s1 s2)]
           (if-not pass
             (merge ctx {:mouseUp false :select1 nil})
+            ; 若成功配對，將結果記錄在buildLine(成功的線)中。注意buildLine為集合
             (merge ctx {:mouseUp false :select1 nil :buildLine (conj (:buildLine ctx) [s1 s2])})))))
     
     :else
