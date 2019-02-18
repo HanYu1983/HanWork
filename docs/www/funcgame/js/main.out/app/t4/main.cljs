@@ -28,7 +28,7 @@
           (if-not (map? v)
             v
             (condp = (:state v)
-              ; 翻開1後秒等待配對
+              ; 翻開秒1後等待配對
               :open
               (if-not (> (:timer v) 1000)
                 v
