@@ -7,6 +7,7 @@ goog.require('app.t2.main');
 goog.require('app.t3.main');
 goog.require('app.t4.main');
 goog.require('app.t5.main');
+goog.require('app.t6.main');
 goog.require('lib.tool');
 
 //# sourceMappingURL=main3476.js.map
