@@ -89,7 +89,7 @@
         rcs (for [r (range 5)] [r c (get-in spawnPos [r c])])
         ; 大於0的值代表要生成
         spawnRcs (filter #(< 0 (nth % 2)) rcs)
-        ; 和成生過的比對，只生成一次
+        ; 和生成過的比對，只生成一次
         spawnRcsOnce (s/difference (set spawnRcs) (:mark ctx))
         ; 生成
         spawnEnemies (map 
@@ -99,7 +99,7 @@
                           :velocity [-1 0]})
                        spawnRcsOnce)]
     ; 套用
-    (merge ctx {; 成生過的記錄起來，下次不在生成
+    (merge ctx {; 成生過的記錄起來，下次不再生成
                 :mark (s/union (:mark ctx) (set spawnRcs))
                 :entities (concat (:entities ctx) spawnEnemies)})))
 
