@@ -53,7 +53,7 @@
 (defn flip [[r c :as rc] ctx]
   (let [v (get-in ctx [:cells r c])
         s (get-in ctx [:states r c])]
-    (if (not (= :close s))
+    (if (= :open s)
       ctx
       (cond
         (nil? v)
