@@ -28,6 +28,6 @@
 
 (deftask build []
   (comp
-    (cljs :optimizations :advanced)
+    (cljs :optimizations :none)
     (target :dir #{targetDir} :no-clean true)))
 

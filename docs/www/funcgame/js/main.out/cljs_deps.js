@@ -12,10 +12,13 @@ goog.addDependency("../app/t1/main.js", ['app.t1.main'], ['cljs.core', 'cljs.cor
 goog.addDependency("../app/app1.js", ['app.app1'], ['cljs.core']);
 goog.addDependency("../clojure/walk.js", ['clojure.walk'], ['cljs.core']);
 goog.addDependency("../app/t4/main.js", ['app.t4.main'], ['cljs.core', 'cljs.core.async', 'clojure.walk']);
+goog.addDependency("../app/t7/tool.js", ['app.t7.tool'], ['cljs.core']);
+goog.addDependency("../app/t7/platform.js", ['app.t7.platform'], ['cljs.core', 'app.t7.tool']);
+goog.addDependency("../app/t7/main.js", ['app.t7.main'], ['cljs.core', 'app.t7.tool', 'app.t7.platform']);
 goog.addDependency("../app/t5/main.js", ['app.t5.main'], ['cljs.core', 'cljs.core.async']);
 goog.addDependency("../app/t6/main.js", ['app.t6.main'], ['cljs.core', 'cljs.core.async']);
 goog.addDependency("../lib/tool.js", ['lib.tool'], ['cljs.core']);
 goog.addDependency("../app/t2/main.js", ['app.t2.main'], ['cljs.core', 'cljs.core.async']);
 goog.addDependency("../clojure/set.js", ['clojure.set'], ['cljs.core']);
 goog.addDependency("../app/t3/main.js", ['app.t3.main'], ['cljs.core', 'cljs.core.async', 'clojure.set']);
-goog.addDependency("../boot/cljs/main3476.js", ['boot.cljs.main3476'], ['app.t1.main', 'app.app1', 'app.t4.main', 'cljs.core', 'app.t5.main', 'app.t6.main', 'lib.tool', 'app.t2.main', 'app.t3.main']);
+goog.addDependency("../boot/cljs/main3476.js", ['boot.cljs.main3476'], ['app.t1.main', 'app.app1', 'app.t4.main', 'cljs.core', 'app.t7.main', 'app.t7.tool', 'app.t5.main', 'app.t6.main', 'lib.tool', 'app.t7.platform', 'app.t2.main', 'app.t3.main']);
