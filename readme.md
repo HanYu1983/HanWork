@@ -14,7 +14,7 @@
 1. [App Engine基本使用](appengine/)
 1. [App Engine卡牌遊戲](appengine/goapp/src/tur/cardgame/)
 1. [使用asmjs](asmjs/)
-1. [最輕量的元件化web framework](docs/www/purlJsFramework/readme.md)
+1. [最輕量的元件化web framework](docs/www/purlJsFramework/)
 
 # 前朝遺臣
 1. [Python Demo](old/pythongamedemo/)
