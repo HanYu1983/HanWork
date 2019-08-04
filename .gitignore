@@ -11,3 +11,4 @@ gradle/
 .*/
 assets/
 jniLibs/
+!docs/www/purlJsFramework/assets
