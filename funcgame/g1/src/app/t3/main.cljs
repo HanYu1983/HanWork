@@ -122,7 +122,7 @@
     ; 套用
     (merge ctx {:entities removeEnemies})))
 
-(defn update [ctx]
+(defn step [ctx]
   (-> ctx 
       updatePlayerInput
       updatePlayerThrust
@@ -168,7 +168,7 @@
             (a/close! evt))
           (recur (update-in ctx [:keyReleased] conj (:key e))))
         
-        (recur (update ctx)))))
+        (recur (step ctx)))))
   
   (let [projectionFn (partial projection {:view [50 (int (/ ch 2))]})]
     (set! (.-setup p5)

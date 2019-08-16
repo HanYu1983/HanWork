@@ -1,0 +1,17 @@
+{
+  "name": "t2",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "shadow-cljs watch app"
+  },
+  "devDependencies": {
+    "shadow-cljs": "2.8.40"
+  },
+  "dependencies": {
+    "create-react-class": "^15.6.3",
+    "process": "^0.11.10",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  }
+}

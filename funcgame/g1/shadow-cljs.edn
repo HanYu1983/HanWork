@@ -1,0 +1,36 @@
+;; shadow-cljs configuration
+{:source-paths
+ ["src"]
+
+ :dependencies
+ [[reagent "0.8.1"]]
+ 
+ :dev-http {8080 "public/"}
+ ; "app" is the build-id, in running "shadow-cljs compile app"
+ :builds {:app {:target :browser ; compile code that loads in a browser
+                :output-dir "public/js"
+                :asset-path "/js" ; assets loaded from index.html are based on path "/js"
+                
+                ; "main.js" is the name for the bundle entry
+                :modules {:shared {:entries [hook]}
+                          :t1 {:entries [app.t1.main]
+                               :depends-on #{:shared}}
+                          :t2 {:entries [app.t2.main]
+                               :depends-on #{:shared}}
+                          :t3 {:entries [app.t3.main]
+                               :depends-on #{:shared}}
+                          :t4 {:entries [app.t4.main]
+                               :depends-on #{:shared}}
+                          :t5 {:entries [app.t5.main]
+                               :depends-on #{:shared}}
+                          :t6 {:entries [app.t6.main]
+                               :depends-on #{:shared}}
+                          :t7 {:entries [app.t7.main]
+                               :depends-on #{:shared}}
+                          :app2 {:init-fn app2.main/main
+                               :depends-on #{:shared}}
+                          :app3 {:init-fn app3.main/main
+                               :depends-on #{:shared}}
+                          }}
+          
+          }}

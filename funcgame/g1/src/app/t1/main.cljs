@@ -43,7 +43,7 @@
       (am/go
         (a/>! evt {:type :update})))
     33))
-(declare update)
+(declare step)
 ; 遊戲迴圈
 (am/go-loop [ctx {:mousePressed false
                   :mousePos [0 0]
@@ -58,7 +58,7 @@
   (let [e (a/<! evt)]
     (condp = (:type e)
       :update
-      (recur (update ctx))
+      (recur (step ctx))
       
       ; 記錄游標位置
       :mousemove
@@ -91,7 +91,7 @@
         [_ _ _ a2] (get-in ctx [:rightCircle s2])]
     (= a1 a2)))
 
-(defn update [ctx]
+(defn step [ctx]
   (cond
     ; 按下游標
     (:mouseDown ctx)

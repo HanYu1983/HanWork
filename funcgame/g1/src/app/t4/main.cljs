@@ -82,7 +82,7 @@
         elapsed (- now last)]
     (merge ctx {:timer {:last now :elapsed elapsed}})))
 
-(defn update [ctx]
+(defn step [ctx]
   (-> ctx
       updateTimer
       updateView
@@ -131,7 +131,7 @@
                            (map int))]
             (recur (merge ctx {:select [y x]})))
           
-          (recur (update ctx))))))
+          (recur (step ctx))))))
   
   (let [p5 js/window]
     (set! (.-setup p5)

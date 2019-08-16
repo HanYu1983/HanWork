@@ -46,7 +46,7 @@
     target))
 
 ; 遊戲更新
-(defn update [ctx]
+(defn step [ctx]
   (let [; 處理事件
         handleEvents
         (fn [ctx]
@@ -82,7 +82,7 @@
   (def model nil)
   (def evt (a/chan))
   ; 依打擊順序定義按鍵
-  (def keys ["q" "w" "e" "a" "s" "d" "z" "x" "c"])
+  (def useKeys ["q" "w" "e" "a" "s" "d" "z" "x" "c"])
   
   (js/setInterval
       (fn []
@@ -129,11 +129,11 @@
           :keyPressed
           (let [; 依定義鍵按的順序尋找對映的目標
                 key (:key e)
-                keyToIdx (zipmap keys (range 9))
+                keyToIdx (zipmap useKeys (range 9))
                 idx (get keyToIdx key)]
             (recur
               (cond
-                (some (partial = key) keys)
+                (some (partial = key) useKeys)
                 (let [{state :state :as target} (nth (:targets ctx) idx)]
                   ; 冒頭和等待狀態才能得分
                   (if-not (some (partial = state) [:wait :go])
@@ -143,7 +143,7 @@
                 :else
                 ctx)))
           
-          (recur (update ctx))))))
+          (recur (step ctx))))))
   
   (let [p5 js/window
         setup
@@ -170,7 +170,7 @@
               (doseq [[idx, {pos :pos origin :origin :as t}] (map vector (range) (:targets model))]
                 (let [[x y] pos
                       [ox oy] origin
-                      showKey (nth keys idx)]
+                      showKey (nth useKeys idx)]
                   (.fill p5 255)
                   (.ellipse p5 x y 50 50)
                   (.rect p5 (- ox 25) (- oy 25) 50 50)

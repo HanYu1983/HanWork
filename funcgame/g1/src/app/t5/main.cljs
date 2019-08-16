@@ -179,7 +179,7 @@
 (defn dropShape [ctx]
   (update-in ctx [:drop :pos] (partial map + [0 dropSpd])))
 
-(defn update [ctx]
+(defn step [ctx]
   (-> ctx
       dropShape
       collide
@@ -232,54 +232,54 @@
         (recur (handleInput (:key e) ctx))
 
         :update
-        (recur (update ctx))
+        (recur (step ctx))
         
         (recur ctx))))
   
   (set! (.-setup p5)
-    (fn []
-      (let [canvas (.createCanvas p5 100 300)]
-        (.parent canvas "container"))))
+        (fn []
+          (let [canvas (.createCanvas p5 100 300)]
+            (.parent canvas "container"))))
   
   (set! (.-draw p5)
-    (fn []
-      (.fill p5 255)
-      (.stroke p5 0)
-      (.rect p5 0 0 (dec 100) (dec 300))
-      (when model
+        (fn []
+          (.fill p5 255)
+          (.stroke p5 0)
+          (.rect p5 0 0 (dec 100) (dec 300))
+          (when model
         ; 背景區塊
         ; 使用dorun來強制墮性序列求值
-        (dorun
-          (for [x (range w) y (range h)]
-            (let [type (get-in model [:cells y x])]
-              (when (> type emptyCell)
-                (fillShapeColor p5 type)
-                (.stroke p5 0)
-                (.rect p5 (* cellW x) (* cellH y) cellW cellH)))))
+            (dorun
+             (for [x (range w) y (range h)]
+               (let [type (get-in model [:cells y x])]
+                 (when (> type emptyCell)
+                   (fillShapeColor p5 type)
+                   (.stroke p5 0)
+                   (.rect p5 (* cellW x) (* cellH y) cellW cellH)))))
         ; 下落中的方塊
-        (let [[type dir pos] (map #(get-in model [:drop %]) [:type :dir :pos])
-              shape (->> (get shapes type) (rotate type dir))]
-          (fillShapeColor p5 type)
-          (drawShape p5 shape pos)))))
+            (let [[type dir pos] (map #(get-in model [:drop %]) [:type :dir :pos])
+                  shape (->> (get shapes type) (rotate type dir))]
+              (fillShapeColor p5 type)
+              (drawShape p5 shape pos)))))
   
   ; =====
   ; EVENT
   ; =====
   
   (js/setInterval
-      (fn []
-        (am/go
-          (a/>! evt {:type :update})))
-      33)
-      
+   (fn []
+     (am/go
+       (a/>! evt {:type :update})))
+   33)
+  
   (set! (.-keyPressed p5)
-    (fn []
-      (am/go
-        (a/>! evt {:type :keyPressed :key (.-key p5)}))))
+        (fn []
+          (am/go
+            (a/>! evt {:type :keyPressed :key (.-key p5)}))))
   
   (set! (.-keyReleased p5)
-    (fn []
-      (am/go
-        (a/>! evt {:type :keyReleased :key (.-key p5)})))))
+        (fn []
+          (am/go
+            (a/>! evt {:type :keyReleased :key (.-key p5)})))))
 
 (main)
