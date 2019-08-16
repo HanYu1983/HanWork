@@ -7,8 +7,8 @@
 1. [俄羅斯方塊](https://hanyu1983.github.io/HanWork/www/funcgame/t5.html) [code](funcgame/g1/src/app/t5/main.cljs)
 1. [踩地雷](https://hanyu1983.github.io/HanWork/www/funcgame/t6.html) [code](funcgame/g1/src/app/t6/main.cljs)
 1. [EntityComponentSystem(ECS)簡易示範](https://hanyu1983.github.io/HanWork/www/funcgame/t7.html) [code](funcgame/g1/src/app/t7/main.cljs)
-1. [深度學習範例使用QLearning](https://hanyu1983.github.io/HanWork/www/funcgame/app2.html) [code](funcgame/g1/src/app2/main.cljs)
-1. [ECS/macros示範](https://hanyu1983.github.io/HanWork/www/funcgame/app3.html) [code](funcgame/g1/src/app3/main.cljs)
+1. [深度學習範例使用QLearning](https://hanyu1983.github.io/HanWork/www/funcgame/app2.html) [code](funcgame/g1/src/app2/)
+1. [ECS/macros示範](https://hanyu1983.github.io/HanWork/www/funcgame/app3.html) [code](funcgame/g1/src/app3/)
 
 
 # 程式碼範例
