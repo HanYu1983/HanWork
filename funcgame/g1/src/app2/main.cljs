@@ -37,9 +37,11 @@
   a)
 
 (defn main []
-
+  
   (let [userInput (a/chan)
         data (atom nil)]
+    
+    ; 訓練頭腦
     (am/go-loop [model {:players {:player :ai
                                   :enemy :ai}
                         :active :player
@@ -49,7 +51,6 @@
                         :result {:player 0 :enemy 0 :draw 0}}]
       (let [currPlayerType (get-in model [:players (:active model)])]
         (a/<! (a/timeout 10))
-        ;(print model)
         (condp = currPlayerType
           :player
           (let [input (a/<! userInput)]
@@ -61,7 +62,7 @@
                 state (:board model)
                 actions (possibleActions state)]
             (if (= 0 (count actions))
-              ;draw
+              ; 平手
               (recur (-> model
                          (merge {:board board
                                  :active oppositePlayer})
@@ -71,20 +72,25 @@
               (let [brain (get-in model [:playerInfos activePlayer :brain])
                     action (b/selectAction brain state actions)]
                 (if (get-in state action)
-                  (js/throw "xxxx")
+                  (js/throw "位置已被下過. 這裡不該被執行到")
                   (let [nextBrain (b/updateQ brain state action actions)
                         nextState (update-in state action (constantly activePlayer))
                         isWin (checkWin nextState activePlayer)]
                     (if isWin
-                      (let [nextBrain (-> nextBrain
+                      ; 主動玩家勝
+                      (let [; 加分
+                            nextBrain (-> nextBrain
                                           (b/updateR (partial + 10))
                                           (b/updateQ state action actions)
                                           (b/clearState))
+                            ; 對手減分
                             oppositeBrain (-> (get-in model [:playerInfos oppositePlayer :brain])
                                               (b/updateR (partial + (- 100)))
                                               (b/updateQ nil nil actions)
                                               (b/clearState))
+                            ; 清場
                             nextState board]
+                        ; 記錄訓練結果, 這個結果用來展示
                         (reset! data model)
                         (recur (-> model
                                    (merge {:board nextState
@@ -92,7 +98,9 @@
                                    (update-in [:playerInfos activePlayer :brain] (constantly nextBrain))
                                    (update-in [:playerInfos oppositePlayer :brain] (constantly oppositeBrain))
                                    (update-in [:result activePlayer] inc))))
-                      (let [nextBrain (-> nextBrain
+                      ; 還沒分出勝負
+                      (let [; 加分
+                            nextBrain (-> nextBrain
                                           (b/updateR (partial + 1)))]
                         (recur (-> model
                                    (merge {:board nextState
@@ -101,9 +109,12 @@
 
           (recur model))))
 
+    ; 和訓練中的頭腦對下的互動介面
     (let [state (r/atom board)
           active (r/atom :player)
           result (r/atom nil)]
+      ; 電腦行為
+      ; 等待玩家下子後下子
       (am/go-loop []
         (condp = @active
           :enemy
@@ -112,19 +123,23 @@
                 actions (possibleActions @state)
                 bestAction (b/bestAction brain @state actions)]
             (if (> (count actions) 0)
+              ; 還有下子空間, 下子並切換玩家
               (do (swap! state (fn [origin]
                                  (update-in origin bestAction (constantly :enemy))))
                   (reset! active (if (= :player @active) :enemy :player))
                   (recur))
-              (do 
+              ; 沒有下子空間, 等待
+              (do
                 (a/<! (a/timeout 1000))
                 (recur))))
-
+          
+          ; 閒置時更新訓練資料的顯示
           (do
             (a/<! (a/timeout 1000))
             (reset! result (:result @data))
             (recur))))
 
+      ; 盤面
       (defn drawPlayground []
         (let [s @state
               ac @active
@@ -138,8 +153,7 @@
                                {:on-click #(do
                                              (swap! state (fn [origin]
                                                             (update-in origin [y x] (constantly :player))))
-                                             (reset! active (if (= :player @active) :enemy :player))
-                                             )}
+                                             (reset! active (if (= :player @active) :enemy :player)))}
                                "O"])))]
           [:div
            [:button {:on-click #(reset! state board)} "clear"]
@@ -167,10 +181,11 @@
       (r/render [drawPlayground]
                 (.getElementById js/document "playground")))
 
-    ; 畫qtable
+    ; 頭腦的訓練結果
     (let [tmodel (r/atom false)
           table (r/atom {})]
 
+      ; 每秒同步資料
       (am/go-loop []
         (let [model @data
               brain (get-in model [:playerInfos :enemy :brain])]
@@ -203,6 +218,4 @@
         (r/render [drawQtable]
                   (.getElementById js/document "qtable")))
 
-      (mountit))
-    
-    ))
+      (mountit))))

@@ -68,6 +68,7 @@
         (update model :entities (partial replace {plyr nextPlyr enemy nextEnemy})))
       model))
 
+  ; 沒有使用
   :moveCost_xxxx [plyr len]
   (let [plyr (first (filter #(= (:id %) (:id plyr)) (:entities model)))]
     (if plyr
