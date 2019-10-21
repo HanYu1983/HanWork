@@ -60,7 +60,7 @@
 - 業餘興趣開發, 採分潤型式
 
 聯絡我
-- hanyushome@gmail.com
 - [臉書](https://www.facebook.com/han.yu.100)
+- hanyushome@gmail.com
 - [日本語resume](resumejp.md)
 - [english resume](resumeen.md)
