@@ -62,5 +62,6 @@
 聯絡我
 - [臉書](https://www.facebook.com/han.yu.100)
 - hanyushome@gmail.com
+- lineID:yuhanchun
 - [日本語resume](resumejp.md)
 - [english resume](resumeen.md)
