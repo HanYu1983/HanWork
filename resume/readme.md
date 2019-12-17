@@ -65,3 +65,40 @@
 - lineID:yuhanchun
 - [日本語resume](resumejp.md)
 - [english resume](resumeen.md)
+
+## 工作經歷
+香蕉會兒  
+2019/3 ~ 現在  
+軟體工程師  
+Frontend web game, Backend server, Broadcaster software Automation
+
+自由接案者  
+2015 ~ 2019  
+About 4 years freelancer
+Works are website, game, server, api connection, web automation, bitcoin
+
+軟體工程師  
+2014  
+天空連線股份有限公司  
+Unity to android no bridge development. game server work handover
+
+遊戲軟體工程師  
+2013/04~2014/06  
+遊悅科技股份有限公司  
+About half year work in Philippines. Unity game development, python tool development
+
+遊戲軟體工程師  
+2011/12~2013/01  
+遊戲夢工埸  
+ios gameSheepRunRun
+flash game替身戒
+
+軟體工程師  
+2010/04~2011/12  
+友邁科技  
+map search engine(j2ee)
+
+遊戲軟體工程師  
+2008/02~2010/02  
+極致行動科技  
+j2me mobile game development、java game editor development
