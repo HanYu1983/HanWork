@@ -80,7 +80,7 @@ Works are website, game, server, api connection, web automation, bitcoin
 軟體工程師  
 2014  
 天空連線股份有限公司  
-Unity to android no bridge development. game server work handover
+Unity to android native development. game server work handover
 
 遊戲軟體工程師  
 2013/04~2014/06  
