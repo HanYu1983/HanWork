@@ -67,38 +67,49 @@
 - [english resume](resumeen.md)
 
 ## 工作經歷
-香蕉會兒  
-2019/3 ~ 現在  
-軟體工程師  
-Frontend web game, Backend server, Broadcaster software Automation
+軟體工程師
+2019/3 ~ 現在
+香蕉會兒 
+1. 前台web game(laya/typescript/html5/css)
+1. 直播軟體自動化排程軟體與web操做介面(websocket/nodejs)
+1. 遊戲後台資料查詢與大量資料處理(js)
+1. xmpp聊天室客戶端處理(js)
 
 自由接案者  
-2015 ~ 2019  
-About 4 years freelancer
-Works are website, game, server, api connection, web automation, bitcoin
+2015 ~ 2019
+1. 網站
+1. Unity音樂節奏遊戲(MeowRemix)
+1. 各種後台API串接
+1. 網頁自動化小程式
+1. 比特幣交易所API串接
 
 軟體工程師  
 2014  
-天空連線股份有限公司  
-Unity to android native development. game server work handover
+1. 天空連線股份有限公司
+1. Unity與android的原生API串接
+1. 赴日交接遊戲後台Server(1個月)
 
 遊戲軟體工程師  
 2013/04~2014/06  
 遊悅科技股份有限公司  
-About half year work in Philippines. Unity game development, python tool development
+1. 赴菲律賓受訓(半年)
+1. Unity遊戲開發
+1. 開發工具(python)
 
 遊戲軟體工程師  
 2011/12~2013/01  
 遊戲夢工埸  
-ios gameSheepRunRun
-flash game替身戒
+1. IOS遊戲 SheepRunRun
+1. flash 遊戲替身戒
 
 軟體工程師  
 2010/04~2011/12  
-友邁科技  
-map search engine(j2ee)
+友邁科技
+1. 地圖系統後台路徑查找(java)
+1. 地圖相關係統前台web介面(jsp)
 
 遊戲軟體工程師  
 2008/02~2010/02  
 極致行動科技  
-j2me mobile game development、java game editor development
+1. 手機遊戲開發(格鬥遊戲與射擊遊戲)
+1. 遊戲素材編輯器(自動拼接地圖/切圖/動畫等)
