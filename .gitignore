@@ -15,3 +15,5 @@ jniLibs/
 package-lock.json
 .nrepl-port
 funcgame/g1/public
+obj/
+bin/
