@@ -10,6 +10,9 @@
 1. [深度學習範例使用QLearning](https://hanyu1983.github.io/HanWork/www/funcgame/app2.html) [code](funcgame/g1/src/app2/)
 1. [ECS/macros示範](https://hanyu1983.github.io/HanWork/www/funcgame/app3.html) [code](funcgame/g1/src/app3/)
 
+# 函數式程式碼範例
+1. Fable/React/FRP [code](funcgame/g2/app1/)
+
 
 # 程式碼範例
 1. 使用gulp整合前後端fullstack開發方案：[node/glup](dev/node/)
