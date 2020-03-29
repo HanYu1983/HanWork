@@ -1339,9 +1339,9 @@
 		TRADITION_COST_AMOUNTS				= { 300 }	# Tradition base cost
 
 		COMMERCIAL_PACT_VALUE_MULT 			= 0.1
-
+		# han: add more trade fee
 		TRADE_AMOUNT_MULTIPLIER				= { 1 5 10 50 100 } # Multiplier interval for resource trading base amount
-		MARKET_TRADE_FEE_BASE				= 0.3	# Base procentage for market trade fee
+		MARKET_TRADE_FEE_BASE				= 0.7	# Base procentage for market trade fee
 		MARKET_TRADE_FEE_MIN				= 0.05	# Minumum trade fee percentage
 		MARKET_FLUCTUATION_ABOVE_BASE_PRICE		= 1	# Base fluctuation when trading a resource' base amount if price is > 0
 		MARKET_FLUCTUATION_BELOW_BASE_PRICE		= 0.2	# Base fluctuation when trading a resource' base amount if price is < 0

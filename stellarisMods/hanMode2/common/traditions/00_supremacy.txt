@@ -173,14 +173,14 @@ tr_supremacy_master_shipwrights = {
 		factor = 1000
 	}
 }
-
+# han: reduce country_command_limit_add
 tr_supremacy_war_games = {
 	possible = {
 		has_tradition = tr_supremacy_master_shipwrights
 		has_tradition = tr_supremacy_fleet_logistical_corps
 	}
 	modifier = {
-		country_command_limit_add = 20
+		country_command_limit_add = 4
 		admiral_skill_levels = 2
 	}
 

@@ -270,6 +270,7 @@ tech_repeatable_naval_cap = {
 	}
 }
 
+# han: reduce country_command_limit_add
 tech_repeatable_command_limit = {
 	area = society
 	cost = @repeatableTechBaseCost
@@ -296,7 +297,7 @@ tech_repeatable_command_limit = {
 	}
 	
 	modifier = {
-		country_command_limit_add = 10		
+		country_command_limit_add = 2		
 	}
 }
 

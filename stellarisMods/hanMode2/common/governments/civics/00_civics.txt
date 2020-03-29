@@ -378,6 +378,7 @@ civic_warrior_culture = {
 	}
 }
 
+# han: reduce country_command_limit_add
 civic_distinguished_admiralty = {
 	potential = {
 		ethics = { NOT = { value = ethic_gestalt_consciousness } }
@@ -396,7 +397,7 @@ civic_distinguished_admiralty = {
 	modifier = {
 		ship_fire_rate_mult = 0.10
 		admiral_skill_levels = 1
-		country_command_limit_add = 10
+		country_command_limit_add = 4
 	}
 }
 

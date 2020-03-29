@@ -3083,7 +3083,7 @@ tech_doctrine_fleet_size_1 = {
 	weight = @tier2weight1
 
 	modifier = {
-		country_command_limit_add = 20
+		country_command_limit_add = 4
 	}
 
 	weight_modifier = {
@@ -3127,7 +3127,7 @@ tech_doctrine_fleet_size_2 = {
 	weight = @tier2weight3
 
 	modifier = {
-		country_command_limit_add = 20
+		country_command_limit_add = 4
 	}
 
 	weight_modifier = {
@@ -3171,7 +3171,7 @@ tech_doctrine_fleet_size_3 = {
 	weight = @tier3weight2
 
 	modifier = {
-		country_command_limit_add = 20
+		country_command_limit_add = 4
 	}
 
 	weight_modifier = {
@@ -3215,7 +3215,7 @@ tech_doctrine_fleet_size_4 = {
 	weight = @tier4weight1
 
 	modifier = {
-		country_command_limit_add = 20
+		country_command_limit_add = 4
 	}
 
 	weight_modifier = {
@@ -3259,7 +3259,7 @@ tech_doctrine_fleet_size_5 = {
 	weight = @tier4weight3
 
 	modifier = {
-		country_command_limit_add = 20
+		country_command_limit_add = 4
 	}
 
 	weight_modifier = {

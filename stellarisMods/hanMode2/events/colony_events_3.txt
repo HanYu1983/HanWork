@@ -1226,7 +1226,7 @@ planet_event = { #hell
 	
 	option = {
 		name = colony.3006.keep
-		#add_deposit = d_portal_research_zone
+		add_deposit = d_portal_research_zone
 		custom_tooltip = portal_zone_tooltip
 	}
 }

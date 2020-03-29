@@ -423,6 +423,9 @@ country_event = {
 			}
 			give_technology = { message = no tech = tech_space_trading }
 		}
+
+		# han: start with tech_automated_exploration
+		give_technology = { message = no tech = tech_automated_exploration }
 	}
 
 	# Additional resources that may be changed by subspecies are granted in generate_start_buildings_and_districts
@@ -446,7 +449,31 @@ country_event = {
 				}
 
 				set_fleet_stance = evasive
-				#set_location = prev.capital_star
+				set_location = prev.capital_scope.star
+
+				owner = {
+					create_leader = {
+						class = scientist
+						sub_type = survey
+						name = random
+						species = owner_main_species
+					}
+				}
+				set_leader = last_created_leader
+			}
+		}
+
+		# han: add more science ship
+		create_fleet = {
+			effect = {
+				set_owner = prev
+
+				create_ship = {
+					name = random
+					random_existing_design = science
+				}
+
+				set_fleet_stance = evasive
 				set_location = prev.capital_scope.star
 
 				owner = {

@@ -515,6 +515,7 @@ ap_world_shaper = {
 	}
 }
 
+# han: reduce country_command_limit_add
 ap_galactic_force_projection = {
 	possible = {
 		custom_tooltip = {
@@ -524,7 +525,7 @@ ap_galactic_force_projection = {
 	}
 	modifier = {
 		country_naval_cap_add = 80
-		country_command_limit_add = 20
+		country_command_limit_add = 4
 	}
 
 	potential = {

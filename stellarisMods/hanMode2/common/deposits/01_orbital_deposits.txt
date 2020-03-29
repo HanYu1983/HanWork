@@ -269,6 +269,7 @@ d_minerals_10 = {
 ##################################
 ######### ENERGY CREDITS #########
 ##################################
+# han: delete energy
 d_energy_1 = {
 	resources = {
 		category = orbital_mining_deposits
@@ -281,17 +282,6 @@ d_energy_1 = {
 	
 	potential = {
 		OR = {
-			is_planet_class = pc_a_star
-			is_planet_class = pc_b_star
-			is_planet_class = pc_f_star
-			is_planet_class = pc_g_star
-			is_planet_class = pc_k_star
-			is_planet_class = pc_m_star
-			is_planet_class = pc_m_giant_star
-			is_planet_class = pc_t_star
-			is_planet_class = pc_gas_giant
-			is_planet_class = pc_molten
-			is_planet_class = pc_ice_asteroid
 		}	
 	}
 	
@@ -312,17 +302,6 @@ d_energy_2 = {
 	
 	potential = {
 		OR = {
-			is_planet_class = pc_a_star
-			is_planet_class = pc_b_star
-			is_planet_class = pc_f_star
-			is_planet_class = pc_g_star
-			is_planet_class = pc_k_star
-			is_planet_class = pc_m_star
-			is_planet_class = pc_m_giant_star
-			is_planet_class = pc_t_star
-			is_planet_class = pc_gas_giant
-			is_planet_class = pc_molten
-			is_planet_class = pc_ice_asteroid
 		}	
 	}
 	
@@ -370,17 +349,6 @@ d_energy_3 = {
 	
 	potential = {
 		OR = {
-			is_planet_class = pc_a_star
-			is_planet_class = pc_b_star
-			is_planet_class = pc_f_star
-			is_planet_class = pc_g_star
-			is_planet_class = pc_k_star
-			is_planet_class = pc_m_star
-			is_planet_class = pc_m_giant_star
-			is_planet_class = pc_t_star
-			is_planet_class = pc_gas_giant
-			is_planet_class = pc_molten
-			is_planet_class = pc_ice_asteroid
 		}	
 	}
 	
@@ -428,17 +396,6 @@ d_energy_4 = {
 	
 	potential = {
 		OR = {
-			is_planet_class = pc_a_star
-			is_planet_class = pc_b_star
-			is_planet_class = pc_f_star
-			is_planet_class = pc_g_star
-			is_planet_class = pc_k_star
-			is_planet_class = pc_m_star
-			is_planet_class = pc_m_giant_star
-			is_planet_class = pc_t_star
-			is_planet_class = pc_gas_giant
-			is_planet_class = pc_molten
-			is_planet_class = pc_ice_asteroid
 		}	
 	}
 	
@@ -486,17 +443,6 @@ d_energy_5 = {
 	
 	potential = {
 		OR = {
-			is_planet_class = pc_a_star
-			is_planet_class = pc_b_star
-			is_planet_class = pc_f_star
-			is_planet_class = pc_g_star
-			is_planet_class = pc_k_star
-			is_planet_class = pc_m_star
-			is_planet_class = pc_m_giant_star
-			is_planet_class = pc_t_star
-			is_planet_class = pc_gas_giant
-			is_planet_class = pc_molten
-			is_planet_class = pc_ice_asteroid
 		}	
 	}
 	
