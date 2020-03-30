@@ -1,9 +1,9 @@
 setup_scenario = {
-	name = "tiny"
-	priority = 3					#priority decides in which order the scenarios are listed
-	num_stars = 200
-	radius = 200					#should be less than 500, preferably less than ~460
-	num_empires = { min = 0 max = 500 } #limits player customization
+	name = "atomic"
+	priority = 0					#priority decides in which order the scenarios are listed
+	num_stars = 25
+	radius = 100					#should be less than 500, preferably less than ~460
+	num_empires = { min = 0 max = 1000 }	#limits player customization
 	num_empire_default = 3
 	fallen_empire_default = 0
 	fallen_empire_max = 100
@@ -26,17 +26,15 @@ setup_scenario = {
 	max_hyperlane_distance = 50
 
 
-	num_nebulas	= 2
+	num_nebulas	= 1
 	nebula_size = 60
 	nebula_min_dist = 100
-	
 	num_wormhole_pairs = { min = 0 max = 100 }
 	num_wormhole_pairs_default = 1
 	num_gateways = { min = 0 max = 100 }
 	num_gateways_default = 1
 	num_hyperlanes = { min=0.1 max= 10 }
 	num_hyperlanes_default = 1
-
 
 	supports_shape = elliptical
 	#supports_shape = spiral_2
