@@ -96,7 +96,8 @@ origin_mechanists = {
 	picture = GFX_origin_mechanist
 
 	playable = {
-		host_has_dlc = "Utopia"
+		# host_has_dlc = "Utopia"
+		always = yes
 	}
 
 	possible = {

@@ -883,9 +883,9 @@
 		COLLATERAL_DAMAGE_MAX_PER_DAY					= 0.25	# Per combat side
 		COLLATERAL_DAMAGE_KILL_POP_CHANCE				= 0.1	# Multiplied by damage dealt
 
-		STATION_SELF_REPAIR_TIMER_DAYS			= 10	# Number of days after taking damage before a station will start self-repairing
+		STATION_SELF_REPAIR_TIMER_DAYS			= 50	# Number of days after taking damage before a station will start self-repairing
 
-		STARBASE_SELF_REPAIR_TIMER_DAYS			= 30	# Number of days after taking damage before a starbase will start self-repairing
+		STARBASE_SELF_REPAIR_TIMER_DAYS			= 150	# Number of days after taking damage before a starbase will start self-repairing
 		STARBASE_DISABLED_HEALTH_PERCENTAGE		= 0		# Percentage of max health when a starbase that can be disabled will be disabled.
 		STARBASE_ENABLED_HEALTH_PERCENTAGE		= 0.05	# Percentage of max health when a starbase that can be disabled will be enabled.
 		STARBASE_AUTO_CONTROL_DISTANCE			= 80	# Distance at which a fleet can seize control of a disabled starbase
