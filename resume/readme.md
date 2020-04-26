@@ -71,7 +71,7 @@
 2019/3 ~ 現在  
 香蕉會兒  
 1. 前台web game(laya/typescript/html5/css)
-1. 直播軟體自動化排程軟體與web操做介面(websocket/nodejs)
+1. 直播軟體自動化排程軟體與web操做介面(websocket/nodejs/react)
 1. 遊戲後台資料查詢與大量資料處理(js/MongoDB/Elasticsearch)
 1. xmpp聊天室客戶端處理(js)
 1. 輔助用小工具(F#)
