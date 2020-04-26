@@ -18,8 +18,9 @@
 應該算是多語言工程師
 - 工具: python/nodejs
 - 移動端: c#/java/objc/kotlin/xcode/android studio/unity
-- Web端: js/livescript/clojurescript/vue/rx
+- Web端: js/livescript/clojurescript/react/vue/rx
 - 後端: golang/nodejs/java
+- DB: mongodb/elasticsearch/mysql/nosql
 - PC端: c#/java/unity
 
 開發平台
