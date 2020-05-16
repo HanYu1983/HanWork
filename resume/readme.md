@@ -69,7 +69,7 @@
 
 ## 工作經歷
 軟體工程師  
-2019/3 ~ 現在  
+2019/3 ~ 2020/5  
 香蕉會兒  
 1. 前台web game(laya/typescript/html5/css)
 1. 直播軟體自動化排程軟體與web操做介面(websocket/nodejs/react)
