@@ -10,26 +10,26 @@ return new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMP
 app3.weapon.meleeGun.createBullet = (function app3$weapon$meleeGun$createBullet(self,plyr,target){
 var dir = app3.tool.seek(new cljs.core.Keyword(null,"position","position",-2011731912).cljs$core$IFn$_invoke$arity$1(plyr),new cljs.core.Keyword(null,"position","position",-2011731912).cljs$core$IFn$_invoke$arity$1(target));
 var iter__4523__auto__ = ((function (dir){
-return (function app3$weapon$meleeGun$createBullet_$_iter__36037(s__36038){
+return (function app3$weapon$meleeGun$createBullet_$_iter__36183(s__36184){
 return (new cljs.core.LazySeq(null,((function (dir){
 return (function (){
-var s__36038__$1 = s__36038;
+var s__36184__$1 = s__36184;
 while(true){
-var temp__5735__auto__ = cljs.core.seq(s__36038__$1);
+var temp__5735__auto__ = cljs.core.seq(s__36184__$1);
 if(temp__5735__auto__){
-var s__36038__$2 = temp__5735__auto__;
-if(cljs.core.chunked_seq_QMARK_(s__36038__$2)){
-var c__4521__auto__ = cljs.core.chunk_first(s__36038__$2);
+var s__36184__$2 = temp__5735__auto__;
+if(cljs.core.chunked_seq_QMARK_(s__36184__$2)){
+var c__4521__auto__ = cljs.core.chunk_first(s__36184__$2);
 var size__4522__auto__ = cljs.core.count(c__4521__auto__);
-var b__36040 = cljs.core.chunk_buffer(size__4522__auto__);
-if((function (){var i__36039 = (0);
+var b__36186 = cljs.core.chunk_buffer(size__4522__auto__);
+if((function (){var i__36185 = (0);
 while(true){
-if((i__36039 < size__4522__auto__)){
-var a = cljs.core._nth.cljs$core$IFn$_invoke$arity$2(c__4521__auto__,i__36039);
-cljs.core.chunk_append(b__36040,new cljs.core.PersistentArrayMap(null, 6, [new cljs.core.Keyword(null,"position","position",-2011731912),new cljs.core.Keyword(null,"position","position",-2011731912).cljs$core$IFn$_invoke$arity$1(plyr),new cljs.core.Keyword(null,"velocity","velocity",-581524355),app3.tool.makeLength((15),app3.weapon.meleeGun.rotateDir(a,dir)),new cljs.core.Keyword(null,"size","size",1098693007),new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [(5),(5)], null),new cljs.core.Keyword(null,"from","from",1815293044),plyr,new cljs.core.Keyword(null,"bullet","bullet",726988937),(0),new cljs.core.Keyword(null,"flyLength","flyLength",-656492776),(100)], null));
+if((i__36185 < size__4522__auto__)){
+var a = cljs.core._nth.cljs$core$IFn$_invoke$arity$2(c__4521__auto__,i__36185);
+cljs.core.chunk_append(b__36186,new cljs.core.PersistentArrayMap(null, 6, [new cljs.core.Keyword(null,"position","position",-2011731912),new cljs.core.Keyword(null,"position","position",-2011731912).cljs$core$IFn$_invoke$arity$1(plyr),new cljs.core.Keyword(null,"velocity","velocity",-581524355),app3.tool.makeLength((15),app3.weapon.meleeGun.rotateDir(a,dir)),new cljs.core.Keyword(null,"size","size",1098693007),new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [(5),(5)], null),new cljs.core.Keyword(null,"from","from",1815293044),plyr,new cljs.core.Keyword(null,"bullet","bullet",726988937),(0),new cljs.core.Keyword(null,"flyLength","flyLength",-656492776),(100)], null));
 
-var G__36056 = (i__36039 + (1));
-i__36039 = G__36056;
+var G__36187 = (i__36185 + (1));
+i__36185 = G__36187;
 continue;
 } else {
 return true;
@@ -37,13 +37,13 @@ return true;
 break;
 }
 })()){
-return cljs.core.chunk_cons(cljs.core.chunk(b__36040),app3$weapon$meleeGun$createBullet_$_iter__36037(cljs.core.chunk_rest(s__36038__$2)));
+return cljs.core.chunk_cons(cljs.core.chunk(b__36186),app3$weapon$meleeGun$createBullet_$_iter__36183(cljs.core.chunk_rest(s__36184__$2)));
 } else {
-return cljs.core.chunk_cons(cljs.core.chunk(b__36040),null);
+return cljs.core.chunk_cons(cljs.core.chunk(b__36186),null);
 }
 } else {
-var a = cljs.core.first(s__36038__$2);
-return cljs.core.cons(new cljs.core.PersistentArrayMap(null, 6, [new cljs.core.Keyword(null,"position","position",-2011731912),new cljs.core.Keyword(null,"position","position",-2011731912).cljs$core$IFn$_invoke$arity$1(plyr),new cljs.core.Keyword(null,"velocity","velocity",-581524355),app3.tool.makeLength((15),app3.weapon.meleeGun.rotateDir(a,dir)),new cljs.core.Keyword(null,"size","size",1098693007),new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [(5),(5)], null),new cljs.core.Keyword(null,"from","from",1815293044),plyr,new cljs.core.Keyword(null,"bullet","bullet",726988937),(0),new cljs.core.Keyword(null,"flyLength","flyLength",-656492776),(100)], null),app3$weapon$meleeGun$createBullet_$_iter__36037(cljs.core.rest(s__36038__$2)));
+var a = cljs.core.first(s__36184__$2);
+return cljs.core.cons(new cljs.core.PersistentArrayMap(null, 6, [new cljs.core.Keyword(null,"position","position",-2011731912),new cljs.core.Keyword(null,"position","position",-2011731912).cljs$core$IFn$_invoke$arity$1(plyr),new cljs.core.Keyword(null,"velocity","velocity",-581524355),app3.tool.makeLength((15),app3.weapon.meleeGun.rotateDir(a,dir)),new cljs.core.Keyword(null,"size","size",1098693007),new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [(5),(5)], null),new cljs.core.Keyword(null,"from","from",1815293044),plyr,new cljs.core.Keyword(null,"bullet","bullet",726988937),(0),new cljs.core.Keyword(null,"flyLength","flyLength",-656492776),(100)], null),app3$weapon$meleeGun$createBullet_$_iter__36183(cljs.core.rest(s__36184__$2)));
 }
 } else {
 return null;

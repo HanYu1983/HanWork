@@ -8,8 +8,8 @@ return (f.cljs$core$IFn$_invoke$arity$2 ? f.cljs$core$IFn$_invoke$arity$2(a__$1,
 });
 });
 app3.tool.checkProperty = (function app3$tool$checkProperty(coms,self){
-return cljs.core.every_QMARK_((function (p1__35477_SHARP_){
-return (p1__35477_SHARP_.cljs$core$IFn$_invoke$arity$1 ? p1__35477_SHARP_.cljs$core$IFn$_invoke$arity$1(self) : p1__35477_SHARP_.call(null,self));
+return cljs.core.every_QMARK_((function (p1__35856_SHARP_){
+return (p1__35856_SHARP_.cljs$core$IFn$_invoke$arity$1 ? p1__35856_SHARP_.cljs$core$IFn$_invoke$arity$1(self) : p1__35856_SHARP_.call(null,self));
 }),coms);
 });
 app3.tool.seek = (function app3$tool$seek(v1,v2){
