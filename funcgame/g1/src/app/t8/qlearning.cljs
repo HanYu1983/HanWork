@@ -8,8 +8,8 @@
 (s/def ::model (s/keys :req-un [::qtable ::learningRate ::discountFactor]))
 
 (def model {:qtable {}
-            :learningRate 0.5
-            :discountFactor 0.9})
+            :learningRate 1
+            :discountFactor 1})
 
 (s/explain ::model model)
 
@@ -45,9 +45,9 @@
 
 
 (defn bestAction [self state actions]
-  (let [scores (replace {nil 0} (map #(get-in self [:q state %]) actions))
-        best (->> (map vector actions scores)
-                  (sort #(compare (last %2) (last %1)))
+  (let [scores (map #(get-in self [:qtable state %]) actions)
+        best (->> (zipmap actions scores)
+                  (sort #(compare (second %2) (second %1)))
                   ffirst)]
     best))
 
