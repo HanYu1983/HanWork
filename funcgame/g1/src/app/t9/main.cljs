@@ -6,12 +6,14 @@
 (defn train [atomModel atomOption]
   (let [seq1 (->> (range) (map #(mod % 10)))
         seq2 (->> (range) (map #(mod % 10)) (map #(- 9 %)))
-        seq3 (->> (range) (map #(mod % 5)))]
+        seq3 (->> (range) (map #(mod % 5)))
+        seq4 (->> (range) (map #(nth [3 3 4 3 3 3 4] (mod % 7))))]
     (a/go
       (loop [qmodel @atomModel
              [x y & s] seq1
              [x2 y2 & s2] seq2
-             [x3 y3 & s3] seq3]
+             [x3 y3 & s3] seq3
+             [x4 y4 & s4] seq4]
         (a/<! (a/timeout 250))
         (let [option @atomOption
               qmodel (cond
@@ -19,14 +21,17 @@
                        ; qlearning可以用來預測模式, x透過"變成y的action"變成y
                        ; 之後再遇到x時, 就可以知道有可能變成y
                        (q/learn qmodel x y 1 y)
-                       
+
                        (= :seq2 (:select option))
                        (q/learn qmodel x2 y2 1 y2)
-                       
+
+                       (= :seq3 (:select option))
+                       (q/learn qmodel x3 y3 1 y3)
+
                        :else
-                       (q/learn qmodel x3 y3 1 y3))]
+                       (q/learn qmodel x4 y4 1 y4))]
           (reset! atomModel qmodel)
-          (recur qmodel (cons y s) (cons y2 s2) (cons y3 s3)))))))
+          (recur qmodel (cons y s) (cons y2 s2) (cons y3 s3) (cons y4 s4)))))))
 
 
 (defn predic [atomModel atomOption] 
@@ -45,11 +50,15 @@
                     [:br]
                     (str "seq3" [0 1 2 3 4 0 1 2 3 4])
                     [:br]
+                    (str "seq4" [3 3 4 3 3 3 4])
+                    [:br]
                     [:div
                      [:button {:on-click #(swap! atomOption (fn [origin] (assoc origin :select :seq1)))} "seq1"]
                      [:button {:on-click #(swap! atomOption (fn [origin] (assoc origin :select :seq2)))} "seq2"]
-                     [:button {:on-click #(swap! atomOption (fn [origin] (assoc origin :select :seq3)))} "seq3"]]
+                     [:button {:on-click #(swap! atomOption (fn [origin] (assoc origin :select :seq3)))} "seq3"]
+                     [:button {:on-click #(swap! atomOption (fn [origin] (assoc origin :select :seq4)))} "seq4"]]
                     (str "select " (:select @atomOption))
+                    [:div (str "[(best) (select)]")]
                     [:div (str "[" s "]")]]))]
     (a/go
       (loop []
@@ -57,8 +66,12 @@
               r (reductions (fn [c _]
                               (q/bestAction qmodel c (range 0 10)))
                             3
+                            (range 10))
+              r2 (reductions (fn [c _]
+                              (q/selectAction qmodel c (range 0 10)))
+                            3
                             (range 10))]
-          (reset! state r)
+          (reset! state [r r2])
           (a/<! (a/timeout 1000))
           (recur))))
 
