@@ -29,6 +29,8 @@
                                :depends-on #{:shared}}
                           :t8 {:entries [app.t8.main]
                                :depends-on #{:shared}}
+                          :t9 {:entries [app.t9.main]
+                               :depends-on #{:shared}}
                           :app2 {:init-fn app2.main/main
                                :depends-on #{:shared}}
                           :app3 {:init-fn app3.main/main

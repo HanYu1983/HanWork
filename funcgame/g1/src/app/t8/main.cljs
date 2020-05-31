@@ -66,7 +66,7 @@
   (a/go
     (loop [qmodel @atomModel]
       (a/<! (a/timeout 1000))
-      (let [qmodel (train qmodel 75)
+      (let [qmodel (train qmodel 50)
             _ (reset! atomModel qmodel)]
         (recur qmodel)))))
 

@@ -9,6 +9,7 @@
 1. [EntityComponentSystem(ECS)簡易示範](https://hanyu1983.github.io/HanWork/www/funcgame/t7.html) [code](funcgame/g1/src/app/t7/main.cljs)
 1. [深度學習範例使用QLearning](https://hanyu1983.github.io/HanWork/www/funcgame/app2.html) [code](funcgame/g1/src/app2/)
 1. [ECS/macros示範](https://hanyu1983.github.io/HanWork/www/funcgame/app3.html) [code](funcgame/g1/src/app3/)
+1. [模式預測/使用QLearning](https://hanyu1983.github.io/HanWork/www/funcgame/t9.html) [code](funcgame/g1/src/app/t9/main.cljs)
 
 # 函數式程式碼範例
 1. Fable/React/FRP [code](funcgame/g2/app1/)
