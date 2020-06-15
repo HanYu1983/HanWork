@@ -12,6 +12,7 @@ gradle/
 assets/
 jniLibs/
 !docs/www/purlJsFramework/assets
+!docs/www/robot/src/assets
 package-lock.json
 .nrepl-port
 funcgame/g1/public
