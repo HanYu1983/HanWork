@@ -10,6 +10,7 @@
 1. [深度學習範例使用QLearning](https://hanyu1983.github.io/HanWork/www/funcgame/app2.html) [code](funcgame/g1/src/app2/)
 1. [ECS/macros示範](https://hanyu1983.github.io/HanWork/www/funcgame/app3.html) [code](funcgame/g1/src/app3/)
 1. [模式預測/使用QLearning](https://hanyu1983.github.io/HanWork/www/funcgame/t9.html) [code](funcgame/g1/src/app/t9/main.cljs)
+1. [機器人大戰驗証用DEMO](https://hanyu1983.github.io/HanWork/www/robot/index.html) [code](https://github.com/HanYu1983/Niba/tree/master/dev/Robot)
 
 # 函數式程式碼範例
 1. Fable/React/FRP [code](funcgame/g2/app1/)
