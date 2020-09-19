@@ -16,7 +16,7 @@
 1. Fable/React/FRP [code](funcgame/g2/app1/)
 
 # Golang函數式編程
-1. [卡片遊戲測試](https://storage.googleapis.com/particle-resources/works/fighterSha/index.html)
+1. [卡片遊戲測試](https://storage.googleapis.com/particle-resources/works/fighterSha/index.html) [code](https://github.com/HanYu1983/Niba/tree/develop/dev/FighterSha/goDev/src)
 
 # 程式碼範例
 1. 使用gulp整合前後端fullstack開發方案：[node/glup](dev/node/)
