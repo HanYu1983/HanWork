@@ -12,8 +12,8 @@
 - 2年的自產品(上善若水線上卡牌平台, UNITY遊戲原型)
 
 應該算是全端工程師
-- 前端MVC的MC的部分(可以的話不寫V)
-- 後端使用雲端VM或App Engine/MySql/NoSql.
+- 前端MVC的MC的部分
+- 後端使用雲端VM或Google App Engine/MySql/NoSql.
 
 應該算是多語言工程師
 - 工具: python/nodejs
@@ -55,10 +55,9 @@
 
 業務合作
 - [接案](business.md)
-- [全職](idealwork.md)
 - 兼職
 - 約聘
-- 業餘興趣開發, 採分潤型式
+- 全職(idealwork.md)
 
 聯絡我
 - [臉書](https://www.facebook.com/han.yu.100)
@@ -68,6 +67,10 @@
 - [english resume](resumeen.md)
 
 ## 工作經歷
+自由接案者
+2020/5 ~ 現在
+1. IOS/Android社交軟體, 包含語音通話, 後台資料庫設計, 前台UI佈置(GCP/Firebase/IOS/Android/ReactNative)
+
 軟體工程師  
 2019/3 ~ 2020/5  
 香蕉會兒  
