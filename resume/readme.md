@@ -68,7 +68,7 @@
 
 ## 工作經歷
 自由接案者
-2020/5 ~ 現在
+2020/5 ~ 現在  
 1. IOS/Android社交軟體, 包含語音通話, 後台資料庫設計, 前台UI佈置(GCP/Firebase/IOS/Android/ReactNative)
 
 軟體工程師  
