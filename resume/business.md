@@ -1,6 +1,4 @@
 # 接案範圍
-主要是非視覺外所有部分(例:網站需要CSS切版人員配合)
-
 1. 後台(node/java/mysql/nosql/gcp/aws)
 1. 網站(js/api串接)
 1. 本機遊戲與上架(unity/ios/android)
