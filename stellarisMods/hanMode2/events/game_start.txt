@@ -426,6 +426,8 @@ country_event = {
 
 		# han: start with tech_automated_exploration
 		give_technology = { message = no tech = tech_automated_exploration }
+		give_technology = { message = no tech = tech_powered_exoskeletons }
+		give_technology = { message = no tech = tech_robotic_workers }
 	}
 
 	# Additional resources that may be changed by subspecies are granted in generate_start_buildings_and_districts
