@@ -5,6 +5,7 @@ import './App.css';
 import { map } from "rxjs/operators"
 import { bind, Subscribe  } from "@react-rxjs/core"
 import { createSignal } from "@react-rxjs/utils"
+import Todo from "./Todo"
 
 // A signal is an entry point to react-rxjs. It's equivalent to using a subject
 const [textChange$, setText] = createSignal<string>();
@@ -57,6 +58,7 @@ function App() {
         <img src={logo} className="App-logo" alt="logo" />
         <TextInput></TextInput>
         <CharacterCounter></CharacterCounter>
+        <Todo></Todo>
         <p>
           Edit <code>src/App.tsx</code> and save to reload.
         </p>
