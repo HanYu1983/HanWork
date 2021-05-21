@@ -1,11 +1,12 @@
 import React from 'react';
 import logo from './logo.svg';
-import './App.css';
+//import './App.css';
 
 import { map } from "rxjs/operators"
 import { bind, Subscribe } from "@react-rxjs/core"
 import { createSignal } from "@react-rxjs/utils"
 import Todo from "./Todo"
+import App2 from "./App2"
 
 // RCE CSS
 import 'react-chat-elements/dist/main.css';
@@ -182,6 +183,8 @@ function App() {
     alt={'logo'}
     size="large"
     type="circle flexible"/>
+
+    <App2></App2>
       </header>
     </div>
   );
