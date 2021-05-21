@@ -1,12 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
+import App from './debug/App3';
 import reportWebVitals from './reportWebVitals';
+import {  Subscribe } from "@react-rxjs/core"
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <Subscribe>
+      <App />
+    </Subscribe>
   </React.StrictMode>,
   document.getElementById('root')
 );
