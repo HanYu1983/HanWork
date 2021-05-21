@@ -3,25 +3,38 @@
 Han Chun Yu
 
 # Software Engineer
-I learned a lot of programming languages, because I have hobbies in various technologies.  
-Frond End and Back End are part of my work, so I can fully understand the project and make work easier.  
-Sometime I become consult to resolve the problem of colleague work.  
-I love unity when I do game development.  
-Sometimes I use compiled languages because I like functional programming. (clojure, livescript, elm)  
+My favorite programming paradigm is Functional Programming. I like to use Clojure for my small project.  
+I like learning and challenging, so I think there is no problem that cannot be solved. Time is the biggest enemy.  
+I like learning a lot of programming languages, because that always gives me new ideas.  
 
 # Technical Skills
-1. html/js
-2. unity/c#
-3. develop tool/python/node
-4. server/golang/node/java
-5. ios/objc++
-6. android/java/kotlin
-7. database/mysql/nosql
-8. platform/gcp/appengine/aws
+1. clojure
+1. golang
+1. unity/c#
+1. typescript
+1. mysql/nosql/elasticsearch/mongodb
+1. gcp/appengine
 
 # Professional Experience
-About 4 years freelancer, I'm doing now.  
-Works are website, game, server, api connection, web automation, bitcoin  
+## Freelancer
+About 6 years freelancer  
+Works on  
+website  
+mobile game  
+server  
+api connection  
+web automation  
+smart contract(solidity)  
+mobile social community  
+
+## Software Engineer
+2019/3 ~ 2020/5  
+香蕉會兒  
+frontend web game(laya/typescript/html5/css)  
+live streaming software automation, and dashboard web page(websocket/nodejs/react)  
+game backend search and data process(js/MongoDB/Elasticsearch)  
+xmpp chat client(js)  
+development tools(F#)  
 
 ## Game Engineer
 天空連線股份有限公司  
