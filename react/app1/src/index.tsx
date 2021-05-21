@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './debug/App3';
+import App from './app/App';
 import reportWebVitals from './reportWebVitals';
 import {  Subscribe } from "@react-rxjs/core"
 

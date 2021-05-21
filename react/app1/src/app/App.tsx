@@ -1,5 +1,4 @@
 import { of } from "rxjs"
-import { map } from "rxjs/operators"
 import { bind, Subscribe } from "@react-rxjs/core"
 import { createSignal } from "@react-rxjs/utils"
 
