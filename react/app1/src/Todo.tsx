@@ -4,6 +4,7 @@ import { collectValues, mergeWithKey, split } from "@react-rxjs/utils";
 import { map, takeWhile, scan, startWith } from "rxjs/operators";
 import * as React from "react";
 
+// https://stackoverflow.com/questions/46235798/relative-path-in-index-html-after-build
 // https://stackoverflow.com/questions/49218765/typescript-and-iterator-type-iterableiteratort-is-not-an-array-type
 
 const newTodo$ = new Subject<string>();
