@@ -2,3 +2,20 @@ html, body, #root {
   height: 100%;
   margin: 0;
 }
+
+.content {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 80px;
+  background-color: blue;
+}
+
+.box {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  height: 100px;
+}
+
+.column {
+  height: 500;
+}

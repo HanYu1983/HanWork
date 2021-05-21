@@ -1,0 +1,62 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    overflow-y: hidden;
+    overflow-x: hidden;
+    color: white;
+}
+
+#root {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    border: 1px solid black;
+}
+
+.chatPage {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 50;
+}
+
+.chatPage .center {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+}
+
+.chatPage .center .left {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    border: 1px solid blue;
+}
+
+.chatPage .center .left .memberList{
+    flex: 1 1 auto;
+    overflow-y: scroll;
+    height: 100px;
+}
+
+.chatPage .center .right {
+    flex: 3;
+    border: 1px solid yellow;
+    display: flex;
+    flex-direction: column;
+}
+
+.chatPage .center .right .dialogWindow{
+    flex:2;
+    border: 1px solid rgb(10, 240, 48);
+}
+
+.chatPage .center .right .messageWindow{
+    flex:1;
+    border: 1px solid rgb(226, 22, 233);
+}
