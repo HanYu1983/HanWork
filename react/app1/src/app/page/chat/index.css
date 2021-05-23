@@ -37,6 +37,7 @@ body {
     border: 1px solid blue;
 }
 
+/* flex: 1 1 auto中的auto是可以讓scrollView高度自適應的關鍵 */
 .chatPage .center .left .memberList{
     flex: 1 1 auto;
     overflow-y: scroll;
