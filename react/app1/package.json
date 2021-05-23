@@ -19,6 +19,7 @@
     "react-chat-elements": "^10.14.0",
     "react-dom": "^17.0.2",
     "react-native-vector-icons": "^8.1.0",
+    "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.3",
     "rxjs": "^7.0.1",
     "typescript": "^4.1.2",

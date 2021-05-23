@@ -3,7 +3,7 @@ import { of } from "rxjs"
 import { bind, Subscribe } from "@react-rxjs/core"
 import { createSignal } from "@react-rxjs/utils"
 import { Input, Space } from 'antd';
-import "./App.css"
+import "./index.css"
 const { MessageGroup, Message, MessageText, ThemeProvider, AgentBar, Avatar, Column, Title, Subtitle, Row, IconButton, RateBadIcon, RateGoodIcon } = require('@livechat/ui-kit')
 const { Search } = Input;
 
@@ -68,3 +68,5 @@ export default function () {
         </div>
     </ThemeProvider>
 }
+
+export {}

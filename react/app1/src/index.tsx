@@ -1,14 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './app/App';
+import App from './app';
 import reportWebVitals from './reportWebVitals';
-import { Subscribe } from "@react-rxjs/core"
-import 'antd/dist/antd.css';
 
 ReactDOM.render(
-  <Subscribe>
-    <App />
-  </Subscribe>,
+  <App />,
   document.getElementById('root')
 );
 
