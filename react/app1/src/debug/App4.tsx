@@ -12,30 +12,29 @@ type Member = {
     title: string,
     subtitle: string,
 }
-const [useMemberList, _] = bind<Member[]>(of([
-    {
-        id: "a",
-        imageUrl: "https://livechat.s3.amazonaws.com/default/avatars/male_8.jpg",
-        title: "a",
-        subtitle: "a"
-    },
-    {
-        id: "b",
-        imageUrl: "https://livechat.s3.amazonaws.com/default/avatars/male_8.jpg",
-        title: "b",
-        subtitle: "b"
-    },
-    {
-        id: "c",
-        imageUrl: "https://livechat.s3.amazonaws.com/default/avatars/male_8.jpg",
-        title: "c",
-        subtitle: "c"
-    }
-]))
 
 
 export default function () {
-    const memberList = useMemberList()
+    const memberList = [
+        {
+            id: "a",
+            imageUrl: "https://livechat.s3.amazonaws.com/default/avatars/male_8.jpg",
+            title: "a",
+            subtitle: "a"
+        },
+        {
+            id: "b",
+            imageUrl: "https://livechat.s3.amazonaws.com/default/avatars/male_8.jpg",
+            title: "b",
+            subtitle: "b"
+        },
+        {
+            id: "c",
+            imageUrl: "https://livechat.s3.amazonaws.com/default/avatars/male_8.jpg",
+            title: "c",
+            subtitle: "c"
+        }
+    ]
     const onSearch = useCallback(() => {
 
     }, [])
