@@ -8,6 +8,7 @@
 # Cocos2D
 
 1. [Robot War](https://storage.googleapis.com/particle-resources/works/robot/index.html)
+1. [Mabu Paobu](https://storage.googleapis.com/particle-resources/works/mabupaobu/index.html)
 
 # P5
 
