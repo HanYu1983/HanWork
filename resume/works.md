@@ -27,5 +27,6 @@
 # Else
 
 1. [Shake Up Boba](https://storage.googleapis.com/particle-resources/works/shakeUpBoba/index.html)
-1. [Project V](https://storage.googleapis.com/particle-resources/works/projectv/index.html)
-1. [Word Card](https://storage.googleapis.com/particle-resources/works/WordCard/index.html)
+2. [Shake Up Boba 2](https://storage.googleapis.com/particle-resources/works/shakeUpBoba2/index.html)
+3. [Project V](https://storage.googleapis.com/particle-resources/works/projectv/index.html)
+4. [Word Card](https://storage.googleapis.com/particle-resources/works/WordCard/index.html)
