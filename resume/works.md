@@ -16,7 +16,7 @@
 
 # WebGL
 
-1. [test](https://storage.googleapis.com/particle-resources/works/webglTest/demo.html)
+1. [Demo](https://storage.googleapis.com/particle-resources/works/webglTest/demo.html)
 
 # Smart Contract
 
