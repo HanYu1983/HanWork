@@ -69,7 +69,8 @@
 ## 工作經歷
 自由接案者
 2020/5 ~ 現在  
-1. IOS/Android社交軟體, 包含語音通話, 後台資料庫設計, 前台UI佈置(GCP/Firebase/IOS/Android/ReactNative)
+1. 手機語音通話API的串接, firestore聊天室設計與實作, react前台UI佈置(GCP/Firebase/IOS/Android/ReactNative)
+2. 操做AWS, 圖片上傳與壓縮, 配置terraform文件, dynamoDB聊天室設計與實作(AWS/dynamoDB/terraform/docker/typescript)
 
 軟體工程師  
 2019/3 ~ 2020/5  
