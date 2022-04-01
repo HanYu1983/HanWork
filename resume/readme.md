@@ -13,15 +13,15 @@
 
 應該算是全端工程師
 - 前端MVC的MC的部分
-- 後端使用雲端VM或Google App Engine/MySql/NoSql.
+- 後端使用雲端VM或GCP/AWS
 
 應該算是多語言工程師
-- 工具: python/nodejs
-- 移動端: c#/java/objc/kotlin/xcode/android studio/unity
-- Web端: js/livescript/clojurescript/react/vue/rx
-- 後端: golang/nodejs/java
+- 工具: nodejs
+- 移動端: reactnative/unity
+- Web端: react/rxjs/typescript/clojurescript
+- 後端: golang/typescript
 - DB: mongodb/elasticsearch/mysql/nosql
-- PC端: c#/java/unity
+- PC端: c#/unity
 
 開發平台
 - web app
@@ -31,6 +31,7 @@
 - dapp
 - Google App Engine
 - Google FireBase
+- AWS
 
 語言
 - 英文可讀原文資料(自我技術學習的程度)
