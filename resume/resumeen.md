@@ -13,7 +13,8 @@ I like learning a lot of programming languages, because that always gives me new
 1. unity/c#
 1. typescript
 1. mysql/nosql/elasticsearch/mongodb
-1. gcp/appengine
+1. gcp/appengine/aws/cognito
+1. ruby on rails
 
 # Professional Experience
 ## Freelancer
