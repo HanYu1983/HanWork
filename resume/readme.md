@@ -17,12 +17,12 @@
 - 後端使用雲端VM或GCP/AWS
 
 應該算是多語言工程師
-- 工具: nodejs
+- 開發工具: nodejs
 - 移動端: reactnative/unity
-- Web端: react/rxjs/typescript/clojurescript
-- 後端: golang/typescript
+- Web端: nodejs/react/rxjs/typescript/clojurescript
+- 後端: nodejs/golang/typescript
 - DB: mongodb/elasticsearch/mysql/nosql
-- PC端: c#/unity
+- PC端: unity
 
 開發平台
 - web app
@@ -96,8 +96,8 @@
 1. 改編當時很紅的fomo3d, 智能合約開發YouAreMyDiamond(dapp/truffle/solidity/html/js)
 
 軟體工程師  
-2014  
-1. 天空連線股份有限公司
+2014 ~ 2015
+天空連線股份有限公司
 1. Unity與android的原生API串接
 1. 赴日交接遊戲後台Server(1個月)
 
