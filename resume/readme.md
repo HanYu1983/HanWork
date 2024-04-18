@@ -27,12 +27,6 @@
 - [上善若水線上卡牌平台實況影片](https://www.youtube.com/watch?v=TX4Rn182urU&list=PLcReQCVhkEm2HQEbO5YkSEd_LGjMrj0vA)
 - [Unity小遊戲-太空模擬戰](https://storage.googleapis.com/particle-resources/works/spacewar/index.html)
 
-業務合作
-- [接案](business.md)
-- 兼職
-- 約聘
-- 全職(idealwork.md)
-
 聯絡我
 - [臉書](https://www.facebook.com/han.yu.100)
 - hanyushome@gmail.com
