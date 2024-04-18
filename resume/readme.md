@@ -70,9 +70,12 @@
 
 ## 工作經歷
 自由接案者
-2020/5 ~ 現在  
+2020/5 ~ 現在
 1. 手機語音通話API的串接, firestore聊天室設計與實作, react前台UI佈置(GCP/Firebase/IOS/Android/ReactNative)
 2. 操做AWS, 圖片上傳與壓縮, 配置terraform文件, dynamoDB聊天室設計與實作(AWS/dynamoDB/terraform/docker/typescript)
+3. ruby專案交接維護與開發(docker-compose/ruby/nuxt/aws cognito/circleci/microcms)
+4. scala專案交接維護與開發(docker-compose/scala/aws sqs/aws lambda/circleci)
+5. 專案由原來微服務改寫為no code設施, 並成取代核心的運轉(n8n/appsmith/retool)
 
 軟體工程師  
 2019/3 ~ 2020/5  
