@@ -1,46 +1,18 @@
 # 履歷
 余漢君
 
-經歷
-- 2年的j2me
-- 2年的j2ee
-- 2年的遊戲, 使用flash/java/unity
-- 6個月至菲律賓受訓的經驗, 使用objc/unity
-- 1次到日本交接的經驗, 使用nodejs交接遊戲後台
-- 1年多的unity遊戲合作案
-- 1年的外包接案, 接有活動網站(js/java), 宣傳網站(flash)
-- 2年的自產品(上善若水線上卡牌平台, UNITY遊戲原型)
-- 約9年的自由接案
-
-應該算是全端工程師
-- 前端MVC的MC的部分
-- 後端使用雲端VM或GCP/AWS
-
-應該算是多語言工程師
-- 開發工具: nodejs
-- 移動端: reactnative/unity
-- Web端: nodejs/react/rxjs/typescript/clojurescript
-- 後端: nodejs/golang/typescript
-- DB: mongodb/elasticsearch/mysql/nosql
-- PC端: unity
-
-開發平台
-- web app
-- mobile app
-- PC app
-- chrome extension
-- dapp
-- Google App Engine
-- Google FireBase
-- AWS
-
-語言
-- 英文可讀原文資料(自我技術學習的程度)
+特徵
+- 不怕難題, 樂於學習
+- 7年的公司員工
+- 9年的自由接案者
+- 全端工程師
+- 多語言工程師
 - 日文N3左右
+- 英文查資料OK
 
 自己的專案
-- [Unity沙盒RPG原型](https://storage.googleapis.com/particle-resources/works/Niba/index.html)(等待內容填充)
-- [Unity機器人大戰原型](https://storage.googleapis.com/particle-resources/works/RobotWar/index.html)(等待內容填充, 支援多人即時)
+- [Unity沙盒RPG原型](https://storage.googleapis.com/particle-resources/works/Niba/index.html)(等待企劃內容填充)
+- [Unity機器人大戰原型](https://storage.googleapis.com/particle-resources/works/RobotWar/index.html)(等待企劃內容填充, 支援多人即時)
 - Unity紅色警戒原型(等待內容填充, 支援多人即時)
 - [上善若水卡片遊戲平台](https://particle-979.appspot.com/manager/index.html)包含虛擬桌面TCG對戰(風雲系列), 股票技術圖表(非常多的技術指標-余氐K線圖), 粒子系統編輯器等. 其中股票因為歷史因素, 本來的後台API已不支援, 現在只支援部分美股, 請在[輸入代碼]中輸入AADR並按右方的按鈕來查看內容
 
