@@ -91,8 +91,9 @@
 1. 網站
 1. Unity音樂節奏遊戲(MeowRemix)
 1. 各種後台API串接
-1. 網頁自動化小程式
+1. 網頁自動化小程式(google chrome extension)
 1. 比特幣交易所API串接
+1. 改編當時很紅的fomo3d, 智能合約開發YouAreMyDiamond(dapp/truffle/solidity/html/js)
 
 軟體工程師  
 2014  
