@@ -47,7 +47,7 @@
 2. 操做AWS, 圖片上傳與壓縮, 配置terraform文件, dynamoDB聊天室設計與實作(AWS/dynamoDB/terraform/docker/typescript)
 3. ruby專案交接維護與開發(docker-compose/ruby/nuxt/aws cognito/circleci/microcms)
 4. scala專案交接維護與開發(docker-compose/scala/aws sqs/aws lambda/circleci)
-5. 專案由原來微服務改寫為no code設施, 並成取代核心的運轉(n8n/appsmith/retool)
+5. 專案由原來微服務改寫為no code設施, 並成功取代核心的運轉(n8n/appsmith/retool)
 
 軟體工程師  
 2019/3 ~ 2020/5  
