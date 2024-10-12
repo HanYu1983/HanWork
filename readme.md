@@ -22,6 +22,9 @@
 1. [卡片遊戲測試](https://storage.googleapis.com/particle-resources/works/fighterSha/index.html) [code](https://github.com/HanYu1983/Niba/tree/develop/dev/FighterSha/goDev/src)
 1. [機器人大戰驗証用 DEMO](https://storage.googleapis.com/particle-resources/works/robot/index.html) [影片](https://youtu.be/pGvwmErdukk)
 
+# 代表作
+1. [TCG鋼彈大戰NexA卡牌遊戲程式化驗証DEMO](https://storage.googleapis.com/particle-resources/works/fighterSha/index.html)
+
 # 小作品
 
 1. [小作品](resume/works.md)
