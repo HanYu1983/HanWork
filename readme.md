@@ -23,7 +23,7 @@
 1. [機器人大戰驗証用 DEMO](https://storage.googleapis.com/particle-resources/works/robot/index.html) [影片](https://youtu.be/pGvwmErdukk)
 
 # 代表作
-1. [TCG鋼彈大戰NexA卡牌遊戲程式化驗証DEMO](https://storage.googleapis.com/particle-resources/works/fighterSha/index.html)
+1. [TCG鋼彈大戰NexA卡牌遊戲程式化驗証DEMO](https://storage.googleapis.com/particle-resources/works/GundamCard2/index.html)
 
 # 小作品
 
