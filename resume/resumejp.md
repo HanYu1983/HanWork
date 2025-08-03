@@ -19,36 +19,6 @@
 7. database/mysql/nosql
 8. platform/gcp/appengine/aws
 
-## 職務経歴詳細
-約6年のフリーランサー、今もしてる  
-仕事のはウェブサイト、ゲーム、サーバー、API連動、ウェブ自動化、バーチャル通貨等  
-
-### ゲームエンジニア
-天空連線股份有限公司  
-Unityとandroid/ios連動するプラグイン開発、日本にゲームサーバーの引き渡し
-
-### ゲームエンジニア
-2013/04~2014/06  
-遊悅科技股份有限公司  
-半年フィリピンで仕事、Unityでゲーム開発、pythonで開発ツール
-
-### ゲームエンジニア
-2011/12~2013/01  
-遊戲夢工埸  
-iosゲーム[SheepRunRun](https://www.youtube.com/watch?v=KLzvoD4S6f0)  
-flashゲーム[替身戒](https://www.youtube.com/watch?v=iJNzlbMn0bs)  
-
-### エンジニア
-2010/04~2011/12  
-友邁科技  
-地図のサーチエンジン(j2ee)  
-
-### ゲームエンジニア
-2008/02~2010/02  
-極致行動科技  
-[j2meで携帯ゲーム開発](https://github.com/HanYu1983/HanWork/tree/master/spec)、javaゲームエディタ開発
-
-
 ## 職務経歴
 
 ### フリーランス (自由接案者)
@@ -135,7 +105,7 @@ flashゲーム[替身戒](https://www.youtube.com/watch?v=iJNzlbMn0bs)
 **会社名:** 極致行動科技
 
 **職務内容:**
-1.  モバイルゲーム開発（格闘ゲーム、シューティングゲーム）。
+1.  [j2meで携帯ゲーム開発](https://github.com/HanYu1983/HanWork/tree/master/spec)（格闘ゲーム、シューティングゲーム）。
 2.  ゲーム素材エディター開発（マップ自動結合/画像カット/アニメーション等）。
 
 ## 保有資格
