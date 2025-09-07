@@ -1,23 +1,10 @@
 # 経歴書
-2018/12/20  
+2025/9/7  
 余漢君  
 ヨウ　カンクン  
 
 ## 活かせる経験・知識・技術
-色んな技術に趣味を持つため、たくさんプログラミング言語を学びました  
-フロントエンドやバックエンドも専門として働きました  
-プロジェクトを全面的に理解でき、仕事を穏便に進める  
-時にコンサルの存在として、同僚の仕事の問題を解決する  
-ゲーム開発のはUnityを愛用  
-関数式を好むため、時にコンパイル言語を使います(clojure,livescript,elm)  
-1. html/js
-2. unity/c#
-3. 開発ツール/python/node
-4. server/golang/node/java
-5. ios/objc++
-6. android/java/kotlin
-7. database/mysql/nosql
-8. platform/gcp/appengine/aws
+かつて、エンジニアには多言語の特性と実装経験が不可欠だと考えていました。しかし、コードはAIが生成する時代となり、現在はn8nのようなローコードツールを駆使することが、これからのエンジニアに求められるスキルであると確信しております。
 
 ## 職務経歴
 
@@ -29,7 +16,7 @@
 2.  AWS操作、画像アップロード・圧縮、Terraformファイル設定、DynamoDBチャットルームの設計・実装を実施。(AWS/DynamoDB/Terraform/Docker/TypeScript)
 3.  Rubyプロジェクトの引継ぎ、保守・開発業務に従事。(Docker Compose/Ruby/Nuxt/AWS Cognito/CircleCI/microCMS)
 4.  Scalaプロジェクトの引継ぎ、保守・開発業務に従事。(Docker Compose/Scala/AWS SQS/AWS Lambda/CircleCI)
-5.  プロジェクトのマイクロサービスからノーコードへの移行を推進し、基幹システムの代替に成功。(n8n/Appsmith/Retool)
+5.  プロジェクトのマイクロサービスからローコードツールへの移行を推進し、基幹システムの代替に成功。(n8n/Appsmith/Retool)
 
 ---
 
