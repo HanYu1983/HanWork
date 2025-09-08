@@ -1,9 +1,7 @@
 # 履歷
 余漢君
 
-早期-遊戲與手機APP
-中期-網頁APP和server
-後期-AWS和docker和n8n
+一開始主要在遊戲與手機APP, 中間轉向網頁APP和server, 現在則以AWS和docker和n8n為主
 
 特徵
 - 不怕難題, 樂於學習
